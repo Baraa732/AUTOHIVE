@@ -50,7 +50,7 @@ class ProfileAvatar extends StatelessWidget {
     final profileImageUrl = user?['profile_image_url'];
     
     if (profileImageUrl != null && profileImageUrl.isNotEmpty) {
-      return CachedNetworkImage(
+      return AppCachedNetworkImage(
         imageUrl: profileImageUrl,
         fit: BoxFit.cover,
         placeholder: Container(
@@ -59,7 +59,7 @@ class ProfileAvatar extends StatelessWidget {
               colors: [Color(0xFFff6f2d), Color(0xFF4a90e2)],
             ),
           ),
-          child: Center(
+          child: const Center(
             child: CircularProgressIndicator(
               color: Colors.white,
               strokeWidth: 2,

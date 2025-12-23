@@ -343,6 +343,16 @@ class _LandlordHomeScreenState extends ConsumerState<LandlordHomeScreen>
                         const Spacer(),
                         IconButton(
                           onPressed: apartment.isApproved
+                              ? () => _toggleAvailability(apartment)
+                              : null,
+                          icon: Icon(
+                            apartment.isAvailable ? Icons.visibility : Icons.visibility_off,
+                            color: apartment.isAvailable ? Colors.green : Colors.grey,
+                            size: 20,
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: apartment.isApproved
                               ? () => _editApartment(apartment)
                               : null,
                           icon: const Icon(
@@ -638,21 +648,18 @@ class _LandlordHomeScreenState extends ConsumerState<LandlordHomeScreen>
       child: ClipRRect(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
         child: apartment.images.isNotEmpty
-            ? Image.network(
-                AppConfig.getImageUrlSync(apartment.images.first),
+            ? AppCachedNetworkImage(
+                imageUrl: AppConfig.getImageUrlSync(apartment.images.first),
                 fit: BoxFit.cover,
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Container(
-                    color: Colors.grey[300],
-                    child: const Center(
-                      child: CircularProgressIndicator(
-                        color: Color(0xFFff6f2d),
-                      ),
+                placeholder: Container(
+                  color: Colors.grey[300],
+                  child: const Center(
+                    child: CircularProgressIndicator(
+                      color: Color(0xFFff6f2d),
                     ),
-                  );
-                },
-                errorBuilder: (context, error, stackTrace) => Container(
+                  ),
+                ),
+                errorWidget: Container(
                   color: Colors.grey[600],
                   child: const Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -788,6 +795,31 @@ class _LandlordHomeScreenState extends ConsumerState<LandlordHomeScreen>
         );
       },
     );
+  }
+
+  Future<void> _toggleAvailability(Apartment apartment) async {
+    try {
+      final result = await _apiService.toggleApartmentAvailability(apartment.id);
+      if (result['success']) {
+        // Reload apartments to get updated data
+        await _loadMyApartments();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              !apartment.isAvailable ? 'Apartment is now visible' : 'Apartment is now hidden',
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to update availability'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   Future<void> _editApartment(Apartment apartment) async {

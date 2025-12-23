@@ -20,6 +20,9 @@ Route::get('/', function () {
     return response()->json(['message' => 'AUTOHIVE API Ready', 'status' => 'ok']);
 });
 
+// Test image URLs
+Route::get('/test-images', [\App\Http\Controllers\Api\TestController::class, 'testImages']);
+
 //! Public routes
 Route::get('/docs', [\App\Http\Controllers\Api\DocsController::class, 'index']);
 Route::get('/status', [\App\Http\Controllers\Api\DocsController::class, 'status']);

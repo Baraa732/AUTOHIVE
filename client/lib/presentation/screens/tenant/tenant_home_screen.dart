@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/core.dart';
 import '../../../core/state/state.dart';
 import '../../../data/data.dart';
+import '../../widgets/common/cached_network_image.dart';
 import '../../widgets/common/theme_toggle_button.dart';
 import '../shared/tenant_apartment_details_screen.dart';
 import '../shared/landlord_profile_screen.dart';
@@ -287,6 +288,10 @@ class _TenantHomeScreenState extends ConsumerState<TenantHomeScreen> with Ticker
                   children: [
                     Text('\$${apartment.price}/night', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFFff6f2d))),
                     const Spacer(),
+                    IconButton(
+                      onPressed: () => _toggleFavorite(apartment.id),
+                      icon: const Icon(Icons.favorite_border, color: Color(0xFFff6f2d), size: 20),
+                    ),
                     if (apartment.landlord != null) _buildLandlordProfile(apartment.landlord!),
                     const SizedBox(width: 8),
                     ElevatedButton.icon(
@@ -320,17 +325,14 @@ class _TenantHomeScreenState extends ConsumerState<TenantHomeScreen> with Ticker
       child: ClipRRect(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
         child: apartment.images.isNotEmpty
-            ? Image.network(
-                AppConfig.getImageUrlSync(apartment.images.first),
+            ? AppCachedNetworkImage(
+                imageUrl: AppConfig.getImageUrlSync(apartment.images.first),
                 fit: BoxFit.cover,
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Container(
-                    color: Colors.grey[300],
-                    child: const Center(child: CircularProgressIndicator(color: Color(0xFFff6f2d))),
-                  );
-                },
-                errorBuilder: (context, error, stackTrace) => Container(
+                placeholder: Container(
+                  color: Colors.grey[300],
+                  child: const Center(child: CircularProgressIndicator(color: Color(0xFFff6f2d))),
+                ),
+                errorWidget: Container(
                   color: Colors.grey,
                   child: const Icon(Icons.image, color: Colors.white, size: 50),
                 ),
@@ -421,6 +423,27 @@ class _TenantHomeScreenState extends ConsumerState<TenantHomeScreen> with Ticker
         );
       },
     );
+  }
+
+  Future<void> _toggleFavorite(String apartmentId) async {
+    try {
+      final result = await _apiService.addToFavorites(apartmentId);
+      if (result['success']) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Added to favorites'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to add to favorites'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override

@@ -441,7 +441,7 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
                 future: AppConfig.getImageUrl(apartment.images.first),
                 builder: (context, snapshot) {
                   if (snapshot.hasData) {
-                    return CachedNetworkImage(
+                    return AppCachedNetworkImage(
                       imageUrl: snapshot.data!,
                       fit: BoxFit.cover,
                       placeholder: Container(

@@ -37,6 +37,7 @@ dependencies:
 
    # Utilities
    image_picker: ^1.0.4
+   cached_network_image: ^3.3.1
    equatable: ^2.0.5
    freezed_annotation: ^2.4.1
    json_annotation: ^4.8.1

@@ -211,7 +211,7 @@ class _TenantApartmentDetailsScreenState extends ConsumerState<TenantApartmentDe
               future: AppConfig.getImageUrl(images[index]),
               builder: (context, snapshot) {
                 if (snapshot.hasData) {
-                  return CachedNetworkImage(
+                  return AppCachedNetworkImage(
                     imageUrl: snapshot.data!,
                     fit: BoxFit.cover,
                     placeholder: Container(color: Colors.grey[300], child: const Center(child: CircularProgressIndicator(color: Color(0xFFff6f2d)))),

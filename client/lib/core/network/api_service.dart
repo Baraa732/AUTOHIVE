@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'auth_service.dart';
-import 'image_cache_service.dart';
 import 'error_handler.dart';
 import '../constants/app_config.dart';
 
@@ -38,21 +37,6 @@ class ApiService {
       final response = await http.get(Uri.parse(url), headers: headers).timeout(const Duration(seconds: 30));
       final data = json.decode(response.body);
       
-      // Cache apartment images
-      if (data['success'] == true && data['data'] != null) {
-        final apartments = data['data'] is List ? data['data'] : data['data']['data'];
-        if (apartments is List) {
-          for (var apartment in apartments) {
-            if (apartment['images'] != null) {
-              for (String imageUrl in List<String>.from(apartment['images'])) {
-                AppConfig.getImageUrl(imageUrl).then((fullUrl) => 
-                  ImageCacheService().cacheImage(fullUrl)).catchError((e) => null);
-              }
-            }
-          }
-        }
-      }
-      
       return data;
     } catch (e, stackTrace) {
       ErrorHandler.logError('getApartments', e, stackTrace);
@@ -67,13 +51,6 @@ class ApiService {
       final response = await http.get(Uri.parse('$apiUrl/apartments/$id/public'), headers: headers).timeout(const Duration(seconds: 30));
       final data = json.decode(response.body);
 
-      if (data['success'] == true && data['data'] != null && data['data']['images'] != null) {
-        for (String imageUrl in List<String>.from(data['data']['images'])) {
-          AppConfig.getImageUrl(imageUrl).then((fullUrl) => 
-            ImageCacheService().cacheImage(fullUrl)).catchError((e) => null);
-        }
-      }
-      
       return data;
     } catch (e, stackTrace) {
       ErrorHandler.logError('getApartmentDetails', e, stackTrace);
@@ -154,20 +131,6 @@ class ApiService {
       final apiUrl = await AppConfig.baseUrl;
       final response = await http.get(Uri.parse('$apiUrl/my-apartments'), headers: headers).timeout(const Duration(seconds: 30));
       final data = json.decode(response.body);
-
-      if (data['success'] == true && data['data'] != null) {
-        final apartments = data['data'] is List ? data['data'] : data['data']['data'];
-        if (apartments is List) {
-          for (var apartment in apartments) {
-            if (apartment['images'] != null) {
-              for (String imageUrl in List<String>.from(apartment['images'])) {
-                AppConfig.getImageUrl(imageUrl).then((fullUrl) => 
-                  ImageCacheService().cacheImage(fullUrl)).catchError((e) => null);
-              }
-            }
-          }
-        }
-      }
       
       return {
         'success': response.statusCode == 200,

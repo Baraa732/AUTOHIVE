@@ -245,7 +245,7 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
           future: AppConfig.getImageUrl(images[index]),
           builder: (context, snapshot) {
             if (snapshot.hasData) {
-              return CachedNetworkImage(
+              return AppCachedNetworkImage(
                 imageUrl: snapshot.data!,
                 fit: BoxFit.cover,
                 placeholder: Container(
