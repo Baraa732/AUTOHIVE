@@ -7,7 +7,7 @@ A comprehensive automotive management system with Flutter mobile client and Lara
 ```
 AUTOHIVE/
 ├── client/          # Flutter mobile application
-└── server/          # Laravel backend API
+└── server/          # Laravel backend API + Admin Dashboard
 ```
 
 ## Features
