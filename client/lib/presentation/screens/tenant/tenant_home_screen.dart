@@ -288,10 +288,6 @@ class _TenantHomeScreenState extends ConsumerState<TenantHomeScreen> with Ticker
                   children: [
                     Text('\$${apartment.price}/night', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFFff6f2d))),
                     const Spacer(),
-                    IconButton(
-                      onPressed: () => _toggleFavorite(apartment.id),
-                      icon: const Icon(Icons.favorite_border, color: Color(0xFFff6f2d), size: 20),
-                    ),
                     if (apartment.landlord != null) _buildLandlordProfile(apartment.landlord!),
                     const SizedBox(width: 8),
                     ElevatedButton.icon(
@@ -423,27 +419,6 @@ class _TenantHomeScreenState extends ConsumerState<TenantHomeScreen> with Ticker
         );
       },
     );
-  }
-
-  Future<void> _toggleFavorite(String apartmentId) async {
-    try {
-      final result = await _apiService.addToFavorites(apartmentId);
-      if (result['success']) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Added to favorites'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to add to favorites'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
   }
 
   @override
