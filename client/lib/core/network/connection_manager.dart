@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'error_handler.dart';
 
 class ConnectionManager {
@@ -12,21 +13,72 @@ class ConnectionManager {
   ];
 
   static String? _workingUrl;
+  static const String _urlCacheKey = 'cached_working_url';
+  static bool _isTestingUrls = false;
 
   static Future<String> getWorkingUrl() async {
+    // Return cached URL immediately if available
     if (_workingUrl != null) {
       return _workingUrl!;
     }
 
+    // Try to get cached URL from storage
+    final prefs = await SharedPreferences.getInstance();
+    final cachedUrl = prefs.getString(_urlCacheKey);
+    
+    if (cachedUrl != null) {
+      _workingUrl = cachedUrl;
+      // Test in background without blocking
+      _testUrlInBackground(cachedUrl);
+      return cachedUrl;
+    }
+
+    // Use default URL immediately for Android emulator
+    const defaultUrl = 'http://10.0.2.2:8000/api';
+    _workingUrl = defaultUrl;
+    
+    // Test URLs in background
+    _testUrlsInBackground();
+    
+    return defaultUrl;
+  }
+
+  static void _testUrlInBackground(String url) async {
+    if (_isTestingUrls) return;
+    _isTestingUrls = true;
+    
+    try {
+      final isWorking = await _testUrl(url);
+      if (!isWorking) {
+        // If cached URL doesn't work, find a working one
+        await _findWorkingUrl();
+      }
+    } finally {
+      _isTestingUrls = false;
+    }
+  }
+
+  static void _testUrlsInBackground() async {
+    if (_isTestingUrls) return;
+    _isTestingUrls = true;
+    
+    try {
+      await _findWorkingUrl();
+    } finally {
+      _isTestingUrls = false;
+    }
+  }
+
+  static Future<void> _findWorkingUrl() async {
+    final prefs = await SharedPreferences.getInstance();
+    
     for (String url in _urls) {
       if (await _testUrl(url)) {
         _workingUrl = url;
-        return url;
+        await prefs.setString(_urlCacheKey, url);
+        return;
       }
     }
-
-    _workingUrl = _urls.first;
-    return _workingUrl!;
   }
 
   static Future<bool> _testUrl(String url) async {
@@ -34,7 +86,7 @@ class ConnectionManager {
       final response = await http.get(
         Uri.parse(url),
         headers: {'Accept': 'application/json'},
-      ).timeout(const Duration(seconds: 3));
+      ).timeout(const Duration(milliseconds: 500)); // Even faster timeout
       
       return response.statusCode == 200;
     } catch (e) {
@@ -44,6 +96,11 @@ class ConnectionManager {
 
   static void resetConnection() {
     _workingUrl = null;
+    _isTestingUrls = false;
+    // Clear cached URL when resetting
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.remove(_urlCacheKey);
+    });
   }
 
   static String? get currentUrl => _workingUrl;

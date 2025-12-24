@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/models/user.dart';
@@ -41,19 +42,30 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> _loadStoredAuth() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString(_tokenKey);
-    final userData = prefs.getString(_userKey);
-    
-    if (token != null && userData != null) {
-      try {
-        final user = User.fromJson(Map<String, dynamic>.from(
-          Uri.splitQueryString(userData)
-        ));
-        state = state.copyWith(user: user, isAuthenticated: true);
-      } catch (e) {
-        await _clearStoredAuth();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString(_tokenKey);
+      final userData = prefs.getString(_userKey);
+      
+      if (token != null && userData != null && token.isNotEmpty && userData.isNotEmpty) {
+        try {
+          // Parse JSON properly instead of using Uri.splitQueryString
+          final Map<String, dynamic> userMap = Map<String, dynamic>.from(
+            jsonDecode(userData)
+          );
+          final user = User.fromJson(userMap);
+          state = state.copyWith(user: user, isAuthenticated: true);
+        } catch (e) {
+          await _clearStoredAuth();
+        }
+      } else {
+        // Ensure we start with unauthenticated state if no valid data
+        state = const AuthState(isAuthenticated: false);
       }
+    } catch (e) {
+      // Silently handle errors during auth loading
+      await _clearStoredAuth();
+      state = const AuthState(isAuthenticated: false);
     }
   }
 
@@ -101,13 +113,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> logout() async {
     await _clearStoredAuth();
-    state = const AuthState();
+    state = const AuthState(isAuthenticated: false, user: null);
   }
 
   Future<void> _storeAuth(String token, User user) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_tokenKey, token);
-    await prefs.setString(_userKey, user.toJson().toString());
+    await prefs.setString(_userKey, jsonEncode(user.toJson())); // Use jsonEncode instead of toString
   }
 
   Future<void> _clearStoredAuth() async {

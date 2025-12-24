@@ -29,11 +29,11 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with TickerProvid
 
   void _initAnimations() {
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 1500),
+      duration: const Duration(milliseconds: 800), // Reduced from 1500ms
       vsync: this,
     );
     _backgroundController = AnimationController(
-      duration: const Duration(seconds: 15),
+      duration: const Duration(seconds: 10), // Reduced from 15 seconds
       vsync: this,
     )..repeat();
 
