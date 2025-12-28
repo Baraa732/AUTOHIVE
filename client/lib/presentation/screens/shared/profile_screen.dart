@@ -1,15 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/core.dart';
-import '../../../core/state/state.dart';
-import '../../../core/network/auth_service.dart';
+import '../../providers/auth_provider.dart';
 import '../../widgets/common/profile_avatar.dart';
 import '../auth/welcome_screen.dart';
-import 'edit_profile_screen.dart';
-import 'settings_screen.dart';
-import '../landlord/my_apartments_screen.dart';
-import '../landlord/booking_requests_screen.dart';
-import '../tenant/my_bookings_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -19,46 +12,12 @@ class ProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
-  final AuthService _authService = AuthService();
-  Map<String, dynamic>? _user;
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadUser();
-  }
-
-  Future<void> _loadUser() async {
-    try {
-      final user = await _authService.getUser();
-      if (mounted) {
-        setState(() {
-          _user = user;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _user = null;
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _logout() async {
-    await _authService.logout();
-    if (!mounted) return;
-    Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const WelcomeScreen()), (route) => false);
-  }
-
-
-
   @override
   Widget build(BuildContext context) {
     final isDarkMode = ref.watch(themeProvider);
+    final authState = ref.watch(authProvider);
+    final user = authState.user;
+    
     return Container(
       decoration: BoxDecoration(
         gradient: AppTheme.getBackgroundGradient(isDarkMode),
@@ -67,19 +26,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         children: [
           _buildAnimatedBackground(isDarkMode),
           SafeArea(
-            child: _buildContent(isDarkMode),
+            child: _buildContent(isDarkMode, user),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildContent(bool isDark) {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator(color: Color(0xFFff6f2d)));
-    }
+  Future<void> _logout() async {
+    await ref.read(authProvider.notifier).logout();
+    if (!mounted) return;
+    Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const WelcomeScreen()), (route) => false);
+  }
 
-    if (_user == null) {
+  Widget _buildContent(bool isDark, User? user) {
+    if (user == null) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -90,7 +51,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: LinearGradient(
-                  colors: [Color(0xFFff6f2d).withOpacity(0.3), Color(0xFF4a90e2).withOpacity(0.3)],
+                  colors: [Color(0xFFff6f2d).withValues(alpha: 0.3), Color(0xFF4a90e2).withValues(alpha: 0.3)],
                 ),
               ),
               child: const Icon(Icons.person_off, size: 60, color: Colors.white),
@@ -113,7 +74,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             Text(
               'Please login to view your profile',
               style: TextStyle(
-                color: Colors.white.withOpacity(0.7),
+                color: Colors.white.withValues(alpha: 0.7),
                 fontSize: 16,
               ),
             ),
@@ -128,7 +89,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFff6f2d).withOpacity(0.4),
+                    color: const Color(0xFFff6f2d).withValues(alpha: 0.4),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
@@ -167,7 +128,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       child: Column(
         children: [
           ProfileAvatar(
-            user: _user,
+            user: user.toJson(),
             size: 140,
             showBorder: true,
           ),
@@ -177,7 +138,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               colors: [Color(0xFFff6f2d), Color(0xFF4a90e2)],
             ).createShader(bounds),
             child: Text(
-              '${_user?['first_name']} ${_user?['last_name']}',
+              '${user.firstName ?? ''} ${user.lastName ?? ''}',
               style: const TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
@@ -188,94 +149,24 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
           const SizedBox(height: 12),
           Text(
-            _user?['phone'] ?? '',
+            user.phone ?? '',
             style: TextStyle(
-              color: Colors.white.withOpacity(0.8),
+              color: Colors.white.withValues(alpha: 0.8),
               fontSize: 16,
             ),
           ),
-          if (_user?['email'] != null) ...[
+          if (user.email != null) ...[
             const SizedBox(height: 8),
             Text(
-              _user?['email'] ?? '',
+              user.email ?? '',
               style: TextStyle(
-                color: Colors.white.withOpacity(0.7),
+                color: Colors.white.withValues(alpha: 0.7),
                 fontSize: 14,
               ),
             ),
           ],
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  const Color(0xFFff6f2d).withOpacity(0.2),
-                  const Color(0xFF4a90e2).withOpacity(0.2),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(25),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.3),
-                width: 1.5,
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  _user?['role'] == 'landlord' ? Icons.home_work : Icons.person,
-                  color: Colors.white,
-                  size: 16,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  _user?['role']?.toUpperCase() ?? '',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                    letterSpacing: 1,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          if (_user?['role'] == 'landlord')
-            _buildMenuItem(Icons.home_work, 'My Apartments', () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const MyApartmentsScreen()));
-            }),
-          if (_user?['role'] == 'landlord')
-            _buildMenuItem(Icons.book_online, 'Booking Requests', () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const BookingRequestsScreen()));
-            }),
-          if (_user?['role'] == 'tenant')
-            _buildMenuItem(Icons.book, 'My Bookings', () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const MyBookingsScreen()));
-            }),
-          if (_user?['role'] == 'tenant')
-            _buildMenuItem(Icons.favorite, 'My Favorites', () {
-              // Navigator.push(context, MaterialPageRoute(builder: (_) => const FavoritesScreen()));
-            }),
-          _buildMenuItem(Icons.person, 'Edit Profile', () async {
-            if (_user != null) {
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => EditProfileScreen(user: _user!)),
-              );
-              if (result == true) {
-                _loadUser(); // Reload user data if profile was updated
-              }
-            }
-          }),
-          _buildMenuItem(Icons.lock, 'Change Password', () {
-            // TODO: Implement change password screen
-          }),
+          const SizedBox(height: 32),
           _buildThemeToggle(),
-          _buildMenuItem(Icons.settings, 'Settings', () {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
-          }),
           _buildMenuItem(Icons.help, 'Help & Support', () {}),
           const SizedBox(height: 12),
           Container(
@@ -288,7 +179,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFEF4444).withOpacity(0.4),
+                  color: const Color(0xFFEF4444).withValues(alpha: 0.4),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                 ),
@@ -350,7 +241,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           Switch(
             value: isDarkMode,
             onChanged: (value) => ref.read(themeProvider.notifier).toggleTheme(),
-            activeColor: const Color(0xFFff6f2d),
+            activeThumbColor: const Color(0xFFff6f2d),
           ),
         ],
       ),
@@ -414,8 +305,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: [
-                  const Color(0xFFff6f2d).withOpacity(isDark ? 0.3 : 0.1),
-                  const Color(0xFF4a90e2).withOpacity(isDark ? 0.2 : 0.05),
+                  const Color(0xFFff6f2d).withValues(alpha: isDark ? 0.3 : 0.1),
+                  const Color(0xFF4a90e2).withValues(alpha: isDark ? 0.2 : 0.05),
                   Colors.transparent,
                 ],
               ),
@@ -432,8 +323,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               borderRadius: BorderRadius.circular(25),
               gradient: LinearGradient(
                 colors: [
-                  const Color(0xFF4a90e2).withOpacity(isDark ? 0.4 : 0.08),
-                  const Color(0xFFff6f2d).withOpacity(isDark ? 0.3 : 0.06),
+                  const Color(0xFF4a90e2).withValues(alpha: isDark ? 0.4 : 0.08),
+                  const Color(0xFFff6f2d).withValues(alpha: isDark ? 0.3 : 0.06),
                 ],
               ),
             ),

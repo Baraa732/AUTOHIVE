@@ -16,7 +16,7 @@ class Apartment {
   final bool isApproved;
   final String status;
   final double? rating;
-  final Map<String, dynamic>? landlord;
+  final Map<String, dynamic>? owner;
 
   Apartment({
     required this.id,
@@ -36,7 +36,7 @@ class Apartment {
     required this.isApproved,
     required this.status,
     this.rating,
-    this.landlord,
+    this.owner,
   });
 
   factory Apartment.fromJson(Map<String, dynamic> json) {
@@ -66,7 +66,30 @@ class Apartment {
       rating: json['rating'] != null
           ? double.parse(json['rating'].toString())
           : null,
-      landlord: json['landlord'] as Map<String, dynamic>?,
+      owner: json['user'] as Map<String, dynamic>? ?? json['owner'] as Map<String, dynamic>?,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'description': description,
+      'address': address,
+      'governorate': governorate,
+      'city': city,
+      'price': price,
+      'price_per_night': pricePerNight ?? price,
+      'bedrooms': bedrooms,
+      'bathrooms': bathrooms,
+      'area': area,
+      'images': images,
+      'features': features,
+      'is_available': isAvailable,
+      'is_approved': isApproved,
+      'status': status,
+      'rating': rating,
+      'user': owner,
+    };
   }
 }

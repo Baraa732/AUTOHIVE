@@ -79,8 +79,8 @@ class _AppBackgroundState extends State<AppBackground>
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
                       colors: [
-                        AppTheme.primaryBlue.withOpacity(0.3),
-                        AppTheme.primaryPink.withOpacity(0.2),
+                        AppTheme.primaryBlue.withValues(alpha: 0.3),
+                        AppTheme.primaryPink.withValues(alpha: 0.2),
                         Colors.transparent,
                       ],
                     ),
@@ -100,8 +100,8 @@ class _AppBackgroundState extends State<AppBackground>
                     borderRadius: BorderRadius.circular(25),
                     gradient: LinearGradient(
                       colors: [
-                        AppTheme.primaryOrange.withOpacity(0.4),
-                        AppTheme.primaryGreen.withOpacity(0.3),
+                        AppTheme.primaryOrange.withValues(alpha: 0.4),
+                        AppTheme.primaryGreen.withValues(alpha: 0.3),
                       ],
                     ),
                   ),
@@ -120,8 +120,8 @@ class _AppBackgroundState extends State<AppBackground>
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
                       colors: [
-                        AppTheme.primaryPink.withOpacity(0.5),
-                        AppTheme.primaryBlue.withOpacity(0.3),
+                        AppTheme.primaryPink.withValues(alpha: 0.5),
+                        AppTheme.primaryBlue.withValues(alpha: 0.3),
                       ],
                     ),
                   ),

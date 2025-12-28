@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Notification;
 use App\Models\User;
+use Illuminate\Support\Facades\Log;
 
 class NotificationService
 {
@@ -20,13 +21,32 @@ class NotificationService
 
     public static function sendToAllAdmins($type, $title, $message, $data = [])
     {
-        $admins = User::where('role', 'admin')->get();
+        $admins = User::get();
+        
+        Log::info('Sending notification to admins', [
+            'admin_count' => $admins->count(),
+            'type' => $type,
+            'title' => $title,
+            'message' => $message
+        ]);
         
         foreach ($admins as $admin) {
             $notification = self::send($admin->id, $type, $title, $message, $data);
             
-            // Broadcast real-time notificatio  n to admin
-            broadcast(new \App\Events\AdminNotification($admin->id, $notification));
+            Log::info('Created notification for admin', [
+                'admin_id' => $admin->id,
+                'notification_id' => $notification->id
+            ]);
+            
+            // Broadcast real-time notification to admin
+            try {
+                broadcast(new \App\Events\AdminNotification($admin->id, $notification));
+            } catch (\Exception $e) {
+                Log::error('Failed to broadcast notification', [
+                    'admin_id' => $admin->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
         }
     }
 
@@ -35,11 +55,10 @@ class NotificationService
         self::sendToAllAdmins(
             'user_registration',
             'New User Registration',
-            "{$user->first_name} {$user->last_name} ({$user->role}) has registered and needs approval.",
+            "{$user->first_name} {$user->last_name} has registered and needs approval.",
             [
                 'user_id' => $user->id,
                 'user_name' => $user->first_name . ' ' . $user->last_name,
-                'user_role' => $user->role,
                 'user_phone' => $user->phone,
                 'action_required' => true,
                 'actions' => ['approve', 'reject']
@@ -77,8 +96,7 @@ class NotificationService
 
     public static function sendAdminActivityNotification($activity)
     {
-        $admins = User::where('role', 'admin')
-            ->where('id', '!=', $activity->admin_id)
+        $admins = User::where('id', '!=', $activity->admin_id)
             ->get();
         
         foreach ($admins as $admin) {

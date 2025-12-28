@@ -5,12 +5,13 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Apartment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class ApartmentController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Apartment::with(['landlord', 'reviews'])
+        $query = Apartment::with(['user', 'reviews'])
             ->where('is_available', true)
             ->where('is_approved', true) // MUST be approved by admin
             ->where('status', 'approved'); // MUST have approved status
@@ -108,10 +109,10 @@ class ApartmentController extends Controller
 
     public function show($id)
     {
-        $apartment = Apartment::with(['landlord', 'reviews.tenant', 'bookings'])
-            ->where('is_approved', true) // Only show approved apartments
+        $apartment = Apartment::with(['user', 'reviews.user', 'bookings'])
+            ->where('is_approved', true)
             ->where('status', 'approved')
-            ->find($id); // Use find() not findOrFail() to handle 404
+            ->find($id);
 
         if (!$apartment) {
             return response()->json([
@@ -119,15 +120,11 @@ class ApartmentController extends Controller
                 'message' => 'Apartment not found or not approved yet'
             ], 404);
         }
-        // $apartment = Apartment::with(['landlord', 'reviews.tenant', 'bookings'])
-        //     ->findOrFail($id);
 
-        // Add calculated fields
         $apartment->average_rating = $apartment->reviews->avg('rating') ?? 0;
         $apartment->reviews_count = $apartment->reviews->count();
         $apartment->bookings_count = $apartment->bookings->count();
         
-        // Check availability for next 30 days
         $apartment->availability_calendar = $this->getAvailabilityCalendar($apartment);
 
         return response()->json([
@@ -194,7 +191,7 @@ class ApartmentController extends Controller
             'features'
         ]);
 
-        $data['landlord_id'] = $request->user()->id;
+        $data['user_id'] = $request->user()->id;
         $data['is_available'] = false; // Should be false until admin approves
         $data['is_approved'] = false; // Needs admin approval
         $data['status'] = 'pending'; // Initial status
@@ -228,7 +225,7 @@ class ApartmentController extends Controller
 
     public function update(Request $request, $id)
     {
-        $apartment = Apartment::where('landlord_id', $request->user()->id)
+        $apartment = Apartment::where('user_id', $request->user()->id)
             ->findOrFail($id);
 
         $request->validate([
@@ -269,7 +266,7 @@ class ApartmentController extends Controller
 
     public function destroy(Request $request, $id)
     {
-        $apartment = Apartment::where('landlord_id', $request->user()->id)
+        $apartment = Apartment::where('user_id', $request->user()->id)
             ->findOrFail($id);
 
         // Check if apartment has active bookings
@@ -292,7 +289,7 @@ class ApartmentController extends Controller
 
     public function myApartments(Request $request)
     {
-        $apartments = Apartment::where('landlord_id', $request->user()->id)
+        $apartments = Apartment::where('user_id', $request->user()->id)
             ->with(['reviews', 'bookings'])
             ->withCount(['bookings', 'reviews'])
             ->paginate(10);
@@ -306,7 +303,7 @@ class ApartmentController extends Controller
 
     public function toggleAvailability(Request $request, $id)
     {
-        $apartment = Apartment::where('landlord_id', $request->user()->id)
+        $apartment = Apartment::where('user_id', $request->user()->id)
             ->findOrFail($id);
 
         $apartment->update([
@@ -332,14 +329,14 @@ class ApartmentController extends Controller
     private function notifyAdminsOfNewApartment($apartment)
     {
         try {
-            \Log::info('New apartment created', [
+            Log::info('New apartment created', [
                 'apartment_id' => $apartment->id,
                 'apartment_title' => $apartment->title,
-                'landlord_id' => $apartment->landlord_id,
+                'user_id' => $apartment->user_id,
                 'status' => $apartment->status
             ]);
         } catch (\Exception $e) {
-            \Log::error('Failed to log apartment creation', ['error' => $e->getMessage()]);
+            Log::error('Failed to log apartment creation', ['error' => $e->getMessage()]);
         }
     }
 }

@@ -8,7 +8,7 @@ class AdminException extends Exception
 {
     protected $statusCode;
 
-    public function __construct($message = 'Admin operation failed', $statusCode = 400, Exception $previous = null)
+    public function __construct($message = 'Admin operation failed', $statusCode = 400, ?Exception $previous = null)
     {
         $this->statusCode = $statusCode;
         parent::__construct($message, 0, $previous);

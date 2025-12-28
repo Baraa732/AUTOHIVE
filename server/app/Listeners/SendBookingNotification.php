@@ -20,7 +20,7 @@ class SendBookingNotification
 
         if (isset($messages[$status])) {
             Notification::create([
-                'user_id' => $booking->tenant_id,
+                'user_id' => $booking->user_id,
                 'type' => 'booking_' . $status,
                 'message' => $messages[$status],
             ]);

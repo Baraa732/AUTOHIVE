@@ -1,6 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+class NavbarThemeData {
+  final Color backgroundColor;
+  final Color accentColor;
+  final Color secondaryColor;
+  final Color textLight;
+  final Color textDim;
+  final double navHeight;
+  final double radius;
+  final double indicatorSize;
+  final double cutoutWidth;
+  final double cutoutHeight;
+  final Duration transitionDuration;
+  final Curve transitionCurve;
+
+  const NavbarThemeData({
+    required this.backgroundColor,
+    required this.accentColor,
+    required this.secondaryColor,
+    required this.textLight,
+    required this.textDim,
+    required this.navHeight,
+    required this.radius,
+    required this.indicatorSize,
+    required this.cutoutWidth,
+    required this.cutoutHeight,
+    required this.transitionDuration,
+    required this.transitionCurve,
+  });
+}
+
 class AppTheme {
   // Brand Colors - Updated to match welcome screen
   static const Color primaryBlue = Color(0xFF4a90e2);
@@ -110,7 +140,7 @@ class AppTheme {
     cardTheme: CardThemeData(
       color: lightCard,
       elevation: 2,
-      shadowColor: Colors.black.withOpacity(0.1),
+      shadowColor: Colors.black.withValues(alpha: 0.1),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     ),
     
@@ -164,12 +194,10 @@ class AppTheme {
       primary: primaryBlue,
       secondary: primaryPink,
       surface: lightSurface,
-      background: lightPrimary,
       error: Color(0xFFEF4444),
       onPrimary: Colors.white,
       onSecondary: Colors.white,
       onSurface: Color(0xFF1E293B),
-      onBackground: Color(0xFF1E293B),
       onError: Colors.white,
     ),
   );
@@ -196,7 +224,7 @@ class AppTheme {
     cardTheme: CardThemeData(
       color: darkCard,
       elevation: 4,
-      shadowColor: Colors.black.withOpacity(0.3),
+      shadowColor: Colors.black.withValues(alpha: 0.3),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     ),
     
@@ -205,7 +233,7 @@ class AppTheme {
       displayLarge: titleDark,
       displayMedium: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: Colors.white),
       bodyLarge: TextStyle(fontSize: 16, color: Color(0xFFE2E8F0)),
-      bodyMedium: TextStyle(fontSize: 14, color: Color(0xFFB3FFFFFF)),
+      bodyMedium: TextStyle(fontSize: 14, color: Color(0xFFB3FFFF)),
       labelLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
     ),
     
@@ -250,12 +278,10 @@ class AppTheme {
       primary: primaryBlue,
       secondary: primaryPink,
       surface: darkSurface,
-      background: darkPrimary,
       error: Color(0xFFEF4444),
       onPrimary: Colors.white,
       onSecondary: Colors.white,
       onSurface: Colors.white,
-      onBackground: Colors.white,
       onError: Colors.white,
     ),
   );
@@ -274,6 +300,7 @@ class AppTheme {
   static LinearGradient getBackgroundGradient(bool isDark) => 
     isDark ? darkBackgroundGradient : lightBackgroundGradient;
 
+  static Color getBackgroundColor(bool isDark) => isDark ? darkPrimary : lightPrimary;
   static Color getCardColor(bool isDark) => isDark ? darkCard : lightCard;
   static Color getBorderColor(bool isDark) => isDark ? const Color(0xFF374151) : const Color(0xFFE2E8F0);
   static Color getTextColor(bool isDark) => isDark ? Colors.white : const Color(0xFF1E293B);
@@ -290,10 +317,46 @@ class AppTheme {
     borderRadius: BorderRadius.circular(20),
     boxShadow: [
       BoxShadow(
-        color: primaryBlue.withOpacity(0.4),
+        color: primaryBlue.withValues(alpha: 0.4),
         blurRadius: 20,
         offset: const Offset(0, 10),
       ),
     ],
   );
+
+  // Navbar Theme - Dark
+  static const NavbarThemeData darkNavbarTheme = NavbarThemeData(
+    backgroundColor: darkCard,
+    accentColor: primaryOrange,
+    secondaryColor: primaryBlue,
+    textLight: Color(0xFFf8fafc),
+    textDim: Color(0xFF94a3b8),
+    navHeight: 72,
+    radius: 22,
+    indicatorSize: 40,
+    cutoutWidth: 80,
+    cutoutHeight: 40,
+    transitionDuration: Duration(milliseconds: 550),
+    transitionCurve: Curves.easeInOutCubic,
+  );
+
+  // Navbar Theme - Light
+  static const NavbarThemeData lightNavbarTheme = NavbarThemeData(
+    backgroundColor: Color(0xFFF8FAFC),
+    accentColor: primaryOrange,
+    secondaryColor: primaryBlue,
+    textLight: Color(0xFF1E293B),
+    textDim: Color(0xFF64748B),
+    navHeight: 72,
+    radius: 22,
+    indicatorSize: 40,
+    cutoutWidth: 80,
+    cutoutHeight: 40,
+    transitionDuration: Duration(milliseconds: 550),
+    transitionCurve: Curves.easeInOutCubic,
+  );
+
+  // Get navbar theme based on brightness
+  static NavbarThemeData getNavbarTheme(bool isDark) =>
+      isDark ? darkNavbarTheme : lightNavbarTheme;
 }

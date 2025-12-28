@@ -3,12 +3,13 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
 
 class StoreApartmentRequest extends FormRequest
 {
     public function authorize()
     {
-        return $this->user()->role === 'landlord';
+        return Auth::check() && Auth::user()->is_approved;
     }
 
     public function rules()

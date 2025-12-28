@@ -15,11 +15,11 @@ class ThemeHelper {
   }
 
   static Color getCardColor(bool isDark) {
-    return isDark ? Colors.white.withOpacity(0.1) : Colors.white;
+    return isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white;
   }
 
   static Color getBorderColor(bool isDark) {
-    return isDark ? Colors.white.withOpacity(0.2) : Colors.grey.withOpacity(0.3);
+    return isDark ? Colors.white.withValues(alpha: 0.2) : Colors.grey.withValues(alpha: 0.3);
   }
 
   static LinearGradient getBackgroundGradient(bool isDark) {

@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BookingRequest;
 use App\Models\Booking;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class BookingRequestController extends Controller
 {
@@ -28,7 +29,7 @@ class BookingRequestController extends Controller
     {
         $requests = BookingRequest::with(['user', 'apartment'])
             ->whereHas('apartment', function ($query) use ($request) {
-                $query->where('landlord_id', $request->user()->id);
+                $query->where('user_id', $request->user()->id);
             })
             ->where('status', 'pending')
             ->orderBy('created_at', 'desc')
@@ -45,19 +46,19 @@ class BookingRequestController extends Controller
     {
         $bookingRequest = BookingRequest::with(['apartment', 'user'])
             ->whereHas('apartment', function ($query) use ($request) {
-                $query->where('landlord_id', $request->user()->id);
+                $query->where('user_id', $request->user()->id);
             })
             ->where('status', 'pending')
             ->findOrFail($id);
 
-        \DB::beginTransaction();
+        DB::beginTransaction();
         try {
             // Update the approved request
             $bookingRequest->update(['status' => 'approved']);
 
             // Create actual booking
             $booking = Booking::create([
-                'tenant_id' => $bookingRequest->user_id,
+                'user_id' => $bookingRequest->user_id,
                 'apartment_id' => $bookingRequest->apartment_id,
                 'check_in' => $bookingRequest->check_in,
                 'check_out' => $bookingRequest->check_out,
@@ -83,7 +84,7 @@ class BookingRequestController extends Controller
                 })
                 ->update(['status' => 'rejected']);
 
-            \DB::commit();
+            DB::commit();
 
             // Notify the approved user
             \App\Models\Notification::create([
@@ -116,7 +117,7 @@ class BookingRequestController extends Controller
                 'data' => $booking
             ]);
         } catch (\Exception $e) {
-            \DB::rollBack();
+            DB::rollBack();
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to approve booking request.'
@@ -128,7 +129,7 @@ class BookingRequestController extends Controller
     {
         $bookingRequest = BookingRequest::with(['apartment', 'user'])
             ->whereHas('apartment', function ($query) use ($request) {
-                $query->where('landlord_id', $request->user()->id);
+                $query->where('user_id', $request->user()->id);
             })
             ->where('status', 'pending')
             ->findOrFail($id);

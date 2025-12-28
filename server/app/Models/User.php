@@ -22,21 +22,13 @@ class User extends Authenticatable
         parent::boot();
 
         static::deleting(function ($user) {
-            // Delete all apartments if user is landlord
-            if ($user->role === 'landlord') {
-                $user->apartments()->each(function ($apartment) {
-                    $apartment->forceDelete();
-                });
-            }
-
-            // Delete all bookings if user is tenant
-            if ($user->role === 'tenant') {
-                $user->bookings()->each(function ($booking) {
-                    $booking->forceDelete();
-                });
-            }
-
-            // Delete related data for all users
+            // Delete all related data when user is deleted
+            $user->apartments()->each(function ($apartment) {
+                $apartment->forceDelete();
+            });
+            $user->bookings()->each(function ($booking) {
+                $booking->forceDelete();
+            });
             $user->reviews()->forceDelete();
             $user->favorites()->forceDelete();
             $user->sentMessages()->forceDelete();
@@ -53,9 +45,9 @@ class User extends Authenticatable
     protected $fillable = [
         'phone',
         'password',
-        'role',
         'first_name',
         'last_name',
+        'role',
         'profile_image',
         'birth_date',
         'id_image',
@@ -96,22 +88,22 @@ class User extends Authenticatable
     // Relationships
     public function apartments()
     {
-        return $this->hasMany(Apartment::class, 'landlord_id');
+        return $this->hasMany(Apartment::class, 'user_id');
     }
 
     public function bookings()
     {
-        return $this->hasMany(Booking::class, 'tenant_id');
+        return $this->hasMany(Booking::class, 'user_id');
     }
 
     public function reviews()
     {
-        return $this->hasMany(Review::class, 'tenant_id');
+        return $this->hasMany(Review::class, 'user_id');
     }
 
     public function favorites()
     {
-        return $this->hasMany(Favorite::class, 'tenant_id');
+        return $this->hasMany(Favorite::class, 'user_id');
     }
 
     public function sentMessages()
@@ -129,16 +121,13 @@ class User extends Authenticatable
         return $this->hasMany(Notification::class);
     }
 
-    // Scopes
-    public function scopeTenants($query)
+    // Admin check
+    public function isAdmin()
     {
-        return $query->where('role', 'tenant');
+        return $this->role === 'admin';
     }
 
-    public function scopeLandlords($query)
-    {
-        return $query->where('role', 'landlord');
-    }
+    // Scopes
 
     public function scopePendingApproval($query)
     {

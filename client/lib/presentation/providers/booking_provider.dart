@@ -159,18 +159,12 @@ class BookingNotifier extends StateNotifier<BookingState> {
   void clearMessages() {
     state = state.copyWith(error: null, successMessage: null);
   }
-}
 
-class LandlordBookingNotifier extends StateNotifier<BookingState> {
-  final ApiService _apiService;
-
-  LandlordBookingNotifier(this._apiService) : super(const BookingState());
-
-  Future<void> loadBookingRequests() async {
+  Future<void> loadApartmentBookingRequests() async {
     state = state.copyWith(isLoading: true, error: null);
     
     try {
-      final result = await _apiService.getLandlordBookingRequests();
+      final result = await _apiService.getApartmentBookingRequests();
       
       if (result['success'] == true) {
         final requestList = (result['data'] as List?)
@@ -205,7 +199,7 @@ class LandlordBookingNotifier extends StateNotifier<BookingState> {
           isLoading: false,
           successMessage: result['message'] ?? 'Booking request approved',
         );
-        await loadBookingRequests();
+        await loadApartmentBookingRequests();
         return true;
       } else {
         state = state.copyWith(
@@ -234,7 +228,7 @@ class LandlordBookingNotifier extends StateNotifier<BookingState> {
           isLoading: false,
           successMessage: result['message'] ?? 'Booking request rejected',
         );
-        await loadBookingRequests();
+        await loadApartmentBookingRequests();
         return true;
       } else {
         state = state.copyWith(
@@ -252,15 +246,36 @@ class LandlordBookingNotifier extends StateNotifier<BookingState> {
     }
   }
 
-  void clearMessages() {
-    state = state.copyWith(error: null, successMessage: null);
+  Future<bool> cancelBooking(String bookingId) async {
+    state = state.copyWith(isLoading: true, error: null);
+    
+    try {
+      final result = await _apiService.cancelBooking(bookingId);
+      
+      if (result['success'] == true) {
+        state = state.copyWith(
+          isLoading: false,
+          successMessage: result['message'] ?? 'Booking cancelled successfully',
+        );
+        await loadMyBookings();
+        return true;
+      } else {
+        state = state.copyWith(
+          error: result['message'] ?? 'Failed to cancel booking',
+          isLoading: false,
+        );
+        return false;
+      }
+    } catch (e) {
+      state = state.copyWith(
+        error: e.toString(),
+        isLoading: false,
+      );
+      return false;
+    }
   }
 }
 
 final bookingProvider = StateNotifierProvider<BookingNotifier, BookingState>((ref) {
   return BookingNotifier(ApiService());
-});
-
-final landlordBookingProvider = StateNotifierProvider<LandlordBookingNotifier, BookingState>((ref) {
-  return LandlordBookingNotifier(ApiService());
 });

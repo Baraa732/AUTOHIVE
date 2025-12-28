@@ -1,13 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/core.dart';
-import '../../../core/state/state.dart';
-import '../../../data/data.dart';
 import '../../widgets/common/cached_network_image.dart';
 import '../../widgets/common/theme_toggle_button.dart';
 import 'apartment_details_screen.dart';
-import 'notifications_screen.dart';
-import 'landlord_profile_screen.dart';
 
 class ModernHomeScreen extends ConsumerStatefulWidget {
   const ModernHomeScreen({super.key});
@@ -19,7 +14,6 @@ class ModernHomeScreen extends ConsumerStatefulWidget {
 class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
     with TickerProviderStateMixin {
   final ApiService _apiService = ApiService();
-  final AuthService _authService = AuthService();
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
@@ -28,20 +22,17 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
   bool _isLoading = true;
   String _selectedGovernorate = 'All';
   String _selectedPriceRange = 'All';
-  String _selectedBedrooms = 'All';
-  bool _showFilters = false;
+  final String _selectedBedrooms = 'All';
+
 
   late AnimationController _headerAnimationController;
   late AnimationController _cardAnimationController;
-  late AnimationController _filterAnimationController;
   late AnimationController _backgroundController;
   late Animation<double> _headerAnimation;
-  late Animation<double> _filterAnimation;
   late Animation<double> _rotationAnimation;
 
   final List<String> _governorates = ['All', 'Cairo', 'Giza', 'Alexandria', 'Luxor', 'Aswan'];
   final List<String> _priceRanges = ['All', '0-500', '500-1000', '1000-2000', '2000+'];
-  final List<String> _bedroomOptions = ['All', '1', '2', '3', '4+'];
 
   @override
   void initState() {
@@ -53,11 +44,9 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
   void _initAnimations() {  
     _headerAnimationController = AnimationController(duration: const Duration(milliseconds: 1200), vsync: this);
     _cardAnimationController = AnimationController(duration: const Duration(milliseconds: 800), vsync: this);
-    _filterAnimationController = AnimationController(duration: const Duration(milliseconds: 300), vsync: this);
     _backgroundController = AnimationController(duration: const Duration(seconds: 20), vsync: this)..repeat();
 
     _headerAnimation = Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(parent: _headerAnimationController, curve: Curves.easeOutCubic));
-    _filterAnimation = Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(parent: _filterAnimationController, curve: Curves.easeInOut));
     _rotationAnimation = Tween<double>(begin: 0, end: 1).animate(_backgroundController);
 
     _headerAnimationController.forward();
@@ -72,6 +61,7 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
   Future<void> _loadApartments() async {
     try {
       final result = await _apiService.getApartments();
+      if (!mounted) return;
       if (result['success'] == true) {
         final data = result['data'];
         List<Apartment> apartments = [];
@@ -82,20 +72,22 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
           apartments = data.map((json) => Apartment.fromJson(json)).toList();
         }
         
-        setState(() {
-          _apartments = apartments;
-          _filteredApartments = apartments;
-          _isLoading = false;
-        });
-      } else {
-        setState(() => _isLoading = false);
         if (mounted) {
+          setState(() {
+            _apartments = apartments;
+            _filteredApartments = apartments;
+            _isLoading = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() => _isLoading = false);
           ErrorHandler.showError(context, null, customMessage: result['message'] ?? 'Failed to load apartments');
         }
       }
     } catch (e) {
-      setState(() => _isLoading = false);
       if (mounted) {
+        setState(() => _isLoading = false);
         ErrorHandler.showError(context, e);
       }
     }
@@ -152,7 +144,7 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
             SafeArea(
               child: Column(
                 children: [
-                  _buildUnifiedHeader(),
+                  _buildHeader(),
                   Expanded(child: _buildApartmentsList()),
                 ],
               ),
@@ -163,10 +155,11 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
     );
   }
 
-  Widget _buildUnifiedHeader() {
+  Widget _buildHeader() {
     return AnimatedBuilder(
       animation: _headerAnimation,
       builder: (context, child) {
+        final isDarkMode = ref.watch(themeProvider);
         return Transform.translate(
           offset: Offset(0, -30 * (1 - _headerAnimation.value)),
           child: Opacity(
@@ -175,10 +168,10 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
               margin: const EdgeInsets.all(16),
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppTheme.getCardColor(ref.watch(themeProvider)),
+                color: AppTheme.getCardColor(isDarkMode),
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: AppTheme.getBorderColor(ref.watch(themeProvider))),
-                boxShadow: [BoxShadow(color: ref.watch(themeProvider) ? Colors.black.withOpacity(0.1) : Colors.grey.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 10))],
+                border: Border.all(color: AppTheme.getBorderColor(isDarkMode)),
+                boxShadow: [BoxShadow(color: isDarkMode ? Colors.black.withValues(alpha: 0.2) : Colors.grey.withValues(alpha: 0.12), blurRadius: 20, offset: const Offset(0, 10))],
               ),
               child: Column(
                 children: [
@@ -283,92 +276,101 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
     if (_filteredApartments.isEmpty) {
       return Center(child: Text('No apartments found', style: TextStyle(color: AppTheme.getTextColor(ref.watch(themeProvider)))));
     }
-    return ListView.builder(
-      controller: _scrollController,
-      padding: const EdgeInsets.all(20),
-      itemCount: _filteredApartments.length,
-      itemBuilder: (context, index) => _buildModernApartmentCard(_filteredApartments[index], index),
+    return RefreshIndicator(
+      onRefresh: _loadData,
+      color: const Color(0xFFff6f2d),
+      child: ListView.builder(
+        controller: _scrollController,
+        padding: const EdgeInsets.all(20),
+        itemCount: _filteredApartments.length,
+        itemBuilder: (context, index) => _buildModernApartmentCard(_filteredApartments[index], index),
+      ),
     );
   }
 
   Widget _buildModernApartmentCard(Apartment apartment, int index) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: AppTheme.getCardColor(ref.watch(themeProvider)),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.getBorderColor(ref.watch(themeProvider))),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 4))],
+    final isDarkMode = ref.watch(themeProvider);
+    return GestureDetector(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => ApartmentDetailsScreen(apartmentId: apartment.id)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildApartmentImage(apartment),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        apartment.title,
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.getTextColor(ref.watch(themeProvider)),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          color: AppTheme.getCardColor(isDarkMode),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppTheme.getBorderColor(isDarkMode)),
+          boxShadow: [BoxShadow(color: isDarkMode ? Colors.black.withValues(alpha: 0.15) : Colors.grey.withValues(alpha: 0.1), blurRadius: 8, offset: const Offset(0, 4))],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildApartmentImage(apartment),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          apartment.title,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.getTextColor(ref.watch(themeProvider)),
+                          ),
                         ),
                       ),
-                    ),
-                    _buildStatusBadge(apartment.isAvailable),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Icon(Icons.location_on, color: Color(0xFFff6f2d), size: 16),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${apartment.city}, ${apartment.governorate}',
-                      style: TextStyle(color: AppTheme.getSubtextColor(ref.watch(themeProvider))),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(Icons.bed, size: 16, color: AppTheme.getSubtextColor(ref.watch(themeProvider))),
-                    Text(' ${apartment.bedrooms}', style: TextStyle(color: AppTheme.getSubtextColor(ref.watch(themeProvider)))),
-                    const SizedBox(width: 16),
-                    Icon(Icons.bathtub, size: 16, color: AppTheme.getSubtextColor(ref.watch(themeProvider))),
-                    Text(' ${apartment.bathrooms}', style: TextStyle(color: AppTheme.getSubtextColor(ref.watch(themeProvider)))),
-                    const SizedBox(width: 16),
-                    Icon(Icons.square_foot, size: 16, color: AppTheme.getSubtextColor(ref.watch(themeProvider))),
-                    Text(' ${apartment.area}m²', style: TextStyle(color: AppTheme.getSubtextColor(ref.watch(themeProvider)))),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Text(
-                      '\$${apartment.price}/night',
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFFff6f2d),
+                      _buildStatusBadge(apartment.isAvailable),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Icon(Icons.location_on, color: Color(0xFFff6f2d), size: 16),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${apartment.city}, ${apartment.governorate}',
+                        style: TextStyle(color: AppTheme.getSubtextColor(ref.watch(themeProvider))),
                       ),
-                    ),
-                    const Spacer(),
-                    _buildLandlordProfile(apartment),
-                    const SizedBox(width: 8),
-                    _buildActionButton(apartment),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(Icons.bed, size: 16, color: AppTheme.getSubtextColor(ref.watch(themeProvider))),
+                      Text(' ${apartment.bedrooms}', style: TextStyle(color: AppTheme.getSubtextColor(ref.watch(themeProvider)))),
+                      const SizedBox(width: 16),
+                      Icon(Icons.bathtub, size: 16, color: AppTheme.getSubtextColor(ref.watch(themeProvider))),
+                      Text(' ${apartment.bathrooms}', style: TextStyle(color: AppTheme.getSubtextColor(ref.watch(themeProvider)))),
+                      const SizedBox(width: 16),
+                      Icon(Icons.square_foot, size: 16, color: AppTheme.getSubtextColor(ref.watch(themeProvider))),
+                      Text(' ${apartment.area}m²', style: TextStyle(color: AppTheme.getSubtextColor(ref.watch(themeProvider)))),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Text(
+                        '\$${apartment.price}/night',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFff6f2d),
+                        ),
+                      ),
+                      const Spacer(),
+                      _buildOwnerProfile(apartment),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -392,8 +394,8 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
                       colors: [
-                        const Color(0xFFff6f2d).withOpacity(isDarkMode ? 0.3 : 0.1),
-                        const Color(0xFF4a90e2).withOpacity(isDarkMode ? 0.2 : 0.05),
+                        const Color(0xFFff6f2d).withValues(alpha: isDarkMode ? 0.3 : 0.1),
+                        const Color(0xFF4a90e2).withValues(alpha: isDarkMode ? 0.2 : 0.05),
                         Colors.transparent,
                       ],
                     ),
@@ -413,8 +415,8 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
                     borderRadius: BorderRadius.circular(25),
                     gradient: LinearGradient(
                       colors: [
-                        const Color(0xFF4a90e2).withOpacity(isDarkMode ? 0.4 : 0.1),
-                        const Color(0xFFff6f2d).withOpacity(isDarkMode ? 0.3 : 0.08),
+                        const Color(0xFF4a90e2).withValues(alpha: isDarkMode ? 0.4 : 0.1),
+                        const Color(0xFFff6f2d).withValues(alpha: isDarkMode ? 0.3 : 0.08),
                       ],
                     ),
                   ),
@@ -437,28 +439,17 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
       child: ClipRRect(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
         child: apartment.images.isNotEmpty
-            ? FutureBuilder<String>(
-                future: AppConfig.getImageUrl(apartment.images.first),
-                builder: (context, snapshot) {
-                  if (snapshot.hasData) {
-                    return AppCachedNetworkImage(
-                      imageUrl: snapshot.data!,
-                      fit: BoxFit.cover,
-                      placeholder: Container(
-                        color: Colors.grey[300],
-                        child: const Center(child: CircularProgressIndicator(color: Color(0xFFff6f2d))),
-                      ),
-                      errorWidget: Container(
-                        color: Colors.grey,
-                        child: const Icon(Icons.image, color: Colors.white, size: 50),
-                      ),
-                    );
-                  }
-                  return Container(
-                    color: Colors.grey[300],
-                    child: const Center(child: CircularProgressIndicator(color: Color(0xFFff6f2d))),
-                  );
-                },
+            ? AppCachedNetworkImage(
+                imageUrl: AppConfig.getImageUrlSync(apartment.images.first),
+                fit: BoxFit.cover,
+                placeholder: Container(
+                  color: Colors.grey[300],
+                  child: const Center(child: CircularProgressIndicator(color: Color(0xFFff6f2d))),
+                ),
+                errorWidget: Container(
+                  color: Colors.grey,
+                  child: const Icon(Icons.image, color: Colors.white, size: 50),
+                ),
               )
             : Container(
                 color: Colors.grey,
@@ -482,11 +473,11 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
     );
   }
 
-  Widget _buildLandlordProfile(Apartment apartment) {
-    if (apartment.landlord == null) return const SizedBox();
+  Widget _buildOwnerProfile(Apartment apartment) {
+    if (apartment.owner == null) return const SizedBox();
     
     return GestureDetector(
-      onTap: () => _showLandlordProfile(apartment.landlord!),
+      onTap: () => _showOwnerInfo(apartment.owner!),
       child: Container(
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
@@ -495,71 +486,42 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
         ),
         child: CircleAvatar(
           radius: 16,
-          backgroundImage: apartment.landlord!['profile_image_url'] != null
-              ? NetworkImage(apartment.landlord!['profile_image_url'])
+          backgroundImage: apartment.owner!['profile_image_url'] != null
+              ? NetworkImage(apartment.owner!['profile_image_url'])
               : null,
-          child: apartment.landlord!['profile_image_url'] == null
+          backgroundColor: const Color(0xFFff6f2d),
+          child: apartment.owner!['profile_image_url'] == null
               ? Text(
-                  apartment.landlord!['first_name']?[0]?.toUpperCase() ?? 'L',
+                  apartment.owner!['first_name']?[0]?.toUpperCase() ?? 'O',
                   style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                 )
               : null,
-          backgroundColor: const Color(0xFFff6f2d),
         ),
       ),
     );
   }
 
-  void _showLandlordProfile(Map<String, dynamic> landlord) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => LandlordProfileScreen(landlord: landlord),
+  void _showOwnerInfo(Map<String, dynamic> owner) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('${owner['first_name']} ${owner['last_name']}'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (owner['phone'] != null) Text('Phone: ${owner['phone']}'),
+            if (owner['city'] != null) Text('City: ${owner['city']}'),
+            if (owner['governorate'] != null) Text('Governorate: ${owner['governorate']}'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
       ),
-    );
-  }
-
-  Widget _buildActionButton(Apartment apartment) {
-    return FutureBuilder<Map<String, dynamic>?>(
-      future: _authService.getUser(),
-      builder: (context, snapshot) {
-        final user = snapshot.data;
-        if (user == null) {
-          return ElevatedButton(
-            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ApartmentDetailsScreen(apartmentId: apartment.id))),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFff6f2d),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            child: const Text('View Details', style: TextStyle(color: Colors.white)),
-          );
-        }
-        
-        if (user['role'] == 'landlord') {
-          return ElevatedButton(
-            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ApartmentDetailsScreen(apartmentId: apartment.id))),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF4a90e2),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            child: const Text('Show Details', style: TextStyle(color: Colors.white)),
-          );
-        } else {
-          return ElevatedButton(
-            onPressed: apartment.isAvailable 
-                ? () => Navigator.push(context, MaterialPageRoute(builder: (_) => ApartmentDetailsScreen(apartmentId: apartment.id)))
-                : null,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: apartment.isAvailable ? const Color(0xFF10B981) : Colors.grey,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            child: Text(
-              apartment.isAvailable ? 'Book Apartment' : 'Not Available',
-              style: const TextStyle(color: Colors.white),
-            ),
-          );
-        }
-      },
     );
   }
 
@@ -567,7 +529,6 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
   void dispose() {
     _headerAnimationController.dispose();
     _cardAnimationController.dispose();
-    _filterAnimationController.dispose();
     _backgroundController.dispose();
     _searchController.dispose();
     _scrollController.dispose();

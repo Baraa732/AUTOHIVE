@@ -10,8 +10,7 @@ class UserController extends Controller
 {
     public function index(Request $request)
     {
-        $query = User::whereIn('role', ['tenant', 'landlord'])
-            ->where('status', 'approved')
+        $query = User::where('status', 'approved')
             ->orderBy('created_at', 'desc');
 
         // Search functionality
@@ -24,16 +23,11 @@ class UserController extends Controller
             });
         }
 
-        // Filter by role
-        if ($request->role && in_array($request->role, ['tenant', 'landlord'])) {
-            $query->where('role', $request->role);
-        }
-
         $users = $query->paginate(15);
         $stats = [
-            'total_users' => User::whereIn('role', ['tenant', 'landlord'])->where('status', 'approved')->count(),
-            'total_tenants' => User::where('role', 'tenant')->where('status', 'approved')->count(),
-            'total_landlords' => User::where('role', 'landlord')->where('status', 'approved')->count(),
+            'total_users' => User::where('status', 'approved')->count(),
+            'total_with_apartments' => User::whereHas('apartments')->count(),
+            'total_with_bookings' => User::whereHas('bookings')->count(),
             'pending_approvals' => User::where('status', 'pending')->count()
         ];
 
@@ -54,7 +48,7 @@ class UserController extends Controller
             
             // Log activity before deletion (optional, don't fail if it errors)
             try {
-                \App\Models\Activity::log('user_deleted', "Deleted user {$userName} ({$user->role})", ['user_id' => $user->id]);
+                \App\Models\Activity::log('user_deleted', "Deleted user {$userName}", ['user_id' => $user->id]);
             } catch (\Exception $e) {
                 // Continue even if logging fails
             }

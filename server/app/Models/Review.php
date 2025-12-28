@@ -10,7 +10,7 @@ class Review extends Model
     use HasFactory;
 
     protected $fillable = [
-        'tenant_id',
+        'user_id',
         'apartment_id',
         'booking_id',
         'rating',
@@ -22,9 +22,9 @@ class Review extends Model
     ];
 
     // Relationships
-    public function tenant()
+    public function user()
     {
-        return $this->belongsTo(User::class, 'tenant_id');
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function apartment()
@@ -35,10 +35,5 @@ class Review extends Model
     public function booking()
     {
         return $this->belongsTo(Booking::class);
-    }
-
-    public function user()
-    {
-        return $this->belongsTo(User::class, 'tenant_id');
     }
 }

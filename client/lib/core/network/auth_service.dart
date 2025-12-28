@@ -12,7 +12,6 @@ class AuthService {
     String lastName,
     String phone,
     String password,
-    String role,
     String city,
     String governorate, {
     DateTime? birthDate,
@@ -31,7 +30,6 @@ class AuthService {
       request.fields['phone'] = phone;
       request.fields['password'] = password;
       request.fields['password_confirmation'] = password;
-      request.fields['role'] = role;
       request.fields['city'] = city;
       request.fields['governorate'] = governorate;
       
@@ -128,10 +126,6 @@ class AuthService {
         if (data['success'] == true && data['data'] != null) {
           final token = data['data']['token'];
           final user = data['data']['user'];
-
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('token', token);
-          await prefs.setString('user', json.encode(user));
 
           return {
             'success': true,
@@ -255,11 +249,6 @@ class AuthService {
       final data = json.decode(responseBody);
       
       if (streamedResponse.statusCode == 200) {
-        if (data['data'] != null && data['data']['user'] != null) {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('user', json.encode(data['data']['user']));
-        }
-        
         return {
           'success': true,
           'message': data['message'] ?? 'Profile updated successfully',

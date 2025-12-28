@@ -44,11 +44,29 @@ class ApiService {
     }
   }
 
+  // Home endpoint
+  Future<Map<String, dynamic>> getHome() async {
+    try {
+      final headers = await _getHeaders();
+      final apiUrl = await AppConfig.baseUrl;
+      final response = await http.get(Uri.parse('$apiUrl/dashboard'), headers: headers).timeout(const Duration(seconds: 30));
+      return json.decode(response.body);
+    } catch (e, stackTrace) {
+      ErrorHandler.logError('getHome', e, stackTrace);
+      return ErrorHandler.handleApiError(e, operation: 'Loading home data');
+    }
+  }
+
   Future<Map<String, dynamic>> getApartmentDetails(String id) async {
     try {
       final headers = await _getHeaders();
       final apiUrl = await AppConfig.baseUrl;
-      final response = await http.get(Uri.parse('$apiUrl/apartments/$id/public'), headers: headers).timeout(const Duration(seconds: 30));
+      
+      // Try authenticated endpoint first to get owner info
+      final token = await _authService.getToken();
+      String endpoint = token != null ? '/apartments/$id' : '/apartments/$id/public';
+      
+      final response = await http.get(Uri.parse('$apiUrl$endpoint'), headers: headers).timeout(const Duration(seconds: 30));
       final data = json.decode(response.body);
 
       return data;
@@ -150,14 +168,20 @@ class ApiService {
     try {
       final apiUrl = await AppConfig.baseUrl;
       var request = http.MultipartRequest('POST', Uri.parse('$apiUrl/apartments'));
-      final headers = await _getHeaders();
-      request.headers.addAll(headers);
+      
+      // Get token for authorization
+      final token = await _authService.getToken();
+      if (token != null) {
+        request.headers['Authorization'] = 'Bearer $token';
+      }
+      request.headers['Accept'] = 'application/json';
 
+      // Add form fields
       apartmentData.forEach((key, value) {
         if (value != null) {
           if (value is List) {
             for (int i = 0; i < value.length; i++) {
-              request.fields['${key}[$i]'] = value[i].toString();
+              request.fields['$key[$i]'] = value[i].toString();
             }
           } else {
             request.fields[key] = value.toString();
@@ -165,6 +189,14 @@ class ApiService {
         }
       });
 
+      // Add image files - backend expects at least one image
+      if (images.isEmpty) {
+        return {
+          'success': false,
+          'message': 'At least one image is required',
+        };
+      }
+      
       for (int i = 0; i < images.length; i++) {
         final file = await http.MultipartFile.fromPath(
           'images[$i]',
@@ -176,7 +208,16 @@ class ApiService {
       
       final streamedResponse = await request.send().timeout(const Duration(seconds: 60));
       final responseBody = await streamedResponse.stream.bytesToString();
-      final data = json.decode(responseBody);
+      
+      Map<String, dynamic> data;
+      try {
+        data = json.decode(responseBody);
+      } catch (e) {
+        return {
+          'success': false,
+          'message': 'Server response error. Please try again.',
+        };
+      }
       
       return {
         'success': streamedResponse.statusCode == 201,
@@ -331,15 +372,31 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> getLandlordBookingRequests() async {
+  Future<Map<String, dynamic>> getApartmentBookingRequests() async {
     try {
       final headers = await _getHeaders();
       final apiUrl = await AppConfig.baseUrl;
-      final response = await http.get(Uri.parse('$apiUrl/landlord/booking-requests'), headers: headers).timeout(const Duration(seconds: 30));
+      final response = await http.get(Uri.parse('$apiUrl/my-apartment-booking-requests'), headers: headers).timeout(const Duration(seconds: 30));
       return json.decode(response.body);
     } catch (e, stackTrace) {
-      ErrorHandler.logError('getLandlordBookingRequests', e, stackTrace);
-      return ErrorHandler.handleApiError(e, operation: 'Loading landlord booking requests');
+      ErrorHandler.logError('getApartmentBookingRequests', e, stackTrace);
+      return ErrorHandler.handleApiError(e, operation: 'Loading apartment booking requests');
+    }
+  }
+
+  Future<Map<String, dynamic>> cancelBooking(String bookingId) async {
+    try {
+      final headers = await _getHeaders();
+      final apiUrl = await AppConfig.baseUrl;
+      final response = await http.delete(
+        Uri.parse('$apiUrl/bookings/$bookingId'),
+        headers: headers,
+      ).timeout(const Duration(seconds: 30));
+      
+      return json.decode(response.body);
+    } catch (e, stackTrace) {
+      ErrorHandler.logError('cancelBooking', e, stackTrace);
+      return ErrorHandler.handleApiError(e, operation: 'Cancelling booking');
     }
   }
 
@@ -402,6 +459,154 @@ class ApiService {
     } catch (e, stackTrace) {
       ErrorHandler.logError('checkAvailability', e, stackTrace);
       return ErrorHandler.handleApiError(e, operation: 'Checking availability');
+    }
+  }
+
+  Future<Map<String, dynamic>> getApartmentFeatures() async {
+    try {
+      final headers = await _getHeaders();
+      final apiUrl = await AppConfig.baseUrl;
+      final response = await http.get(
+        Uri.parse('$apiUrl/apartments/features/available'),
+        headers: headers,
+      ).timeout(const Duration(seconds: 30));
+      
+      return json.decode(response.body);
+    } catch (e, stackTrace) {
+      ErrorHandler.logError('getApartmentFeatures', e, stackTrace);
+      return ErrorHandler.handleApiError(e, operation: 'Loading apartment features');
+    }
+  }
+
+  Future<Map<String, dynamic>> submitRentalApplication({
+    required String apartmentId,
+    required String checkIn,
+    required String checkOut,
+    String? message,
+  }) async {
+    try {
+      final headers = await _getHeaders();
+      final apiUrl = await AppConfig.baseUrl;
+      final body = {
+        'apartment_id': apartmentId,
+        'check_in': checkIn,
+        'check_out': checkOut,
+        if (message != null && message.isNotEmpty) 'message': message,
+      };
+      
+      final response = await http.post(
+        Uri.parse('$apiUrl/rental-applications'),
+        headers: headers,
+        body: json.encode(body),
+      ).timeout(const Duration(seconds: 30));
+      
+      final data = json.decode(response.body);
+      return {
+        'success': response.statusCode == 201,
+        'message': data['message'] ?? 'Application submitted successfully',
+        'data': data['data']
+      };
+    } catch (e, stackTrace) {
+      ErrorHandler.logError('submitRentalApplication', e, stackTrace);
+      return ErrorHandler.handleApiError(e, operation: 'Submitting rental application');
+    }
+  }
+
+  Future<Map<String, dynamic>> getMyRentalApplications() async {
+    try {
+      final headers = await _getHeaders();
+      final apiUrl = await AppConfig.baseUrl;
+      final response = await http.get(
+        Uri.parse('$apiUrl/rental-applications/my-applications'),
+        headers: headers,
+      ).timeout(const Duration(seconds: 30));
+      
+      return json.decode(response.body);
+    } catch (e, stackTrace) {
+      ErrorHandler.logError('getMyRentalApplications', e, stackTrace);
+      return ErrorHandler.handleApiError(e, operation: 'Loading my rental applications');
+    }
+  }
+
+  Future<Map<String, dynamic>> getIncomingRentalApplications() async {
+    try {
+      final headers = await _getHeaders();
+      final apiUrl = await AppConfig.baseUrl;
+      final response = await http.get(
+        Uri.parse('$apiUrl/rental-applications/incoming'),
+        headers: headers,
+      ).timeout(const Duration(seconds: 30));
+      
+      return json.decode(response.body);
+    } catch (e, stackTrace) {
+      ErrorHandler.logError('getIncomingRentalApplications', e, stackTrace);
+      return ErrorHandler.handleApiError(e, operation: 'Loading incoming rental applications');
+    }
+  }
+
+  Future<Map<String, dynamic>> getRentalApplicationDetail(String applicationId) async {
+    try {
+      final headers = await _getHeaders();
+      final apiUrl = await AppConfig.baseUrl;
+      final response = await http.get(
+        Uri.parse('$apiUrl/rental-applications/$applicationId'),
+        headers: headers,
+      ).timeout(const Duration(seconds: 30));
+      
+      return json.decode(response.body);
+    } catch (e, stackTrace) {
+      ErrorHandler.logError('getRentalApplicationDetail', e, stackTrace);
+      return ErrorHandler.handleApiError(e, operation: 'Loading rental application details');
+    }
+  }
+
+  Future<Map<String, dynamic>> approveRentalApplication(String applicationId) async {
+    try {
+      final headers = await _getHeaders();
+      final apiUrl = await AppConfig.baseUrl;
+      final response = await http.post(
+        Uri.parse('$apiUrl/rental-applications/$applicationId/approve'),
+        headers: headers,
+      ).timeout(const Duration(seconds: 30));
+      
+      final data = json.decode(response.body);
+      return {
+        'success': response.statusCode == 200,
+        'message': data['message'] ?? 'Application approved successfully',
+        'data': data['data']
+      };
+    } catch (e, stackTrace) {
+      ErrorHandler.logError('approveRentalApplication', e, stackTrace);
+      return ErrorHandler.handleApiError(e, operation: 'Approving rental application');
+    }
+  }
+
+  Future<Map<String, dynamic>> rejectRentalApplication(
+    String applicationId, {
+    String? rejectedReason,
+  }) async {
+    try {
+      final headers = await _getHeaders();
+      final apiUrl = await AppConfig.baseUrl;
+      final body = {
+        if (rejectedReason != null && rejectedReason.isNotEmpty) 'rejected_reason': rejectedReason,
+      };
+      
+      final response = await http.post(
+        Uri.parse('$apiUrl/rental-applications/$applicationId/reject'),
+        headers: headers,
+        body: json.encode(body),
+      ).timeout(const Duration(seconds: 30));
+      
+      final data = json.decode(response.body);
+      return {
+        'success': response.statusCode == 200,
+        'message': data['message'] ?? 'Application rejected successfully',
+        'data': data['data']
+      };
+    } catch (e, stackTrace) {
+      ErrorHandler.logError('rejectRentalApplication', e, stackTrace);
+      return ErrorHandler.handleApiError(e, operation: 'Rejecting rental application');
     }
   }
 }

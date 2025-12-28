@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/core.dart';
 import '../../widgets/common/animated_input_field.dart';
+import '../../providers/auth_provider.dart';
 import '../shared/main_navigation_screen.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin {
+class _LoginScreenState extends ConsumerState<LoginScreen> with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   
-  final _authService = AuthService();
-  bool _isLoading = false;
   bool _obscurePassword = true;
+  String? _lastShownError;
 
   late AnimationController _animationController;
   late AnimationController _backgroundController;
@@ -68,32 +69,11 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _isLoading = true);
-
-    try {
-      final result = await _authService.login(
-        _phoneController.text.trim(),
-        _passwordController.text,
-      );
-
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-
-      if (result['success'] == true) {
-        // Navigate to main screen
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
-          (route) => false,
-        );
-      } else {
-        _showError(result['message'] ?? 'Login failed');
-      }
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-      _showError('Connection failed. Please try again.');
-    }
+    _lastShownError = null;
+    await ref.read(authProvider.notifier).login(
+      _phoneController.text.trim(),
+      _passwordController.text,
+    );
   }
 
   void _showError(String message) {
@@ -141,100 +121,130 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      resizeToAvoidBottomInset: true,
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: AppTheme.getBackgroundGradient(isDark),
-        ),
-        child: Stack(
-          children: [
-            _buildAnimatedBackground(isDark),
-            SafeArea(
-              child: AnimatedBuilder(
-                animation: _fadeAnimation,
-                builder: (context, child) {
-                  return FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: SlideTransition(
-                      position: _slideAnimation,
-                      child: Column(
-                        children: [
-                          _buildHeader(isDark),
-                          Expanded(
-                            child: SingleChildScrollView(
-                              padding: const EdgeInsets.all(24),
-                              child: Form(
-                                key: _formKey,
-                                child: Column(
-                                  children: [
-                                    const SizedBox(height: 40),
-                                    _buildLogo(),
-                                    const SizedBox(height: 40),
-                                    _buildTitle(isDark),
-                                    const SizedBox(height: 40),
-                                    
-                                    // Phone Number Field
-                                    AnimatedInputField(
-                                      controller: _phoneController,
-                                      label: 'Phone Number',
-                                      icon: Icons.phone_outlined,
-                                      keyboardType: TextInputType.phone,
-                                      isDark: isDark,
-                                      hintText: '09xxxxxxxx',
-                                      primaryColor: AppTheme.primaryOrange,
-                                      secondaryColor: AppTheme.primaryBlue,
-                                      validator: (value) {
-                                        if (value?.isEmpty ?? true) {
-                                          return 'Phone number is required';
-                                        }
-                                        if (!RegExp(r'^09[0-9]{8}$').hasMatch(value!)) {
-                                          return 'Please enter a valid Syrian phone number';
-                                        }
-                                        return null;
-                                      },
+    return Consumer(
+      builder: (context, ref, child) {
+        final authState = ref.watch(authProvider);
+        
+        // Auto-navigate on successful login
+        if (authState.isAuthenticated && authState.user != null) {
+          _lastShownError = null;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
+                (route) => false,
+              );
+            }
+          });
+        }
+        
+        // Show error if login failed (only once per error)
+        if (authState.error != null && !authState.isLoading && _lastShownError != authState.error) {
+          _lastShownError = authState.error;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              _showError(authState.error!);
+            }
+          });
+        }
+        
+        return Scaffold(
+          resizeToAvoidBottomInset: true,
+          body: Container(
+            decoration: BoxDecoration(
+              gradient: AppTheme.getBackgroundGradient(isDark),
+            ),
+            child: Stack(
+              children: [
+                _buildAnimatedBackground(isDark),
+                SafeArea(
+                  child: AnimatedBuilder(
+                    animation: _fadeAnimation,
+                    builder: (context, child) {
+                      return FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: SlideTransition(
+                          position: _slideAnimation,
+                          child: Column(
+                            children: [
+                              _buildHeader(isDark),
+                              Expanded(
+                                child: SingleChildScrollView(
+                                  padding: const EdgeInsets.all(24),
+                                  child: Form(
+                                    key: _formKey,
+                                    child: Column(
+                                      children: [
+                                        const SizedBox(height: 40),
+                                        _buildLogo(),
+                                        const SizedBox(height: 40),
+                                        _buildTitle(isDark),
+                                        const SizedBox(height: 40),
+                                        
+                                        // Phone Number Field
+                                        AnimatedInputField(
+                                          controller: _phoneController,
+                                          label: 'Phone Number',
+                                          icon: Icons.phone_outlined,
+                                          keyboardType: TextInputType.phone,
+                                          isDark: isDark,
+                                          hintText: '09xxxxxxxx',
+                                          primaryColor: AppTheme.primaryOrange,
+                                          secondaryColor: AppTheme.primaryBlue,
+                                          validator: (value) {
+                                            if (value?.isEmpty ?? true) {
+                                              return 'Phone number is required';
+                                            }
+                                            if (!RegExp(r'^09[0-9]{8}$').hasMatch(value!)) {
+                                              return 'Please enter a valid Syrian phone number';
+                                            }
+                                            return null;
+                                          },
+                                        ),
+
+                                        const SizedBox(height: 20),
+
+                                        // Password Field
+                                        AnimatedInputField(
+                                          controller: _passwordController,
+                                          label: 'Password',
+                                          icon: Icons.lock_outlined,
+                                          isDark: isDark,
+                                          hintText: 'Enter your password',
+                                          obscureText: _obscurePassword,
+                                          primaryColor: AppTheme.primaryBlue,
+                                          secondaryColor: AppTheme.primaryOrange,
+                                          validator: (value) {
+                                            if (value?.isEmpty ?? true) {
+                                              return 'Password is required';
+                                            }
+                                            return null;
+                                          },
+                                          onTap: () {
+                                            setState(() => _obscurePassword = !_obscurePassword);
+                                          },
+                                        ),
+
+                                        const SizedBox(height: 40),
+                                        _buildLoginButton(authState.isLoading),
+                                      ],
                                     ),
-
-                                    const SizedBox(height: 20),
-
-                                    // Password Field
-                                    AnimatedInputField(
-                                      controller: _passwordController,
-                                      label: 'Password',
-                                      icon: Icons.lock_outlined,
-                                      isDark: isDark,
-                                      hintText: 'Enter your password',
-                                      obscureText: _obscurePassword,
-                                      primaryColor: AppTheme.primaryBlue,
-                                      secondaryColor: AppTheme.primaryOrange,
-                                      validator: (value) {
-                                        if (value?.isEmpty ?? true) {
-                                          return 'Password is required';
-                                        }
-                                        return null;
-                                      },
-                                      onTap: () {
-                                        setState(() => _obscurePassword = !_obscurePassword);
-                                      },
-                                    ),
-
-                                    const SizedBox(height: 40),
-                                    _buildLoginButton(),
-                                  ],
+                                  ),
                                 ),
                               ),
-                            ),
+                            ],
                           ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -256,8 +266,8 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
                       colors: [
-                        AppTheme.primaryOrange.withOpacity(isDark ? 0.3 : 0.1),
-                        AppTheme.primaryBlue.withOpacity(isDark ? 0.2 : 0.05),
+                        AppTheme.primaryOrange.withValues(alpha: isDark ? 0.3 : 0.1),
+                        AppTheme.primaryBlue.withValues(alpha: isDark ? 0.2 : 0.05),
                         Colors.transparent,
                       ],
                     ),
@@ -277,8 +287,8 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                     borderRadius: BorderRadius.circular(25),
                     gradient: LinearGradient(
                       colors: [
-                        AppTheme.primaryBlue.withOpacity(isDark ? 0.4 : 0.1),
-                        AppTheme.primaryOrange.withOpacity(isDark ? 0.3 : 0.08),
+                        AppTheme.primaryBlue.withValues(alpha: isDark ? 0.4 : 0.1),
+                        AppTheme.primaryOrange.withValues(alpha: isDark ? 0.3 : 0.08),
                       ],
                     ),
                   ),
@@ -359,7 +369,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFff6f2d).withOpacity(0.3),
+              color: const Color(0xFFff6f2d).withValues(alpha: 0.3),
               blurRadius: 20,
               spreadRadius: 5,
             ),
@@ -402,7 +412,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     );
   }
 
-  Widget _buildLoginButton() {
+  Widget _buildLoginButton(bool isLoading) {
     return ScaleTransition(
       scale: _scaleAnimation,
       child: Container(
@@ -415,20 +425,20 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFff6f2d).withOpacity(0.4),
+              color: const Color(0xFFff6f2d).withValues(alpha: 0.4),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
           ],
         ),
         child: ElevatedButton(
-          onPressed: _isLoading ? null : _login,
+          onPressed: isLoading ? null : _login,
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.transparent,
             shadowColor: Colors.transparent,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           ),
-          child: _isLoading
+          child: isLoading
               ? const SizedBox(
                   width: 24,
                   height: 24,

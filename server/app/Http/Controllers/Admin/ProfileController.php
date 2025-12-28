@@ -6,18 +6,21 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 
 class ProfileController extends Controller
 {
     public function index()
     {
-        $admin = auth()->user();
+        $admin = Auth::user();
         return view('admin.profile', compact('admin'));
     }
 
     public function update(Request $request)
     {
-        $admin = auth()->user();
+        /** @var User $admin */
+        $admin = Auth::user();
         
         $updateData = [];
         

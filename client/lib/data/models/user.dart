@@ -1,30 +1,45 @@
 class User {
   final String id;
-  final String email;
-  final String name;
-  final String role; // 'tenant', 'landlord', 'admin'
+  final String? email;
+  final String? firstName;
+  final String? lastName;
   final String? phone;
-  final String? avatar;
+  final String? profileImageUrl;
+  final String? city;
+  final String? governorate;
+  final String? birthDate;
+  final String? status; // 'pending', 'approved', 'rejected'
   final bool isVerified;
 
   const User({
     required this.id,
-    required this.email,
-    required this.name,
-    required this.role,
+    this.email,
+    this.firstName,
+    this.lastName,
     this.phone,
-    this.avatar,
+    this.profileImageUrl,
+    this.city,
+    this.governorate,
+    this.birthDate,
+    this.status,
     this.isVerified = false,
   });
+
+  // Get full name
+  String get name => '${firstName ?? ''} ${lastName ?? ''}'.trim();
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
       id: json['id'].toString(),
-      email: json['email'] ?? '',
-      name: json['name'] ?? '',
-      role: json['role'] ?? 'tenant',
+      email: json['email'],
+      firstName: json['first_name'],
+      lastName: json['last_name'],
       phone: json['phone'],
-      avatar: json['avatar'],
+      profileImageUrl: json['profile_image_url'],
+      city: json['city'],
+      governorate: json['governorate'],
+      birthDate: json['birth_date'],
+      status: json['status'],
       isVerified: json['is_verified'] ?? false,
     );
   }
@@ -33,10 +48,14 @@ class User {
     return {
       'id': id,
       'email': email,
-      'name': name,
-      'role': role,
+      'first_name': firstName,
+      'last_name': lastName,
       'phone': phone,
-      'avatar': avatar,
+      'profile_image_url': profileImageUrl,
+      'city': city,
+      'governorate': governorate,
+      'birth_date': birthDate,
+      'status': status,
       'is_verified': isVerified,
     };
   }

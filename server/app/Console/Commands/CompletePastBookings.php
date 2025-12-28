@@ -23,9 +23,9 @@ class CompletePastBookings extends Command
          $booking->update(['status' => 'completed']);
          $booking->apartment->update(['is_available' => true]);
 
-         // Send notification to tenant
+         // Send notification to user
          \App\Models\Notification::create([
-            'user_id' => $booking->tenant_id,
+            'user_id' => $booking->user_id,
             'type' => 'booking_completed',
             'title' => 'Booking Completed',
             'message' => "Your booking for {$booking->apartment->title} has been completed.",

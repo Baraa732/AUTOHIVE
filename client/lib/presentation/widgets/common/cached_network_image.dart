@@ -65,12 +65,14 @@ class AppCachedNetworkImage extends StatelessWidget {
       fit: fit,
       placeholder: _buildPlaceholder,
       errorWidget: _buildErrorWidget,
-      fadeInDuration: const Duration(milliseconds: 300),
-      fadeOutDuration: const Duration(milliseconds: 300),
-      memCacheWidth: width?.toInt(),
-      memCacheHeight: height?.toInt(),
-      maxWidthDiskCache: 800,
-      maxHeightDiskCache: 800,
+      fadeInDuration: const Duration(milliseconds: 200),
+      fadeOutDuration: const Duration(milliseconds: 200),
+      memCacheWidth: width != null ? (width! * MediaQuery.of(context).devicePixelRatio).toInt() : null,
+      memCacheHeight: height != null ? (height! * MediaQuery.of(context).devicePixelRatio).toInt() : null,
+      maxWidthDiskCache: 1200,
+      maxHeightDiskCache: 1200,
+      cacheKey: imageUrl,
+      useOldImageOnUrlChange: true,
     );
 
     if (borderRadius != null) {

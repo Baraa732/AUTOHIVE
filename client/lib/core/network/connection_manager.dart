@@ -1,7 +1,5 @@
-import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'error_handler.dart';
 
 class ConnectionManager {
   // Simple URLs for Android Emulator
@@ -86,7 +84,7 @@ class ConnectionManager {
       final response = await http.get(
         Uri.parse(url),
         headers: {'Accept': 'application/json'},
-      ).timeout(const Duration(milliseconds: 500)); // Even faster timeout
+      ).timeout(const Duration(seconds: 3)); // Increased timeout for better stability
       
       return response.statusCode == 200;
     } catch (e) {

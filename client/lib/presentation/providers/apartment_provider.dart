@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/apartment.dart';
 import '../../core/network/api_service.dart';
@@ -77,6 +78,43 @@ class ApartmentNotifier extends StateNotifier<ApartmentState> {
 
   Future<void> searchApartments(String query) async {
     await loadApartments(search: query, refresh: true);
+  }
+
+  Future<void> addApartment(Map<String, dynamic> apartmentData, List<File> images) async {
+    try {
+      final result = await _apiService.createApartment(
+        apartmentData: apartmentData,
+        images: images,
+      );
+      
+      if (result['success'] != true) {
+        String errorMessage = result['message'] ?? 'Failed to create apartment';
+        throw Exception(errorMessage);
+      }
+      
+      await loadApartments(refresh: true);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> updateApartment(String apartmentId, Map<String, dynamic> apartmentData, List<File> images) async {
+    try {
+      final result = await _apiService.updateApartment(
+        apartmentId: apartmentId,
+        apartmentData: apartmentData,
+        images: images,
+      );
+      
+      if (result['success'] != true) {
+        String errorMessage = result['message'] ?? 'Failed to update apartment';
+        throw Exception(errorMessage);
+      }
+      
+      await loadApartments(refresh: true);
+    } catch (e) {
+      rethrow;
+    }
   }
 
   void clearError() {

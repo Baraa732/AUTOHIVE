@@ -14,8 +14,8 @@ class AdminController extends Controller
     public function dashboard()
     {
         $stats = [
-            'total_users' => User::whereIn('role', ['tenant', 'landlord'])->count(),
-            'pending_approvals' => User::whereIn('role', ['tenant', 'landlord'])->where('is_approved', false)->count(),
+            'total_users' => User::count(),
+            'pending_approvals' => User::where('is_approved', false)->count(),
             'total_apartments' => Apartment::count(),
             'total_bookings' => Booking::count(),
             'pending_bookings' => Booking::where('status', 'pending')->count(),
@@ -28,7 +28,7 @@ class AdminController extends Controller
             ->get();
 
         $adminStats = [
-            'total_admins' => User::where('role', 'admin')->count(),
+            'total_admins' => 1, // Simplified system has only one admin
             'active_today' => AdminActivity::whereDate('created_at', today())
                 ->distinct('admin_id')
                 ->count()
@@ -47,7 +47,7 @@ class AdminController extends Controller
 
     public function users(Request $request)
     {
-        $query = User::whereIn('role', ['tenant', 'landlord']);
+        $query = User::query();
         
         // Status filtering
         if ($request->has('status') && $request->status !== 'all') {
@@ -56,11 +56,6 @@ class AdminController extends Controller
             } elseif ($request->status === 'approved') {
                 $query->where('is_approved', true);
             }
-        }
-        
-        // Role filtering
-        if ($request->has('role') && $request->role !== 'all') {
-            $query->where('role', $request->role);
         }
         
         // Search functionality
@@ -100,11 +95,11 @@ class AdminController extends Controller
         
         // Add summary statistics
         $stats = [
-            'total' => User::whereIn('role', ['tenant', 'landlord'])->count(),
-            'approved' => User::whereIn('role', ['tenant', 'landlord'])->where('is_approved', true)->count(),
-            'pending' => User::whereIn('role', ['tenant', 'landlord'])->where('is_approved', false)->count(),
-            'tenants' => User::where('role', 'tenant')->count(),
-            'landlords' => User::where('role', 'landlord')->count(),
+            'total' => User::count(),
+            'approved' => User::where('is_approved', true)->count(),
+            'pending' => User::where('is_approved', false)->count(),
+            'with_apartments' => User::whereHas('apartments')->count(),
+            'with_bookings' => User::whereHas('bookings')->count(),
         ];
 
         return response()->json([
@@ -123,7 +118,7 @@ class AdminController extends Controller
         ]);
     }
 
-    public function approveUser($id)
+    public function approveUser(int $id)
     {
         $user = User::findOrFail($id);
         $user->update(['is_approved' => true]);
@@ -143,12 +138,12 @@ class AdminController extends Controller
         ]);
     }
 
-    public function rejectUser($id)
+    public function rejectUser(int $id)
     {
         $user = User::findOrFail($id);
         
         // Prevent admin from rejecting themselves
-        if ($user->id === auth()->id()) {
+        if ($user->id === auth('api')->user()?->id) {
             return response()->json([
                 'success' => false,
                 'message' => 'Cannot reject your own account'
@@ -200,7 +195,7 @@ class AdminController extends Controller
 
     public function apartments(Request $request)
     {
-        $query = Apartment::with(['landlord']);
+        $query = Apartment::with(['user']);
         
         if ($request->has('status')) {
             $query->where('is_available', $request->status === 'available');
@@ -224,7 +219,7 @@ class AdminController extends Controller
         ]);
     }
 
-    public function deleteApartment($id)
+    public function deleteApartment(int $id)
     {
         $apartment = Apartment::findOrFail($id);
         
@@ -266,7 +261,7 @@ class AdminController extends Controller
         ]);
     }
 
-    public function approveBooking($id)
+    public function approveBooking(int $id)
     {
         $booking = Booking::with(['user', 'apartment'])->findOrFail($id);
         $booking->update(['status' => 'confirmed']);
@@ -283,7 +278,7 @@ class AdminController extends Controller
         ]);
     }
 
-    public function rejectBooking($id)
+    public function rejectBooking(int $id)
     {
         $booking = Booking::with(['user', 'apartment'])->findOrFail($id);
         
@@ -328,7 +323,7 @@ class AdminController extends Controller
 
     public function admins()
     {
-        $admins = User::where('role', 'admin')->latest()->paginate(20);
+        $admins = User::latest()->paginate(20);
         return response()->json([
             'success' => true,
             'data' => $admins,
@@ -349,7 +344,6 @@ class AdminController extends Controller
         $admin = User::create([
             'phone' => $request->phone,
             'password' => bcrypt($request->password),
-            'role' => 'admin',
             'first_name' => trim($request->first_name),
             'last_name' => trim($request->last_name),
             'birth_date' => $request->birth_date,
@@ -369,18 +363,18 @@ class AdminController extends Controller
         ]);
     }
 
-    public function deleteAdmin($id)
+    public function deleteAdmin(int $id)
     {
-        $admin = User::where('role', 'admin')->findOrFail($id);
+        $admin = User::findOrFail($id);
         
-        if ($admin->id === auth()->id()) {
+        if ($admin->id === auth('api')->user()?->id) {
             return response()->json([
                 'success' => false,
                 'message' => 'Cannot delete your own account'
             ], 400);
         }
 
-        $adminCount = User::where('role', 'admin')->count();
+        $adminCount = User::count();
         if ($adminCount <= 1) {
             return response()->json([
                 'success' => false,

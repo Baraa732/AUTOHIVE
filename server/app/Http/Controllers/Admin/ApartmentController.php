@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Apartment;
 use App\Models\Booking;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ApartmentController extends Controller
 {
@@ -88,14 +89,14 @@ class ApartmentController extends Controller
                 'status' => 'approved',
                 'rejection_reason' => null,
                 'approved_at' => now(),
-                'approved_by' => auth()->id()
+                'approved_by' => Auth::id()
             ]);
 
             // Log activity
             \App\Models\Activity::log(
                 'apartment_approved',
                 "Approved apartment: {$apartment->title}",
-                ['apartment_id' => $apartment->id, 'admin_id' => auth()->id()]
+                ['apartment_id' => $apartment->id, 'admin_id' => Auth::id()]
             );
 
             // Send notification to landlord
@@ -130,14 +131,14 @@ class ApartmentController extends Controller
                 'status' => 'rejected',
                 'rejection_reason' => $request->reason,
                 'rejected_at' => now(),
-                'rejected_by' => auth()->id()
+                'rejected_by' => Auth::id()
             ]);
 
             // Log activity
             \App\Models\Activity::log(
                 'apartment_rejected',
                 "Rejected apartment: {$apartment->title}",
-                ['apartment_id' => $apartment->id, 'admin_id' => auth()->id(), 'reason' => $request->reason]
+                ['apartment_id' => $apartment->id, 'admin_id' => Auth::id(), 'reason' => $request->reason]
             );
 
             // Send notification to landlord

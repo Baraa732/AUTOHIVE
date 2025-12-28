@@ -10,6 +10,7 @@ use App\Models\AdminActivity;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class AdminManagementController extends Controller
 {
@@ -74,7 +75,7 @@ class AdminManagementController extends Controller
             
             $admin = User::where('role', 'admin')->findOrFail($id);
             
-            if ($admin->id === auth()->id()) {
+            if ($admin->id === Auth::id()) {
                 return back()->withErrors(['error' => 'You cannot delete your own account.']);
             }
 

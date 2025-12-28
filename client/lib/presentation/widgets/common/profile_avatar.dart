@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/app_config.dart';
 import 'cached_network_image.dart';
 
 class ProfileAvatar extends StatelessWidget {
@@ -29,11 +28,11 @@ class ProfileAvatar extends StatelessWidget {
             colors: [Color(0xFFff6f2d), Color(0xFF4a90e2)],
           ),
           border: showBorder 
-              ? Border.all(color: Colors.white.withOpacity(0.3), width: 2)
+              ? Border.all(color: Colors.white.withValues(alpha: 0.3), width: 2)
               : null,
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFff6f2d).withOpacity(0.3),
+              color: const Color(0xFFff6f2d).withValues(alpha: 0.3),
               blurRadius: 10,
               offset: const Offset(0, 5),
             ),

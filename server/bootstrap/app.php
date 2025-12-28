@@ -14,8 +14,6 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'approved' => \App\Http\Middleware\EnsureUserIsApproved::class,
-            'landlord' => \App\Http\Middleware\LandlordMiddleware::class,
-            'tenant' => \App\Http\Middleware\TenantOnlyMiddleware::class,
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
             'admin.auth' => \App\Http\Middleware\EnsureAdminAuthenticated::class,
         ]);

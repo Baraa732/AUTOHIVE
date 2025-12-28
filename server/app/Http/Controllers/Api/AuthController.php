@@ -37,7 +37,6 @@ class AuthController extends Controller
         $request->validate([
             'phone' => 'required|string',
             'password' => 'required|string|min:6|confirmed',
-            'role' => 'required|in:tenant,landlord',
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'birth_date' => 'required|date',
@@ -73,7 +72,7 @@ class AuthController extends Controller
             $existingUser->restore();
             $existingUser->update([
                 'password' => Hash::make($request->password),
-                'role' => $request->role,
+                'role' => 'user',
                 'first_name' => $request->first_name,
                 'last_name' => $request->last_name,
                 'birth_date' => $request->birth_date,
@@ -89,7 +88,6 @@ class AuthController extends Controller
             $user = User::create([
                 'phone' => $request->phone,
                 'password' => Hash::make($request->password),
-                'role' => $request->role,
                 'first_name' => $request->first_name,
                 'last_name' => $request->last_name,
                 'birth_date' => $request->birth_date,
@@ -103,6 +101,13 @@ class AuthController extends Controller
         }
 
         // Send notification to admins only once
+        \Log::info('Sending admin notification for new user registration', [
+            'user_id' => $user->id,
+            'user_name' => $user->first_name . ' ' . $user->last_name,
+            'user_type' => 'user',
+            'user_status' => $user->status
+        ]);
+        
         $this->notifyAdminsOfNewRegistration($user);
 
         return response()->json([

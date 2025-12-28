@@ -37,41 +37,19 @@ class AnimatedInputField extends StatefulWidget {
 class _AnimatedInputFieldState extends State<AnimatedInputField>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
-  late Animation<double> _scaleAnimation;
-  late Animation<double> _glowAnimation;
   late FocusNode _focusNode;
   bool _isFocused = false;
-  bool _hasText = false;
 
   @override
   void initState() {
     super.initState();
     _focusNode = FocusNode();
     _focusNode.addListener(_onFocusChange);
-    widget.controller.addListener(_onTextChange);
 
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-
-    _scaleAnimation = Tween<double>(
-      begin: 1.0,
-      end: 1.02,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutCubic,
-    ));
-
-    _glowAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutCubic,
-    ));
-
-    _hasText = widget.controller.text.isNotEmpty;
   }
 
   void _onFocusChange() {
@@ -85,17 +63,10 @@ class _AnimatedInputFieldState extends State<AnimatedInputField>
     });
   }
 
-  void _onTextChange() {
-    setState(() {
-      _hasText = widget.controller.text.isNotEmpty;
-    });
-  }
-
   @override
   void dispose() {
     _animationController.dispose();
     _focusNode.dispose();
-    widget.controller.removeListener(_onTextChange);
     super.dispose();
   }
 
@@ -110,14 +81,14 @@ class _AnimatedInputFieldState extends State<AnimatedInputField>
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             color: widget.isDark 
-                ? const Color(0xFF1A1A2E).withOpacity(0.8)
-                : Colors.white.withOpacity(0.9),
+                ? const Color(0xFF1A1A2E).withValues(alpha: 0.8)
+                : Colors.white.withValues(alpha: 0.9),
             border: Border.all(
               color: _isFocused
                   ? primaryColor
                   : widget.isDark
-                      ? Colors.white.withOpacity(0.2)
-                      : Colors.grey.withOpacity(0.3),
+                      ? Colors.white.withValues(alpha: 0.2)
+                      : Colors.grey.withValues(alpha: 0.3),
               width: _isFocused ? 2 : 1,
             ),
           ),
@@ -138,13 +109,13 @@ class _AnimatedInputFieldState extends State<AnimatedInputField>
                 color: _isFocused
                     ? primaryColor
                     : widget.isDark
-                        ? Colors.white.withOpacity(0.7)
+                        ? Colors.white.withValues(alpha: 0.7)
                         : Colors.grey[600],
                 fontSize: 16,
               ),
               hintStyle: TextStyle(
                 color: widget.isDark
-                    ? Colors.white.withOpacity(0.5)
+                    ? Colors.white.withValues(alpha: 0.5)
                     : Colors.grey[400],
                 fontSize: 16,
               ),
@@ -153,7 +124,7 @@ class _AnimatedInputFieldState extends State<AnimatedInputField>
                 color: _isFocused
                     ? primaryColor
                     : widget.isDark
-                        ? Colors.white.withOpacity(0.7)
+                        ? Colors.white.withValues(alpha: 0.7)
                         : Colors.grey[600],
                 size: 22,
               ),
@@ -162,7 +133,7 @@ class _AnimatedInputFieldState extends State<AnimatedInputField>
                       icon: Icon(
                         widget.obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                         color: widget.isDark
-                            ? Colors.white.withOpacity(0.7)
+                            ? Colors.white.withValues(alpha: 0.7)
                             : Colors.grey[600],
                         size: 22,
                       ),

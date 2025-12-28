@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/core.dart';
-import '../../theme_provider.dart';
 import '../../widgets/common/theme_toggle_button.dart';
 import 'login_screen.dart';
 import 'register_screen.dart';
@@ -132,8 +130,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with TickerProvid
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
                       colors: [
-                        const Color(0xFFff6f2d).withOpacity(isDark ? 0.3 : 0.1),
-                        const Color(0xFF4a90e2).withOpacity(isDark ? 0.2 : 0.05),
+                        const Color(0xFFff6f2d).withValues(alpha: isDark ? 0.3 : 0.1),
+                        const Color(0xFF4a90e2).withValues(alpha: isDark ? 0.2 : 0.05),
                         Colors.transparent,
                       ],
                     ),
@@ -153,8 +151,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with TickerProvid
                     borderRadius: BorderRadius.circular(25),
                     gradient: LinearGradient(
                       colors: [
-                        const Color(0xFF4a90e2).withOpacity(isDark ? 0.4 : 0.1),
-                        const Color(0xFFff6f2d).withOpacity(isDark ? 0.3 : 0.08),
+                        const Color(0xFF4a90e2).withValues(alpha: isDark ? 0.4 : 0.1),
+                        const Color(0xFFff6f2d).withValues(alpha: isDark ? 0.3 : 0.08),
                       ],
                     ),
                   ),
@@ -173,8 +171,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with TickerProvid
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
                       colors: [
-                        const Color(0xFFff6f2d).withOpacity(isDark ? 0.5 : 0.12),
-                        const Color(0xFF4a90e2).withOpacity(isDark ? 0.3 : 0.08),
+                        const Color(0xFFff6f2d).withValues(alpha: isDark ? 0.5 : 0.12),
+                        const Color(0xFF4a90e2).withValues(alpha: isDark ? 0.3 : 0.08),
                       ],
                     ),
                   ),
@@ -200,7 +198,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with TickerProvid
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFff6f2d).withOpacity(0.3),
+              color: const Color(0xFFff6f2d).withValues(alpha: 0.3),
               blurRadius: 20,
               spreadRadius: 5,
             ),
@@ -257,7 +255,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with TickerProvid
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFff6f2d).withOpacity(0.4),
+              color: const Color(0xFFff6f2d).withValues(alpha: 0.4),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),

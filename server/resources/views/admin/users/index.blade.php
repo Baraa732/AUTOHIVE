@@ -18,20 +18,20 @@
     <div class="stat-card">
         <div class="stat-header">
             <div class="stat-icon">
-                <i class="fas fa-user"></i>
+                <i class="fas fa-home"></i>
             </div>
         </div>
-        <div class="stat-number">{{ $stats['total_tenants'] }}</div>
-        <div class="stat-label">Tenants</div>
+        <div class="stat-number">{{ $stats['total_with_apartments'] }}</div>
+        <div class="stat-label">Users with Apartments</div>
     </div>
     <div class="stat-card">
         <div class="stat-header">
             <div class="stat-icon">
-                <i class="fas fa-home"></i>
+                <i class="fas fa-calendar"></i>
             </div>
         </div>
-        <div class="stat-number">{{ $stats['total_landlords'] }}</div>
-        <div class="stat-label">Landlords</div>
+        <div class="stat-number">{{ $stats['total_with_bookings'] }}</div>
+        <div class="stat-label">Users with Bookings</div>
     </div>
     <div class="stat-card">
         <div class="stat-header">
@@ -56,9 +56,7 @@
         <div style="display: flex; gap: var(--space-md); align-items: center;">
             <form method="GET" style="display: flex; gap: var(--space-sm);">
                 <select name="role" style="padding: 8px 12px; border: 1px solid var(--border-grey); border-radius: var(--radius-sm);">
-                    <option value="">All Roles</option>
-                    <option value="tenant" {{ request('role') == 'tenant' ? 'selected' : '' }}>Tenants</option>
-                    <option value="landlord" {{ request('role') == 'landlord' ? 'selected' : '' }}>Landlords</option>
+                    <option value="">All Users</option>
                 </select>
                 <input type="text" name="search" placeholder="Search users..." value="{{ request('search') }}" style="padding: 8px 12px; border: 1px solid var(--border-grey); border-radius: var(--radius-sm); width: 200px;">
                 <button type="submit" style="background: var(--deep-green); color: white; border: none; padding: 8px 16px; border-radius: var(--radius-sm); cursor: pointer;">
@@ -104,8 +102,8 @@
                             </div>
                         </td>
                         <td style="padding: var(--space-md); font-size: 0.9rem;">
-                            <span style="padding: 4px 12px; border-radius: var(--radius-lg); font-size: 0.75rem; font-weight: 600; background: {{ $user->role == 'landlord' ? '#10B981' : '#3B82F6' }}20; color: {{ $user->role == 'landlord' ? '#10B981' : '#3B82F6' }};">
-                                {{ ucfirst($user->role) }}
+                            <span style="padding: 4px 12px; border-radius: var(--radius-lg); font-size: 0.75rem; font-weight: 600; background: #10B98120; color: #10B981;">
+                                User
                             </span>
                         </td>
                         <td style="padding: var(--space-md); font-size: 0.9rem; color: var(--text-dark);">{{ $user->phone }}</td>

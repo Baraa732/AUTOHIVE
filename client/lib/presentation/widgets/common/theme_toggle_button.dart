@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../theme_provider.dart';
 import '../../../core/core.dart';
 
 class ThemeToggleButton extends ConsumerWidget {
@@ -17,7 +15,7 @@ class ThemeToggleButton extends ConsumerWidget {
         border: Border.all(color: AppTheme.getBorderColor(isDarkMode)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.1),
+            color: Colors.black.withValues(alpha: isDarkMode ? 0.3 : 0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),

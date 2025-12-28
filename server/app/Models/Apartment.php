@@ -10,7 +10,7 @@ class Apartment extends Model
     use HasFactory;
 
     protected $fillable = [
-        'landlord_id',
+        'user_id',
         'title',
         'description',
         'governorate',
@@ -50,9 +50,9 @@ class Apartment extends Model
     }
 
     // Relationships
-    public function landlord()
+    public function user()
     {
-        return $this->belongsTo(User::class, 'landlord_id');
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function bookings()

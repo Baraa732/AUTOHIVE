@@ -3,12 +3,13 @@
 namespace App\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
 
 class CreateAdminRequest extends FormRequest
 {
     public function authorize()
     {
-        return auth()->check() && auth()->user()->role === 'admin';
+        return Auth::check() && Auth::user()->role === 'admin';
     }
 
     public function rules()

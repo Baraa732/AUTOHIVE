@@ -45,7 +45,7 @@ class ThemeService {
   /// Get appropriate subtitle color based on theme
   Color getSubtitleColor(BuildContext context) {
     return isDarkMode(context) 
-        ? Colors.white.withOpacity(0.7) 
+        ? Colors.white.withValues(alpha: 0.7) 
         : const Color(0xFF64748B);
   }
   
@@ -66,22 +66,22 @@ class ThemeService {
   /// Get appropriate border color based on theme
   Color getBorderColor(BuildContext context) {
     return isDarkMode(context) 
-        ? Colors.white.withOpacity(0.2) 
-        : Colors.grey.withOpacity(0.3);
+        ? Colors.white.withValues(alpha: 0.2) 
+        : Colors.grey.withValues(alpha: 0.3);
   }
   
   /// Get appropriate icon color based on theme
   Color getIconColor(BuildContext context) {
     return isDarkMode(context) 
-        ? Colors.white.withOpacity(0.9) 
+        ? Colors.white.withValues(alpha: 0.9) 
         : const Color(0xFF64748B);
   }
   
   /// Get appropriate shadow color based on theme
   Color getShadowColor(BuildContext context) {
     return isDarkMode(context) 
-        ? Colors.black.withOpacity(0.3) 
-        : Colors.black.withOpacity(0.1);
+        ? Colors.black.withValues(alpha: 0.3) 
+        : Colors.black.withValues(alpha: 0.1);
   }
   
   /// Get background gradient based on theme

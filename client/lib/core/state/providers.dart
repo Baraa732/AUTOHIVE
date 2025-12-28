@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../data/models/user.dart';
 
 // Navigation provider
 final navIndexProvider = StateProvider<int>((ref) => 0);

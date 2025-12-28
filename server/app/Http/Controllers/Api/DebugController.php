@@ -60,4 +60,40 @@ class DebugController extends Controller
             'message' => 'Notification force created'
         ]);
     }
+
+    public function checkRentalApplications(Request $request)
+    {
+        $user = $request->user();
+        
+        $rentalApps = \App\Models\RentalApplication::with(['user', 'apartment', 'apartment.user'])
+            ->orderBy('created_at', 'desc')
+            ->limit(50)
+            ->get();
+        
+        $userApartments = \App\Models\Apartment::where('user_id', $user->id)->get();
+        
+        $incomingApps = \App\Models\RentalApplication::with(['user', 'apartment'])
+            ->whereHas('apartment', function ($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })
+            ->where('status', 'pending')
+            ->get();
+        
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'current_user' => $user,
+                'user_apartments' => $userApartments,
+                'incoming_applications_for_user' => $incomingApps,
+                'all_recent_applications' => $rentalApps,
+                'debug_info' => [
+                    'user_id' => $user->id,
+                    'user_apartments_count' => $userApartments->count(),
+                    'incoming_count' => $incomingApps->count(),
+                    'total_applications' => $rentalApps->count(),
+                ]
+            ],
+            'message' => 'Debug info for rental applications'
+        ]);
+    }
 }

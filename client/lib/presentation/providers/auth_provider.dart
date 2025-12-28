@@ -34,84 +34,73 @@ class AuthState {
 
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthService _authService;
-  static const String _tokenKey = 'auth_token';
-  static const String _userKey = 'user_data';
+  static const String _tokenKey = 'token';
+  static const String _userKey = 'user';
 
   AuthNotifier(this._authService) : super(const AuthState()) {
-    _loadStoredAuth();
+    _initializeAuth();
   }
 
-  Future<void> _loadStoredAuth() async {
+  Future<void> _initializeAuth() async {
+    await _clearStoredAuth();
+  }
+
+
+  Future<void> login(String phone, String password) async {
+    state = state.copyWith(isLoading: true, error: null);
+    
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString(_tokenKey);
-      final userData = prefs.getString(_userKey);
-      
-      if (token != null && userData != null && token.isNotEmpty && userData.isNotEmpty) {
-        try {
-          // Parse JSON properly instead of using Uri.splitQueryString
-          final Map<String, dynamic> userMap = Map<String, dynamic>.from(
-            jsonDecode(userData)
-          );
-          final user = User.fromJson(userMap);
-          state = state.copyWith(user: user, isAuthenticated: true);
-        } catch (e) {
-          await _clearStoredAuth();
-        }
+      final result = await _authService.login(phone, password);
+      if (result['success'] == true && result['user'] != null) {
+        final user = User.fromJson(result['user']);
+        await _storeAuth(result['token'], user);
+        state = state.copyWith(
+          user: user,
+          isAuthenticated: true,
+          isLoading: false,
+        );
       } else {
-        // Ensure we start with unauthenticated state if no valid data
-        state = const AuthState(isAuthenticated: false);
+        throw Exception(result['message'] ?? 'Login failed');
       }
     } catch (e) {
-      // Silently handle errors during auth loading
-      await _clearStoredAuth();
-      state = const AuthState(isAuthenticated: false);
-    }
-  }
-
-  Future<void> login(String email, String password) async {
-    state = state.copyWith(isLoading: true, error: null);
-    
-    try {
-      final result = await _authService.login(email, password);
-      final user = User.fromJson(result['user']);
-      
-      await _storeAuth(result['token'], user);
+      final errorMsg = e.toString().replaceAll('Exception: ', '').trim();
+      final finalError = errorMsg.isEmpty ? 'Login failed. Please try again.' : errorMsg;
       state = state.copyWith(
-        user: user,
-        isAuthenticated: true,
-        isLoading: false,
-      );
-    } catch (e) {
-      state = state.copyWith(
-        error: e.toString(),
+        error: finalError,
         isLoading: false,
       );
     }
   }
 
-  Future<void> register(String firstName, String lastName, String phone, String password, String role, String city, String governorate) async {
+  Future<void> register(String firstName, String lastName, String phone, String password, String city, String governorate) async {
     state = state.copyWith(isLoading: true, error: null);
     
     try {
-      final result = await _authService.register(firstName, lastName, phone, password, role, city, governorate);
-      final user = User.fromJson(result['user']);
-      
-      await _storeAuth(result['token'], user);
-      state = state.copyWith(
-        user: user,
-        isAuthenticated: true,
-        isLoading: false,
-      );
+      final result = await _authService.register(firstName, lastName, phone, password, city, governorate);
+      if (result['success'] == true && result['data'] != null) {
+        state = state.copyWith(
+          isLoading: false,
+          error: null,
+        );
+      } else {
+        throw Exception(result['message'] ?? 'Registration failed');
+      }
     } catch (e) {
+      final errorMsg = e.toString().replaceAll('Exception: ', '').trim();
       state = state.copyWith(
-        error: e.toString(),
+        error: errorMsg.isEmpty ? 'Registration failed. Please try again.' : errorMsg,
         isLoading: false,
       );
     }
   }
 
   Future<void> logout() async {
+    try {
+      // Call logout API if needed
+      await _authService.logout();
+    } catch (e) {
+      // Continue with logout even if API call fails
+    }
     await _clearStoredAuth();
     state = const AuthState(isAuthenticated: false, user: null);
   }

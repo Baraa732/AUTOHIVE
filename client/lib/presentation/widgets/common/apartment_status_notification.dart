@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../core/core.dart';
-import '../../../core/theme/app_theme.dart';
 
 class ApartmentStatusNotification extends ConsumerWidget {
   final String status;
@@ -19,7 +18,7 @@ class ApartmentStatusNotification extends ConsumerWidget {
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: _getStatusColor().withOpacity(0.1),
+        color: _getStatusColor().withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: _getStatusColor()),
       ),

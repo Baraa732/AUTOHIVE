@@ -78,7 +78,7 @@ class _AnimatedBottomNavState extends State<AnimatedBottomNav>
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, -5),
           ),
@@ -124,8 +124,8 @@ class _AnimatedBottomNavState extends State<AnimatedBottomNav>
                         child: InkWell(
                           onTap: () => _onItemTap(index),
                           borderRadius: BorderRadius.circular(12),
-                          splashColor: const Color(0xFFff6f2d).withOpacity(0.2),
-                          highlightColor: const Color(0xFFff6f2d).withOpacity(0.1),
+                          splashColor: const Color(0xFFff6f2d).withValues(alpha: 0.2),
+                          highlightColor: const Color(0xFFff6f2d).withValues(alpha: 0.1),
                           child: Container(
                             padding: const EdgeInsets.symmetric(vertical: 8),
                             child: Column(
@@ -136,7 +136,7 @@ class _AnimatedBottomNavState extends State<AnimatedBottomNav>
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
                                     color: isActive 
-                                      ? const Color(0xFFff6f2d).withOpacity(0.2)
+                                      ? const Color(0xFFff6f2d).withValues(alpha: 0.2)
                                       : Colors.transparent,
                                     borderRadius: BorderRadius.circular(12),
                                   ),
@@ -150,7 +150,7 @@ class _AnimatedBottomNavState extends State<AnimatedBottomNav>
                                           key: ValueKey(isActive),
                                           color: isActive 
                                             ? const Color(0xFFff6f2d)
-                                            : Colors.white.withOpacity(0.6),
+                                            : Colors.white.withValues(alpha: 0.6),
                                           size: 24,
                                         ),
                                       ),
@@ -190,7 +190,7 @@ class _AnimatedBottomNavState extends State<AnimatedBottomNav>
                                     fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
                                     color: isActive 
                                       ? const Color(0xFFff6f2d)
-                                      : Colors.white.withOpacity(0.6),
+                                      : Colors.white.withValues(alpha: 0.6),
                                   ),
                                   child: Text(item.label),
                                 ),

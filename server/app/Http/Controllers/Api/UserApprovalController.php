@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Notification;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class UserApprovalController extends Controller
 {
@@ -117,7 +118,7 @@ class UserApprovalController extends Controller
         }
 
         // Prevent admin from rejecting themselves
-        if ($user->id === auth()->id()) {
+        if (Auth::check() && $user->id === Auth::user()->id) {
             return response()->json([
                 'success' => false,
                 'message' => 'Cannot reject your own account'
@@ -175,6 +176,10 @@ class UserApprovalController extends Controller
 
         // Create notification-like structure for each pending user
         $processedNotifications = $pendingUsers->map(function ($user) {
+            if (!$user || !$user->id) {
+                return null;
+            }
+
             return [
                 'id' => 'pending_' . $user->id,
                 'type' => 'new_user_registration',
@@ -183,7 +188,6 @@ class UserApprovalController extends Controller
                 'created_at' => $user->created_at,
                 'user' => [
                     'id' => $user->id,
-                    'display_id' => $user->display_id,
                     'name' => $user->first_name . ' ' . $user->last_name,
                     'email' => $user->email ?? 'N/A',
                     'role' => $user->role,
@@ -191,7 +195,7 @@ class UserApprovalController extends Controller
                     'status' => $user->status
                 ]
             ];
-        });
+        })->filter();
 
         return response()->json([
             'success' => true,

@@ -158,15 +158,13 @@ class DashboardController extends Controller
 
     private function calculateOccupancyRate($apartment)
     {
-        $totalDays = now()->diffInDays($apartment->created_at);
+        $totalDays = Carbon::now()->diffInDays(Carbon::parse($apartment->created_at));
         if ($totalDays == 0) return 0;
 
         $bookedDays = Booking::where('apartment_id', $apartment->id)
             ->where('status', 'completed')
             ->get()
-            ->sum(function($booking) {
-                return $booking->check_in->diffInDays($booking->check_out);
-            });
+            ->sum(fn($booking) => $booking->check_in->diffInDays($booking->check_out));
 
         return round(($bookedDays / $totalDays) * 100, 2);
     }

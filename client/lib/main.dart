@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'core/di/injection.dart';
 import 'core/core.dart';
-import 'core/state/state.dart';
 import 'presentation/screens/auth/welcome_screen.dart';
 import 'presentation/screens/shared/main_navigation_screen.dart';
 import 'presentation/providers/auth_provider.dart';
@@ -70,7 +69,6 @@ class _AppInitializerState extends ConsumerState<AppInitializer> {
   }
 
   Future<void> _initializeApp() async {
-    // Minimal delay just to show splash briefly
     await Future.delayed(const Duration(milliseconds: 100));
     
     if (mounted) {

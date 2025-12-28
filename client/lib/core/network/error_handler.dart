@@ -60,7 +60,7 @@ class ErrorHandler {
                 appError.details!,
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.white.withOpacity(0.8),
+                  color: Colors.white.withValues(alpha: 0.8),
                 ),
               ),
             ]

@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ApartmentController;
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\BookingRequestController;
+use App\Http\Controllers\Api\RentalApplicationController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\FavoriteController;
 use App\Http\Controllers\Api\MessageController;
@@ -11,8 +12,8 @@ use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\SettingController;
 use App\Http\Controllers\Api\LocationController;
 use App\Http\Controllers\Api\StatisticsController;
-use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\FileController;
+use App\Http\Controllers\Api\SearchController;
 use Illuminate\Support\Facades\Route;
 
 // Connection test route
@@ -58,6 +59,9 @@ Route::middleware(['auth:sanctum', 'approved'])->group(function () {
     Route::post('/change-password', [AuthController::class, 'changePassword']);
     Route::delete('/delete-account', [AuthController::class, 'deleteAccount']);
 
+    //1.5 User Stats
+    Route::get('/user/stats', [StatisticsController::class, 'userStats']);
+
 
     //2 File Management
     Route::post('/files/profile-image', [FileController::class, 'uploadProfileImage']);
@@ -88,65 +92,55 @@ Route::middleware(['auth:sanctum', 'approved'])->group(function () {
     Route::get('/apartments/features/available', [ApartmentController::class, 'getFeatures']);
 
 
-    Route::middleware('landlord')->group(function () {
-        //6 Landlord Dashboard
-        Route::get('/landlord/dashboard', [\App\Http\Controllers\Api\DashboardController::class, 'landlordDashboard']);
-
-        // Apartments Management
-        Route::post('/apartments', [ApartmentController::class, 'store']);
-        Route::put('/apartments/{id}', [ApartmentController::class, 'update']);
-        Route::delete('/apartments/{id}', [ApartmentController::class, 'destroy']);
-        Route::get('/my-apartments', [ApartmentController::class, 'myApartments']);
-        Route::post('/apartments/{id}/toggle-availability', [ApartmentController::class, 'toggleAvailability']);
-
-        //7 Landlord Bookings
-        Route::get('/landlord/bookings', [BookingController::class, 'landlordBookings']);
-        Route::get('/landlord/bookings/{id}', [BookingController::class, 'landlordShow']);
-        Route::post('/bookings/{id}/approve', [BookingController::class, 'approve']);
-        Route::post('/bookings/{id}/reject', [BookingController::class, 'reject']);
-        // Remove these duplicate lines:
-        // Route::get('/landlord/bookings', [BookingController::class, 'landlordBookings']);
-        // Route::get('/landlord/bookings/{id}', [BookingController::class, 'landlordShow']);
-        Route::get('/landlord/booking-requests', [BookingRequestController::class, 'landlordRequests']);
-        Route::post('/booking-requests/{id}/approve', [BookingRequestController::class, 'approveRequest']);
-        Route::post('/booking-requests/{id}/reject', [BookingRequestController::class, 'rejectRequest']);
-    });
+    //6 Apartment Management
+    Route::post('/apartments', [ApartmentController::class, 'store']);
+    Route::put('/apartments/{id}', [ApartmentController::class, 'update']);
+    Route::delete('/apartments/{id}', [ApartmentController::class, 'destroy']);
+    Route::get('/my-apartments', [ApartmentController::class, 'myApartments']);
+    Route::post('/apartments/{id}/toggle-availability', [ApartmentController::class, 'toggleAvailability']);
+    Route::get('/my-apartment-bookings', [BookingController::class, 'myApartmentBookings']);
+    Route::get('/my-apartment-bookings/{id}', [BookingController::class, 'apartmentBookingShow']);
+    Route::post('/bookings/{id}/approve', [BookingController::class, 'approve']);
+    Route::post('/bookings/{id}/reject', [BookingController::class, 'reject']);
+    Route::get('/my-apartment-booking-requests', [BookingRequestController::class, 'myApartmentRequests']);
+    Route::post('/booking-requests/{id}/approve', [BookingRequestController::class, 'approveRequest']);
+    Route::post('/booking-requests/{id}/reject', [BookingRequestController::class, 'rejectRequest']);
 
 
-    //8 Bookings (Tenant only)
-    Route::middleware('tenant')->group(function () {
-        // Specific routes FIRST
-        Route::get('/bookings/history', [BookingController::class, 'history']);
-        Route::get('/bookings/upcoming', [BookingController::class, 'upcoming']);
-        Route::post('/booking-requests', [BookingController::class, 'requestBooking']);
-        Route::get('/my-booking-requests', [BookingRequestController::class, 'myRequests']);
+    //7 Rental Applications
+    Route::post('/rental-applications', [RentalApplicationController::class, 'store']);
+    Route::get('/rental-applications/my-applications', [RentalApplicationController::class, 'myApplications']);
+    Route::get('/rental-applications/incoming', [RentalApplicationController::class, 'incoming']);
+    Route::get('/rental-applications/{id}', [RentalApplicationController::class, 'show']);
+    Route::post('/rental-applications/{id}/approve', [RentalApplicationController::class, 'approve']);
+    Route::post('/rental-applications/{id}/reject', [RentalApplicationController::class, 'reject']);
 
-        // Then parameterized routes
-        Route::get('/bookings', [BookingController::class, 'index']);
-        Route::get('/bookings/{id}', [BookingController::class, 'show']);
-        Route::post('/bookings', [BookingController::class, 'store']);
-        Route::put('/bookings/{id}', [BookingController::class, 'update']);
-        Route::delete('/bookings/{id}', [BookingController::class, 'destroy']);
-    });
+
+    //8 Booking Management
+    Route::get('/bookings/history', [BookingController::class, 'history']);
+    Route::get('/bookings/upcoming', [BookingController::class, 'upcoming']);
+    Route::post('/booking-requests', [BookingController::class, 'requestBooking']);
+    Route::get('/my-booking-requests', [BookingRequestController::class, 'myRequests']);
+    Route::get('/bookings', [BookingController::class, 'index']);
+    Route::get('/bookings/{id}', [BookingController::class, 'show']);
+    Route::post('/bookings', [BookingController::class, 'store']);
+    Route::put('/bookings/{id}', [BookingController::class, 'update']);
+    Route::delete('/bookings/{id}', [BookingController::class, 'destroy']);
 
     //9 Availability check (available to all authenticated users)
     Route::get('/bookings/check-availability/{apartmentId}', [BookingController::class, 'checkAvailability']);
 
 
-    //10 Reviews (Tenant only)
-    Route::middleware('tenant')->group(function () {
-        Route::post('/reviews', [ReviewController::class, 'store']);
-        Route::get('/my-reviews', [ReviewController::class, 'myReviews']);
-        Route::get('/bookings/{id}/can-review', [ReviewController::class, 'canReview']);
-    });
+    //10 Reviews (Available to all users)
+    Route::post('/reviews', [ReviewController::class, 'store']);
+    Route::get('/my-reviews', [ReviewController::class, 'myReviews']);
+    Route::get('/bookings/{id}/can-review', [ReviewController::class, 'canReview']);
 
 
-    //11 Favorites (Tenant only)
-    Route::middleware('tenant')->group(function () {
-        Route::get('/favorites', [FavoriteController::class, 'index']);
-        Route::post('/favorites', [FavoriteController::class, 'store']);
-        Route::delete('/favorites/{id}', [FavoriteController::class, 'destroy']);
-    });
+    //11 Favorites (Available to all users)
+    Route::get('/favorites', [FavoriteController::class, 'index']);
+    Route::post('/favorites', [FavoriteController::class, 'store']);
+    Route::delete('/favorites/{id}', [FavoriteController::class, 'destroy']);
 
 
     //12 Messages
@@ -171,6 +165,7 @@ Route::middleware(['auth:sanctum', 'approved'])->group(function () {
     //15 Debug endpoints
     Route::get('/debug/notifications', [\App\Http\Controllers\Api\DebugController::class, 'checkNotifications']);
     Route::post('/debug/force-notification', [\App\Http\Controllers\Api\DebugController::class, 'forceCreateNotification']);
+    Route::get('/debug/rental-applications', [\App\Http\Controllers\Api\DebugController::class, 'checkRentalApplications']);
 
 
     //16 Admin API routes (protected by admin middleware)

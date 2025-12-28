@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Review;
 use App\Models\Booking;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class ReviewController extends Controller
 {
@@ -51,7 +52,7 @@ class ReviewController extends Controller
         }
 
         // Check if review is within allowed timeframe (e.g., 30 days after checkout)
-        if ($booking->check_out->diffInDays(now()) > 30) {
+        if (Carbon::parse($booking->check_out)->diffInDays(Carbon::now()) > 30) {
             return response()->json([
                 'success' => false,
                 'message' => 'Review period has expired (30 days after checkout).',
@@ -180,7 +181,7 @@ class ReviewController extends Controller
             ]);
         }
 
-        $daysSinceCheckout = $booking->check_out->diffInDays(now());
+        $daysSinceCheckout = Carbon::parse($booking->check_out)->diffInDays(Carbon::now());
         if ($daysSinceCheckout > 30) {
             return response()->json([
                 'success' => true,

@@ -157,7 +157,7 @@ class AdminController extends Controller
     public function getBookingDetails($id)
     {
         try {
-            $booking = \App\Models\Booking::with(['tenant', 'apartment'])->findOrFail($id);
+            $booking = \App\Models\Booking::with(['user', 'apartment'])->findOrFail($id);
             return response()->json($booking);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Booking not found'], 404);

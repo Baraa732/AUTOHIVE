@@ -9,6 +9,7 @@ use App\Models\AdminActivity;
 use Illuminate\Support\Facades\DB;
 use App\Services\NotificationService;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 
 class AdminService
@@ -16,8 +17,8 @@ class AdminService
     public function getDashboardStats()
     {
         return [
-            'total_users' => User::where('role', 'user')->count(),
-            'pending_approvals' => User::where('role', 'user')->where('is_approved', false)->count(),
+            'total_users' => User::count(),
+            'pending_approvals' => User::where('is_approved', false)->count(),
             'total_apartments' => Apartment::count(),
             'available_apartments' => Apartment::where('is_available', true)->count(),
             'total_bookings' => Booking::count(),
@@ -42,7 +43,7 @@ class AdminService
     public function getAdminStats()
     {
         return [
-            'total_admins' => User::where('role', 'admin')->count(),
+            'total_admins' => 1, // Only one admin in simplified system
             'active_today' => \App\Models\Activity::whereDate('created_at', Carbon::today())
                 ->distinct('admin_id')
                 ->count(),
@@ -55,7 +56,7 @@ class AdminService
 
     public function getUsers($filters = [])
     {
-        $query = User::where('role', 'user');
+        $query = User::query();
 
         if (isset($filters['status'])) {
             if ($filters['status'] === 'approved') {
@@ -80,7 +81,7 @@ class AdminService
     public function approveUser($userId)
     {
         return DB::transaction(function () use ($userId) {
-            $user = User::where('role', 'user')->findOrFail($userId);
+            $user = User::findOrFail($userId);
             $user->update(['is_approved' => true]);
 
             AdminActivity::log('user_approved', "Approved user: {$user->first_name} {$user->last_name}", [
@@ -102,7 +103,7 @@ class AdminService
     public function rejectUser($userId)
     {
         return DB::transaction(function () use ($userId) {
-            $user = User::where('role', 'user')->findOrFail($userId);
+            $user = User::findOrFail($userId);
             
             AdminActivity::log('user_rejected', "Rejected user: {$user->first_name} {$user->last_name}", [
                 'user_id' => $user->id,
@@ -116,7 +117,7 @@ class AdminService
 
     public function getApartments($filters = [])
     {
-        $query = Apartment::with(['landlord']);
+        $query = Apartment::with(['user']);
 
         if (isset($filters['status'])) {
             // Change from availability to approval status
@@ -139,7 +140,7 @@ class AdminService
                 $q->where('title', 'like', "%{$search}%")
                     ->orWhere('city', 'like', "%{$search}%")
                     ->orWhere('governorate', 'like', "%{$search}%")
-                    ->orWhereHas('landlord', function ($q) use ($search) {
+                    ->orWhereHas('user', function ($q) use ($search) {
                         $q->where('first_name', 'like', "%{$search}%")
                             ->orWhere('last_name', 'like', "%{$search}%");
                     });
@@ -160,19 +161,19 @@ class AdminService
                 'is_available' => true, // Make it available for booking
                 'rejection_reason' => null,
                 'approved_at' => now(),
-                'approved_by' => auth()->id()
+                'approved_by' => Auth::id()
             ]);
 
             // Log activity
             \App\Models\Activity::log(
                 'apartment_approved',
                 "Approved apartment: {$apartment->title}",
-                ['apartment_id' => $apartment->id, 'admin_id' => auth()->id()]
+                ['apartment_id' => $apartment->id, 'admin_id' => Auth::id()]
             );
 
-            // Notify landlord
+            // Notify user
             NotificationService::send(
-                $apartment->landlord_id,
+                $apartment->user_id,
                 'success',
                 'Apartment Approved',
                 "Your apartment '{$apartment->title}' has been approved and is now live!"
@@ -193,19 +194,19 @@ class AdminService
                 'is_available' => false, // Keep it unavailable
                 'rejection_reason' => $reason,
                 'rejected_at' => now(),
-                'rejected_by' => auth()->id()
+                'rejected_by' => Auth::id()
             ]);
 
             // Log activity
             \App\Models\Activity::log(
                 'apartment_rejected',
                 "Rejected apartment: {$apartment->title}",
-                ['apartment_id' => $apartment->id, 'admin_id' => auth()->id(), 'reason' => $reason]
+                ['apartment_id' => $apartment->id, 'admin_id' => Auth::id(), 'reason' => $reason]
             );
 
-            // Notify landlord
+            // Notify user
             NotificationService::send(
-                $apartment->landlord_id,
+                $apartment->user_id,
                 'error',
                 'Apartment Rejected',
                 "Your apartment '{$apartment->title}' has been rejected. Reason: {$reason}"
@@ -231,7 +232,7 @@ class AdminService
 
             AdminActivity::log('apartment_deleted', "Deleted apartment: {$apartment->title}", [
                 'apartment_id' => $apartment->id,
-                'landlord_id' => $apartment->landlord_id,
+                'user_id' => $apartment->user_id,
             ]);
 
             $apartment->delete();

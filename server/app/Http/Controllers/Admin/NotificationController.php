@@ -5,12 +5,13 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Notification;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class NotificationController extends Controller
 {
     public function check()
     {
-        $notifications = Notification::where('user_id', auth()->id())
+        $notifications = Notification::where('user_id', Auth::id())
             ->where('read_at', null)
             ->latest()
             ->take(5)
@@ -26,7 +27,7 @@ class NotificationController extends Controller
             });
 
         // Mark as read
-        Notification::where('user_id', auth()->id())
+        Notification::where('user_id', Auth::id())
             ->where('read_at', null)
             ->update(['read_at' => now()]);
 
@@ -37,7 +38,7 @@ class NotificationController extends Controller
 
     public function markAsRead($id)
     {
-        $notification = Notification::where('user_id', auth()->id())
+        $notification = Notification::where('user_id', Auth::id())
             ->where('id', $id)
             ->first();
 
@@ -55,13 +56,17 @@ class NotificationController extends Controller
 
     public function getPendingUsers()
     {
-        $pendingUsers = \App\Models\User::whereIn('role', ['tenant', 'landlord'])
+        $pendingUsers = \App\Models\User::where('role', 'user')
             ->where('status', 'pending')
             ->whereNull('deleted_at')
             ->orderBy('created_at', 'desc')
             ->get();
 
         $processedNotifications = $pendingUsers->map(function ($user) {
+            if (!$user || !$user->id) {
+                return null;
+            }
+            
             return [
                 'id' => 'pending_' . $user->id,
                 'type' => 'new_user_registration',
@@ -70,17 +75,16 @@ class NotificationController extends Controller
                 'created_at' => $user->created_at,
                 'user' => [
                     'id' => $user->id,
-                    'display_id' => $user->display_id,
                     'name' => $user->first_name . ' ' . $user->last_name,
                     'email' => $user->phone,
                     'role' => $user->role,
                     'phone' => $user->phone,
                     'status' => $user->status,
-                    'profile_image_url' => $user->profile_image_url,
-                    'id_image_url' => $user->id_image_url
+                    'profile_image_url' => $user->profile_image_url ?? null,
+                    'id_image_url' => $user->id_image_url ?? null
                 ]
             ];
-        });
+        })->filter();
 
         return response()->json([
             'success' => true,
@@ -91,7 +95,7 @@ class NotificationController extends Controller
 
     public function markAllAsRead()
     {
-        Notification::where('user_id', auth()->id())
+        Notification::where('user_id', Auth::id())
             ->where('read_at', null)
             ->update(['read_at' => now()]);
 

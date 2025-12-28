@@ -10,14 +10,14 @@ class Favorite extends Model
     use HasFactory;
 
     protected $fillable = [
-        'tenant_id',
+        'user_id',
         'apartment_id',
     ];
 
     // Relationships
-    public function tenant()
+    public function user()
     {
-        return $this->belongsTo(User::class, 'tenant_id');
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function apartment()

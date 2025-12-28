@@ -7,13 +7,15 @@ use App\Models\Booking;
 use App\Models\Apartment;
 use App\Models\BookingRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class BookingController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Booking::with(['apartment.landlord', 'tenant'])
-            ->where('tenant_id', $request->user()->id);
+        $query = Booking::with(['apartment.user', 'user'])
+            ->where('user_id', $request->user()->id);
 
         // Filter by status
         if ($request->status) {
@@ -71,8 +73,8 @@ class BookingController extends Controller
             ], 422);
         }
 
-        // Prevent landlords from booking their own apartments
-        if ($apartment->landlord_id === $request->user()->id) {
+        // Allow users to book any apartment except their own
+        if ($apartment->user_id === $request->user()->id) {
             return response()->json([
                 'success' => false,
                 'message' => 'You cannot book your own apartment.',
@@ -80,7 +82,7 @@ class BookingController extends Controller
             ], 422);
         }
 
-        \DB::beginTransaction();
+        DB::beginTransaction();
         try {
             // Lock the apartment record to prevent race conditions
             $apartment = Apartment::lockForUpdate()->findOrFail($request->apartment_id);
@@ -88,7 +90,7 @@ class BookingController extends Controller
             // Check if apartment is booked for the dates
             // IMPORTANT: Only check CONFIRMED bookings, not pending ones
             if ($apartment->isBookedForDates($request->check_in, $request->check_out)) {
-                \DB::rollBack();
+                DB::rollBack();
                 return response()->json([
                     'success' => false,
                     'message' => 'Apartment is not available for selected dates.',
@@ -102,27 +104,27 @@ class BookingController extends Controller
             $totalPrice = $nights * $apartment->price_per_night;
 
             $booking = Booking::create([
-                'tenant_id' => $request->user()->id,
+                'user_id' => $request->user()->id,
                 'apartment_id' => $request->apartment_id,
                 'check_in' => $request->check_in,
                 'check_out' => $request->check_out,
                 'total_price' => $totalPrice,
                 'payment_details' => $request->payment_details,
-                'status' => 'pending', // Landlord needs to approve
+                'status' => 'pending',
             ]);
 
-            \DB::commit();
+            DB::commit();
 
-            // Send notification to apartment landlord
-            $this->notifyLandlord($booking);
+            // Send notification to apartment owner
+            $this->notifyApartmentOwner($booking);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Booking request created successfully. Waiting for landlord approval.',
-                'data' => $booking->load(['apartment.landlord', 'tenant'])
+                'message' => 'Booking request created successfully. Waiting for owner approval.',
+                'data' => $booking->load(['apartment.user', 'user'])
             ], 201);
         } catch (\Exception $e) {
-            \DB::rollBack();
+            DB::rollBack();
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to create booking',
@@ -131,11 +133,11 @@ class BookingController extends Controller
         }
     }
 
-    private function notifylandlord($booking)
+    private function notifyApartmentOwner($booking)
     {
-        // Create notification for apartment landlord
+        // Create notification for apartment owner
         \App\Models\Notification::create([
-            'user_id' => $booking->apartment->landlord_id,
+            'user_id' => $booking->apartment->user_id,
             'type' => 'booking_request',
             'title' => 'New Booking Request',
             'message' => "You have a new booking request for {$booking->apartment->title}",
@@ -145,7 +147,7 @@ class BookingController extends Controller
 
     public function update(Request $request, $id)
     {
-        $booking = Booking::where('tenant_id', $request->user()->id)
+        $booking = Booking::where('user_id', $request->user()->id)
             ->whereIn('status', ['pending', 'approved'])
             ->findOrFail($id);
 
@@ -164,7 +166,7 @@ class BookingController extends Controller
             'payment_details' => 'array',
         ]);
 
-        \DB::beginTransaction();
+        DB::beginTransaction();
         try {
             $updateData = [];
             $recalculatePrice = false;
@@ -175,7 +177,7 @@ class BookingController extends Controller
 
                 // Check availability for new dates
                 if ($booking->apartment->isBookedForDates($checkIn, $checkOut, $booking->id)) {
-                    \DB::rollBack();
+                    DB::rollBack();
                     return response()->json([
                         'success' => false,
                         'message' => 'Apartment is not available for selected dates.',
@@ -203,21 +205,21 @@ class BookingController extends Controller
             }
 
             $booking->update($updateData);
-            \DB::commit();
+            DB::commit();
 
-            // Notify landlord if dates changed
+            // Notify owner if dates changed
             if ($request->check_in || $request->check_out) {
-                $this->notifylandlordOfModification($booking);
+                $this->notifyOwnerOfModification($booking);
             }
 
             return response()->json([
                 'success' => true,
                 'message' => 'Booking updated successfully',
-                'data' => $booking->fresh(['apartment.landlord', 'tenant'])
+                'data' => $booking->fresh(['apartment.user', 'user'])
             ]);
             
         } catch (\Exception $e) {
-            \DB::rollBack();
+            DB::rollBack();
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to update booking',
@@ -226,10 +228,10 @@ class BookingController extends Controller
         }
     }
 
-    private function notifylandlordOfModification($booking)
+    private function notifyOwnerOfModification($booking)
     {
         \App\Models\Notification::create([
-            'user_id' => $booking->apartment->landlord_id,
+            'user_id' => $booking->apartment->user_id,
             'type' => 'booking_modified',
             'title' => 'Booking Modified',
             'message' => "Booking for {$booking->apartment->title} has been modified",
@@ -241,7 +243,7 @@ class BookingController extends Controller
     {
         try {
             // First, find the booking regardless of status
-            $booking = Booking::where('tenant_id', $request->user()->id)
+            $booking = Booking::where('user_id', $request->user()->id)
                 ->find($id);
 
             if (!$booking) {
@@ -321,72 +323,84 @@ class BookingController extends Controller
     }
 
 
-    public function landlordBookings(Request $request)
+    public function myApartmentBookings(Request $request)
     {
-        $bookings = Booking::with(['apartment', 'tenant'])
+        $bookings = Booking::with(['apartment', 'user'])
             ->whereHas('apartment', function($query) use ($request) {
-                $query->where('landlord_id', $request->user()->id);
+                $query->where('user_id', $request->user()->id);
             })
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
-        return response()->json($bookings);
+        return response()->json([
+            'success' => true,
+            'data' => $bookings,
+            'message' => 'Apartment bookings retrieved successfully'
+        ]);
     }
 
     public function show(Request $request, $id)
     {
-        $booking = Booking::with(['apartment.landlord', 'tenant'])
-            ->where('tenant_id', $request->user()->id)
+        $booking = Booking::with(['apartment.user', 'user'])
+            ->where('user_id', $request->user()->id)
             ->findOrFail($id);
 
-        return response()->json($booking);
+        return response()->json([
+            'success' => true,
+            'data' => $booking,
+            'message' => 'Booking details retrieved successfully'
+        ]);
     }
 
-    public function landlordShow(Request $request, $id)
+    public function apartmentBookingShow(Request $request, $id)
     {
-        $booking = Booking::with(['apartment', 'tenant'])
+        $booking = Booking::with(['apartment', 'user'])
             ->whereHas('apartment', function($query) use ($request) {
-                $query->where('landlord_id', $request->user()->id);
+                $query->where('user_id', $request->user()->id);
             })
             ->findOrFail($id);
 
-        return response()->json($booking);
+        return response()->json([
+            'success' => true,
+            'data' => $booking,
+            'message' => 'Booking details retrieved successfully'
+        ]);
     }
 
     public function approve(Request $request, $id)
     {
         try {
-            \Log::info('Attempting to approve booking', [
+            Log::info('Attempting to approve booking', [
                 'booking_id' => $id,
-                'landlord_id' => $request->user()->id,
-                'landlord_name' => $request->user()->first_name . ' ' . $request->user()->last_name
+                'owner_id' => $request->user()->id,
+                'owner_name' => $request->user()->first_name . ' ' . $request->user()->last_name
             ]);
 
             $booking = Booking::with('apartment')
                 ->whereHas('apartment', function ($query) use ($request) {
-                    $query->where('landlord_id', $request->user()->id);
+                    $query->where('user_id', $request->user()->id);
                 })
                 ->where('status', 'pending')
                 ->findOrFail($id);
 
-            \Log::info('Booking found', [
+            Log::info('Booking found', [
                 'booking_id' => $booking->id,
                 'apartment_id' => $booking->apartment_id,
                 'apartment_title' => $booking->apartment->title,
                 'current_status' => $booking->status
             ]);
 
-            \DB::beginTransaction();
+            DB::beginTransaction();
 
             $oldStatus = $booking->status;
             $booking->update(['status' => 'confirmed']);
 
-            \Log::info('Booking status updated', ['new_status' => 'confirmed']);
+            Log::info('Booking status updated', ['new_status' => 'confirmed']);
 
             // Make apartment unavailable
             $booking->apartment->update(['is_available' => false]);
 
-            \Log::info('Apartment availability updated', [
+            Log::info('Apartment availability updated', [
                 'apartment_id' => $booking->apartment_id,
                 'new_availability' => false
             ]);
@@ -405,13 +419,13 @@ class BookingController extends Controller
                 })
                 ->update(['status' => 'cancelled']);
 
-            \Log::info('Auto-rejected other bookings', ['count' => $rejectedCount]);
+            Log::info('Auto-rejected other bookings', ['count' => $rejectedCount]);
 
-            \DB::commit();
+            DB::commit();
 
             event(new \App\Events\BookingStatusChanged($booking->load('apartment'), $oldStatus, 'confirmed'));
 
-            \Log::info('Booking approved successfully', ['booking_id' => $booking->id]);
+            Log::info('Booking approved successfully', ['booking_id' => $booking->id]);
 
             return response()->json([
                 'success' => true,
@@ -419,9 +433,9 @@ class BookingController extends Controller
                 'data' => $booking
             ]);
         } catch (\Exception $e) {
-            \DB::rollBack();
+            DB::rollBack();
 
-            \Log::error('Failed to approve booking', [
+            Log::error('Failed to approve booking', [
                 'booking_id' => $id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
@@ -438,12 +452,12 @@ class BookingController extends Controller
     {
         $booking = Booking::with('apartment')
             ->whereHas('apartment', function ($query) use ($request) {
-                $query->where('landlord_id', $request->user()->id);
+                $query->where('user_id', $request->user()->id);
             })
             ->where('status', 'pending')
             ->findOrFail($id);
 
-        \DB::beginTransaction();
+        DB::beginTransaction();
         try {
             $oldStatus = $booking->status;
             $booking->update(['status' => 'cancelled']);
@@ -451,7 +465,7 @@ class BookingController extends Controller
             // Make apartment available again since booking was rejected
             $booking->apartment->update(['is_available' => true]);
 
-            \DB::commit();
+            DB::commit();
 
             event(new \App\Events\BookingStatusChanged($booking->load('apartment'), $oldStatus, 'cancelled'));
 
@@ -461,7 +475,7 @@ class BookingController extends Controller
                 'data' => $booking
             ]);
         } catch (\Exception $e) {
-            \DB::rollBack();
+            DB::rollBack();
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to reject booking'
@@ -473,18 +487,18 @@ class BookingController extends Controller
     {
         $booking = Booking::with('apartment')->findOrFail($bookingId);
 
-        \DB::beginTransaction();
+        DB::beginTransaction();
         try {
             $booking->update(['status' => 'completed']);
 
             // Make apartment available again
             $booking->apartment->update(['is_available' => true]);
 
-            \DB::commit();
+            DB::commit();
 
-            // Notify tenant that booking is completed
+            // Notify user that booking is completed
             \App\Models\Notification::create([
-                'user_id' => $booking->tenant_id,
+                'user_id' => $booking->user_id,
                 'type' => 'booking_completed',
                 'title' => 'Booking Completed',
                 'message' => "Your booking for {$booking->apartment->title} has been completed.",
@@ -493,15 +507,15 @@ class BookingController extends Controller
 
             return true;
         } catch (\Exception $e) {
-            \DB::rollBack();
+            DB::rollBack();
             return false;
         }
     }
 
     public function history(Request $request)
     {
-        $query = Booking::with(['apartment.landlord', 'tenant'])
-            ->where('tenant_id', $request->user()->id);
+        $query = Booking::with(['apartment.user', 'user'])
+            ->where('user_id', $request->user()->id);
 
         // Filter by type
         $type = $request->get('type', 'all');
@@ -540,7 +554,7 @@ class BookingController extends Controller
         // Add additional info for each booking
         $bookings->getCollection()->transform(function ($booking) {
             $booking->can_review = $booking->status === 'completed' && 
-                                 !$booking->reviews()->where('user_id', $booking->tenant_id)->exists();
+                                 !$booking->reviews()->where('user_id', $booking->user_id)->exists();
             $booking->can_cancel = in_array($booking->status, ['pending', 'approved']) && 
                                  $booking->check_in->isFuture();
             $booking->can_modify = in_array($booking->status, ['pending', 'approved']) && 
@@ -557,8 +571,8 @@ class BookingController extends Controller
 
     public function upcoming(Request $request)
     {
-        $bookings = Booking::with(['apartment.landlord', 'tenant'])
-            ->where('tenant_id', $request->user()->id)
+        $bookings = Booking::with(['apartment.user', 'user'])
+            ->where('user_id', $request->user()->id)
             ->whereIn('status', ['pending', 'approved'])
             ->where('check_in', '>=', now())
             ->orderBy('check_in', 'asc')
@@ -599,7 +613,7 @@ class BookingController extends Controller
         $conflicts = [];
         if (!$isAvailable) {
             $conflicts = $apartment->bookings()
-                ->where('status', 'approved')
+                ->where('status', 'confirmed')
                 ->where(function ($query) use ($request) {
                     $query->where(function ($q) use ($request) {
                         $q->where('check_in', '<=', $request->check_in)
@@ -650,6 +664,15 @@ class BookingController extends Controller
                 'success' => false,
                 'message' => 'This apartment is not available for booking yet.',
             ], 403);
+        }
+
+        // Check if user is the apartment owner
+        if ($apartment->user_id === $request->user()->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You cannot request to rent your own property.',
+                'errors' => ['apartment_id' => ['Cannot request to rent own property']]
+            ], 422);
         }
 
         // Check if user already has pending request for these dates
@@ -709,8 +732,8 @@ class BookingController extends Controller
             'status' => 'pending',
         ]);
 
-        // Notify landlord
-        $this->notifyLandlordOfBookingRequest($bookingRequest);
+        // Notify apartment owner
+        $this->notifyOwnerOfBookingRequest($bookingRequest);
 
         return response()->json([
             'success' => true,
@@ -719,10 +742,10 @@ class BookingController extends Controller
         ], 201);
     }
 
-    private function notifyLandlordOfBookingRequest($bookingRequest)
+    private function notifyOwnerOfBookingRequest($bookingRequest)
     {
         \App\Models\Notification::create([
-            'user_id' => $bookingRequest->apartment->landlord_id,
+            'user_id' => $bookingRequest->apartment->user_id,
             'type' => 'booking_request',
             'title' => 'New Booking Request',
             'message' => "You have a new booking request for {$bookingRequest->apartment->title} from {$bookingRequest->user->first_name}",

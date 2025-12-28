@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'app_state.dart';
 import 'providers.dart';
 import '../../presentation/theme_provider.dart';
 

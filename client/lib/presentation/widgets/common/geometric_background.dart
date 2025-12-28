@@ -16,7 +16,7 @@ class GeometricBackground extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: RadialGradient(
-                colors: [const Color(0xFFff6f2d).withOpacity(0.3), Colors.transparent],
+                colors: [const Color(0xFFff6f2d).withValues(alpha: 0.3), Colors.transparent],
               ),
             ),
           ),
@@ -52,7 +52,7 @@ class GeometricBackground extends StatelessWidget {
                       height: 4,
                       margin: const EdgeInsets.all(3),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.7),
+                        color: Colors.white.withValues(alpha: 0.7),
                         borderRadius: BorderRadius.circular(1),
                       ),
                     ),
