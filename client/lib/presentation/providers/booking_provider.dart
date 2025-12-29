@@ -4,30 +4,30 @@ import '../../core/network/api_service.dart';
 
 class BookingState {
   final List<Booking> bookings;
+  final List<Booking> apartmentBookings;
   final List<Map<String, dynamic>> bookingRequests;
-  final bool isLoading;
   final String? error;
   final String? successMessage;
 
   const BookingState({
     this.bookings = const [],
+    this.apartmentBookings = const [],
     this.bookingRequests = const [],
-    this.isLoading = false,
     this.error,
     this.successMessage,
   });
 
   BookingState copyWith({
     List<Booking>? bookings,
+    List<Booking>? apartmentBookings,
     List<Map<String, dynamic>>? bookingRequests,
-    bool? isLoading,
     String? error,
     String? successMessage,
   }) {
     return BookingState(
       bookings: bookings ?? this.bookings,
+      apartmentBookings: apartmentBookings ?? this.apartmentBookings,
       bookingRequests: bookingRequests ?? this.bookingRequests,
-      isLoading: isLoading ?? this.isLoading,
       error: error,
       successMessage: successMessage,
     );
@@ -40,37 +40,73 @@ class BookingNotifier extends StateNotifier<BookingState> {
   BookingNotifier(this._apiService) : super(const BookingState());
 
   Future<void> loadMyBookings() async {
-    state = state.copyWith(isLoading: true, error: null);
-    
+    print('  📱 loadMyBookings API call started');
     try {
       final result = await _apiService.getMyBookings();
+      print('  📡 API response received');
+      print('  Full Response: $result');
+      
+      List<Booking> bookingList = [];
       
       if (result['success'] == true) {
-        final bookingList = (result['data'] as List?)
-            ?.map((json) => Booking.fromJson(json))
-            .toList() ?? [];
+        final data = result['data'];
+        print('  🔍 Data type: ${data.runtimeType}');
         
+        if (data is List) {
+          print('  ➡️ Data is a List');
+          bookingList = (data as List)
+              .map((json) {
+                try {
+                  return Booking.fromJson(json as Map<String, dynamic>);
+                } catch (e) {
+                  print('  ⚠️ Error parsing booking: $e');
+                  print('  JSON data: $json');
+                  return null;
+                }
+              })
+              .whereType<Booking>()
+              .toList();
+        } else if (data is Map) {
+          final dataList = data['data'];
+          if (dataList is List) {
+            print('  ➡️ Data is a paginated Map');
+            bookingList = (dataList as List)
+                .map((json) {
+                  try {
+                    return Booking.fromJson(json as Map<String, dynamic>);
+                  } catch (e) {
+                    print('  ⚠️ Error parsing booking: $e');
+                    print('  JSON data: $json');
+                    return null;
+                  }
+                })
+                .whereType<Booking>()
+                .toList();
+          }
+        }
+        
+        print('  ✅ Loaded ${bookingList.length} user bookings');
         state = state.copyWith(
           bookings: bookingList,
-          isLoading: false,
         );
       } else {
+        final errorMsg = result['message'] ?? result.toString();
+        print('  ⚠️ API error in loadMyBookings: $errorMsg');
+        print('  Success field: ${result['success']}');
         state = state.copyWith(
-          error: result['message'] ?? 'Failed to load bookings',
-          isLoading: false,
+          bookings: [],
         );
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('  ❌ Exception in loadMyBookings: $e');
+      print('  Stack: $stackTrace');
       state = state.copyWith(
-        error: e.toString(),
-        isLoading: false,
+        bookings: [],
       );
     }
   }
 
   Future<void> loadMyBookingRequests() async {
-    state = state.copyWith(isLoading: true, error: null);
-    
     try {
       final result = await _apiService.getMyBookingRequests();
       
@@ -80,18 +116,16 @@ class BookingNotifier extends StateNotifier<BookingState> {
         
         state = state.copyWith(
           bookingRequests: requestList,
-          isLoading: false,
+          error: null,
         );
       } else {
         state = state.copyWith(
           error: result['message'] ?? 'Failed to load booking requests',
-          isLoading: false,
         );
       }
     } catch (e) {
       state = state.copyWith(
         error: e.toString(),
-        isLoading: false,
       );
     }
   }
@@ -103,8 +137,6 @@ class BookingNotifier extends StateNotifier<BookingState> {
     required int guests,
     String? message,
   }) async {
-    state = state.copyWith(isLoading: true, error: null);
-    
     try {
       final result = await _apiService.createBookingRequest(
         apartmentId: apartmentId,
@@ -116,7 +148,6 @@ class BookingNotifier extends StateNotifier<BookingState> {
       
       if (result['success'] == true) {
         state = state.copyWith(
-          isLoading: false,
           successMessage: result['message'] ?? 'Booking request sent successfully',
         );
         await loadMyBookingRequests();
@@ -124,14 +155,12 @@ class BookingNotifier extends StateNotifier<BookingState> {
       } else {
         state = state.copyWith(
           error: result['message'] ?? 'Failed to create booking request',
-          isLoading: false,
         );
         return false;
       }
     } catch (e) {
       state = state.copyWith(
         error: e.toString(),
-        isLoading: false,
       );
       return false;
     }
@@ -160,9 +189,81 @@ class BookingNotifier extends StateNotifier<BookingState> {
     state = state.copyWith(error: null, successMessage: null);
   }
 
+  Future<void> loadMyApartmentBookings() async {
+    print('  📱 loadMyApartmentBookings API call started');
+    try {
+      final result = await _apiService.getMyApartmentBookings();
+      print('  📡 API response received');
+      print('  Full Response: $result');
+      
+      List<Booking> bookingList = [];
+      
+      if (result['success'] == true) {
+        final data = result['data'];
+        print('  🔍 Data type: ${data.runtimeType}');
+        
+        if (data is List) {
+          print('  ➡️ Data is a List');
+          bookingList = (data as List)
+              .map((json) {
+                try {
+                  return Booking.fromJson(json as Map<String, dynamic>);
+                } catch (e) {
+                  print('  ⚠️ Error parsing booking: $e');
+                  print('  JSON data: $json');
+                  return null;
+                }
+              })
+              .whereType<Booking>()
+              .toList();
+        } else if (data is Map) {
+          final dataList = data['data'];
+          if (dataList is List) {
+            print('  ➡️ Data is a paginated Map');
+            bookingList = (dataList as List)
+                .map((json) {
+                  try {
+                    return Booking.fromJson(json as Map<String, dynamic>);
+                  } catch (e) {
+                    print('  ⚠️ Error parsing booking: $e');
+                    print('  JSON data: $json');
+                    return null;
+                  }
+                })
+                .whereType<Booking>()
+                .toList();
+          }
+        }
+        
+        print('  ✅ Loaded ${bookingList.length} apartment bookings');
+        state = state.copyWith(
+          apartmentBookings: bookingList,
+        );
+      } else {
+        final errorMsg = result['message'] ?? result.toString();
+        print('  ⚠️ API error in loadMyApartmentBookings: $errorMsg');
+        print('  Success field: ${result['success']}');
+        state = state.copyWith(
+          apartmentBookings: [],
+        );
+      }
+    } catch (e, stackTrace) {
+      print('  ❌ Exception in loadMyApartmentBookings: $e');
+      print('  Stack: $stackTrace');
+      state = state.copyWith(
+        apartmentBookings: [],
+      );
+    }
+  }
+
+  Future<void> loadAllBookingsData() async {
+    await Future.wait([
+      loadMyBookings(),
+      loadMyApartmentBookings(),
+    ], eagerError: false);
+  }
+
   Future<void> loadApartmentBookingRequests() async {
-    state = state.copyWith(isLoading: true, error: null);
-    
     try {
       final result = await _apiService.getApartmentBookingRequests();
       
@@ -172,31 +273,25 @@ class BookingNotifier extends StateNotifier<BookingState> {
         
         state = state.copyWith(
           bookingRequests: requestList,
-          isLoading: false,
         );
       } else {
         state = state.copyWith(
           error: result['message'] ?? 'Failed to load booking requests',
-          isLoading: false,
         );
       }
     } catch (e) {
       state = state.copyWith(
         error: e.toString(),
-        isLoading: false,
       );
     }
   }
 
   Future<bool> approveBookingRequest(String requestId) async {
-    state = state.copyWith(isLoading: true, error: null);
-    
     try {
       final result = await _apiService.approveBookingRequest(requestId);
       
       if (result['success'] == true) {
         state = state.copyWith(
-          isLoading: false,
           successMessage: result['message'] ?? 'Booking request approved',
         );
         await loadApartmentBookingRequests();
@@ -204,28 +299,23 @@ class BookingNotifier extends StateNotifier<BookingState> {
       } else {
         state = state.copyWith(
           error: result['message'] ?? 'Failed to approve booking request',
-          isLoading: false,
         );
         return false;
       }
     } catch (e) {
       state = state.copyWith(
         error: e.toString(),
-        isLoading: false,
       );
       return false;
     }
   }
 
   Future<bool> rejectBookingRequest(String requestId) async {
-    state = state.copyWith(isLoading: true, error: null);
-    
     try {
       final result = await _apiService.rejectBookingRequest(requestId);
       
       if (result['success'] == true) {
         state = state.copyWith(
-          isLoading: false,
           successMessage: result['message'] ?? 'Booking request rejected',
         );
         await loadApartmentBookingRequests();
@@ -233,28 +323,23 @@ class BookingNotifier extends StateNotifier<BookingState> {
       } else {
         state = state.copyWith(
           error: result['message'] ?? 'Failed to reject booking request',
-          isLoading: false,
         );
         return false;
       }
     } catch (e) {
       state = state.copyWith(
         error: e.toString(),
-        isLoading: false,
       );
       return false;
     }
   }
 
   Future<bool> cancelBooking(String bookingId) async {
-    state = state.copyWith(isLoading: true, error: null);
-    
     try {
       final result = await _apiService.cancelBooking(bookingId);
       
       if (result['success'] == true) {
         state = state.copyWith(
-          isLoading: false,
           successMessage: result['message'] ?? 'Booking cancelled successfully',
         );
         await loadMyBookings();
@@ -262,14 +347,12 @@ class BookingNotifier extends StateNotifier<BookingState> {
       } else {
         state = state.copyWith(
           error: result['message'] ?? 'Failed to cancel booking',
-          isLoading: false,
         );
         return false;
       }
     } catch (e) {
       state = state.copyWith(
         error: e.toString(),
-        isLoading: false,
       );
       return false;
     }

@@ -49,7 +49,22 @@ Route::post('/broadcasting/auth', [\App\Http\Controllers\Api\BroadcastController
     ->middleware('auth:sanctum');
 
 
-//0 Protected routes
+//0 Routes that require authentication but not approval (view bookings, make requests, etc)
+Route::middleware(['auth:sanctum'])->group(function () {
+    //8A Booking Viewing (allowed for all authenticated users)
+    Route::get('/bookings', [BookingController::class, 'index']);
+    Route::get('/bookings/{id}', [BookingController::class, 'show']);
+    Route::get('/bookings/history', [BookingController::class, 'history']);
+    Route::get('/bookings/upcoming', [BookingController::class, 'upcoming']);
+    Route::get('/my-apartment-bookings', [BookingController::class, 'myApartmentBookings']);
+    Route::get('/my-apartment-bookings/{id}', [BookingController::class, 'apartmentBookingShow']);
+    Route::get('/bookings/check-availability/{apartmentId}', [BookingController::class, 'checkAvailability']);
+    
+    // Debug endpoint
+    Route::get('/debug/bookings-debug', [BookingController::class, 'debugBookings']);
+});
+
+//0 Protected routes (require approval)
 Route::middleware(['auth:sanctum', 'approved'])->group(function () {
     //1 Auth & Profile
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -98,8 +113,6 @@ Route::middleware(['auth:sanctum', 'approved'])->group(function () {
     Route::delete('/apartments/{id}', [ApartmentController::class, 'destroy']);
     Route::get('/my-apartments', [ApartmentController::class, 'myApartments']);
     Route::post('/apartments/{id}/toggle-availability', [ApartmentController::class, 'toggleAvailability']);
-    Route::get('/my-apartment-bookings', [BookingController::class, 'myApartmentBookings']);
-    Route::get('/my-apartment-bookings/{id}', [BookingController::class, 'apartmentBookingShow']);
     Route::post('/bookings/{id}/approve', [BookingController::class, 'approve']);
     Route::post('/bookings/{id}/reject', [BookingController::class, 'reject']);
     Route::get('/my-apartment-booking-requests', [BookingRequestController::class, 'myApartmentRequests']);
@@ -116,19 +129,12 @@ Route::middleware(['auth:sanctum', 'approved'])->group(function () {
     Route::post('/rental-applications/{id}/reject', [RentalApplicationController::class, 'reject']);
 
 
-    //8 Booking Management
-    Route::get('/bookings/history', [BookingController::class, 'history']);
-    Route::get('/bookings/upcoming', [BookingController::class, 'upcoming']);
+    //8 Booking Management (Create/Update/Delete - requires approval)
     Route::post('/booking-requests', [BookingController::class, 'requestBooking']);
     Route::get('/my-booking-requests', [BookingRequestController::class, 'myRequests']);
-    Route::get('/bookings', [BookingController::class, 'index']);
-    Route::get('/bookings/{id}', [BookingController::class, 'show']);
     Route::post('/bookings', [BookingController::class, 'store']);
     Route::put('/bookings/{id}', [BookingController::class, 'update']);
     Route::delete('/bookings/{id}', [BookingController::class, 'destroy']);
-
-    //9 Availability check (available to all authenticated users)
-    Route::get('/bookings/check-availability/{apartmentId}', [BookingController::class, 'checkAvailability']);
 
 
     //10 Reviews (Available to all users)
@@ -166,6 +172,7 @@ Route::middleware(['auth:sanctum', 'approved'])->group(function () {
     Route::get('/debug/notifications', [\App\Http\Controllers\Api\DebugController::class, 'checkNotifications']);
     Route::post('/debug/force-notification', [\App\Http\Controllers\Api\DebugController::class, 'forceCreateNotification']);
     Route::get('/debug/rental-applications', [\App\Http\Controllers\Api\DebugController::class, 'checkRentalApplications']);
+    Route::get('/debug/bookings', [BookingController::class, 'debugBookings']);
 
 
     //16 Admin API routes (protected by admin middleware)

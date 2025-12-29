@@ -36,41 +36,60 @@ class ErrorHandler {
   static void showError(BuildContext context, dynamic error, {String? customMessage}) {
     final appError = _parseError(error, customMessage);
     
+    // Handle multiline messages
+    final messageLines = appError.message.split('\n');
+    final mainMessage = messageLines.first;
+    final additionalLines = messageLines.skip(1).join('\n');
+    final finalDetails = additionalLines.isEmpty ? appError.details : '$additionalLines${appError.details != null ? '\n\n${appError.details}' : ''}';
+    
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(_getErrorIcon(appError.type), color: Colors.white),
-                const SizedBox(width: 8),
-                Expanded(
+        content: SizedBox(
+          width: double.maxFinite,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(_getErrorIcon(appError.type), color: Colors.white),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      mainMessage,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                    ),
+                  ),
+                ],
+              ),
+              if (finalDetails != null && finalDetails.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
                   child: Text(
-                    appError.message,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    finalDetails,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.white.withValues(alpha: 0.95),
+                      height: 1.5,
+                    ),
                   ),
                 ),
-              ],
-            ),
-            if (appError.details != null) ...[
-              const SizedBox(height: 4),
-              Text(
-                appError.details!,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.white.withValues(alpha: 0.8),
-                ),
-              ),
-            ]
-          ],
+              ]
+            ],
+          ),
         ),
         backgroundColor: _getErrorColor(appError.type),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         margin: const EdgeInsets.all(16),
-        duration: Duration(seconds: appError.type == ErrorType.network ? 6 : 4),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        duration: Duration(seconds: finalDetails != null && finalDetails.isNotEmpty ? 6 : 4),
         action: appError.type == ErrorType.network
             ? SnackBarAction(
                 label: 'Retry',

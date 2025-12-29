@@ -22,7 +22,7 @@ return new class extends Migration
             $table->timestamp('responded_at')->nullable();
             $table->timestamps();
             
-            $table->unique(['user_id', 'apartment_id', 'submission_attempt']);
+            $table->unique(['user_id', 'apartment_id', 'submission_attempt'], 'rental_apps_unique');
         });
     }
 

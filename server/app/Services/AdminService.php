@@ -22,11 +22,11 @@ class AdminService
             'total_apartments' => Apartment::count(),
             'available_apartments' => Apartment::where('is_available', true)->count(),
             'total_bookings' => Booking::count(),
-            'pending_bookings' => Booking::where('status', 'pending')->count(),
-            'confirmed_bookings' => Booking::where('status', 'confirmed')->count(),
-            'completed_bookings' => Booking::where('status', 'completed')->count(),
-            'total_revenue' => Booking::where('status', 'completed')->sum('total_price') ?? 0,
-            'monthly_revenue' => Booking::where('status', 'completed')
+            'pending_bookings' => Booking::where('status', Booking::STATUS_PENDING)->count(),
+            'confirmed_bookings' => Booking::where('status', Booking::STATUS_CONFIRMED)->count(),
+            'completed_bookings' => Booking::where('status', Booking::STATUS_COMPLETED)->count(),
+            'total_revenue' => Booking::where('status', Booking::STATUS_COMPLETED)->sum('total_price') ?? 0,
+            'monthly_revenue' => Booking::where('status', Booking::STATUS_COMPLETED)
                 ->whereMonth('created_at', Carbon::now()->month)
                 ->sum('total_price') ?? 0,
         ];

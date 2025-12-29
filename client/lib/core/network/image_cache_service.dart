@@ -12,12 +12,15 @@ class ImageCacheService {
     if (_cache.containsKey(url)) return;
     
     try {
-      final response = await http.get(Uri.parse(url));
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {'Keep-Alive': 'true'},
+      );
       if (response.statusCode == 200) {
         _cache[url] = response.bodyBytes;
       }
     } catch (e) {
-      // Ignore cache errors
+      // ! : Handle error appropriately
     }
   }
 

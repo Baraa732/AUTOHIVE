@@ -149,17 +149,27 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
           if (result['success'] == true) {
             Navigator.pop(context, true);
           } else {
+            String errorMessage = result['message'] ?? 'Failed to create booking request';
+            String? errorDetails = result['details'];
+            
+            // Combine message and details if details exist
+            if (errorDetails != null && errorDetails.isNotEmpty) {
+              errorMessage = '$errorMessage\n\n$errorDetails';
+            }
+            
+            print('❌ Booking creation failed: $errorMessage');
+            
             ErrorHandler.showError(
               context,
               null,
-              customMessage:
-                  result['message'] ?? 'Failed to create booking request',
+              customMessage: errorMessage,
             );
           }
         }
       } catch (e) {
         if (mounted) {
           setState(() => _isLoading = false);
+          print('❌ Exception caught in _submitBooking: $e');
           ErrorHandler.showError(context, e);
         }
       }

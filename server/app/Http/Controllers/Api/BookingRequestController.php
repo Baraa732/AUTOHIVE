@@ -13,8 +13,10 @@ class BookingRequestController extends Controller
 {
     public function myRequests(Request $request)
     {
-        $requests = BookingRequest::with(['apartment.landlord'])
+        // Load pending bookings created by the current user
+        $requests = Booking::with(['apartment.user', 'user'])
             ->where('user_id', $request->user()->id)
+            ->where('status', Booking::STATUS_PENDING)
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
@@ -25,13 +27,14 @@ class BookingRequestController extends Controller
         ]);
     }
 
-    public function landlordRequests(Request $request)
+    public function myApartmentRequests(Request $request)
     {
-        $requests = BookingRequest::with(['user', 'apartment'])
+        // Load pending bookings for apartments owned by the current user
+        $requests = Booking::with(['user', 'apartment'])
             ->whereHas('apartment', function ($query) use ($request) {
                 $query->where('user_id', $request->user()->id);
             })
-            ->where('status', 'pending')
+            ->where('status', Booking::STATUS_PENDING)
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
@@ -44,70 +47,59 @@ class BookingRequestController extends Controller
 
     public function approveRequest(Request $request, $id)
     {
-        $bookingRequest = BookingRequest::with(['apartment', 'user'])
+        $booking = Booking::with(['apartment', 'user'])
             ->whereHas('apartment', function ($query) use ($request) {
                 $query->where('user_id', $request->user()->id);
             })
-            ->where('status', 'pending')
+            ->where('status', Booking::STATUS_PENDING)
             ->findOrFail($id);
 
         DB::beginTransaction();
         try {
-            // Update the approved request
-            $bookingRequest->update(['status' => 'approved']);
-
-            // Create actual booking
-            $booking = Booking::create([
-                'user_id' => $bookingRequest->user_id,
-                'apartment_id' => $bookingRequest->apartment_id,
-                'check_in' => $bookingRequest->check_in,
-                'check_out' => $bookingRequest->check_out,
-                'total_price' => $bookingRequest->total_price,
-                'status' => 'confirmed',
-                'booking_request_id' => $bookingRequest->id,
-            ]);
+            // Update booking status to confirmed
+            $booking->update(['status' => Booking::STATUS_CONFIRMED]);
 
             // Mark apartment as unavailable
-            $bookingRequest->apartment->update(['is_available' => false]);
+            $booking->apartment->update(['is_available' => false]);
 
-            // Reject all other pending requests for overlapping dates
-            BookingRequest::where('apartment_id', $bookingRequest->apartment_id)
-                ->where('id', '!=', $bookingRequest->id)
-                ->where('status', 'pending')
-                ->where(function ($query) use ($bookingRequest) {
-                    $query->whereBetween('check_in', [$bookingRequest->check_in, $bookingRequest->check_out])
-                        ->orWhereBetween('check_out', [$bookingRequest->check_in, $bookingRequest->check_out])
-                        ->orWhere(function ($q) use ($bookingRequest) {
-                            $q->where('check_in', '<=', $bookingRequest->check_in)
-                                ->where('check_out', '>=', $bookingRequest->check_out);
+            // Reject all other pending bookings for overlapping dates
+            Booking::where('apartment_id', $booking->apartment_id)
+                ->where('id', '!=', $booking->id)
+                ->where('status', Booking::STATUS_PENDING)
+                ->where(function ($query) use ($booking) {
+                    $query->whereBetween('check_in', [$booking->check_in, $booking->check_out])
+                        ->orWhereBetween('check_out', [$booking->check_in, $booking->check_out])
+                        ->orWhere(function ($q) use ($booking) {
+                            $q->where('check_in', '<=', $booking->check_in)
+                                ->where('check_out', '>=', $booking->check_out);
                         });
                 })
-                ->update(['status' => 'rejected']);
+                ->update(['status' => Booking::STATUS_REJECTED]);
 
             DB::commit();
 
             // Notify the approved user
             \App\Models\Notification::create([
-                'user_id' => $bookingRequest->user_id,
+                'user_id' => $booking->user_id,
                 'type' => 'booking_approved',
                 'title' => 'Booking Approved',
-                'message' => "Your booking request for {$bookingRequest->apartment->title} has been approved!",
+                'message' => "Your booking request for {$booking->apartment->title} has been approved!",
                 'data' => ['booking_id' => $booking->id]
             ]);
 
             // Notify rejected users
-            $rejectedRequests = BookingRequest::where('apartment_id', $bookingRequest->apartment_id)
-                ->where('status', 'rejected')
+            $rejectedBookings = Booking::where('apartment_id', $booking->apartment_id)
+                ->where('status', Booking::STATUS_REJECTED)
                 ->where('updated_at', '>=', now()->subMinute())
                 ->get();
 
-            foreach ($rejectedRequests as $rejected) {
+            foreach ($rejectedBookings as $rejectedBooking) {
                 \App\Models\Notification::create([
-                    'user_id' => $rejected->user_id,
+                    'user_id' => $rejectedBooking->user_id,
                     'type' => 'booking_rejected',
                     'title' => 'Booking Request Rejected',
-                    'message' => "Your booking request for {$bookingRequest->apartment->title} was not approved.",
-                    'data' => ['booking_request_id' => $rejected->id]
+                    'message' => "Your booking request for {$booking->apartment->title} was not approved.",
+                    'data' => ['booking_id' => $rejectedBooking->id]
                 ]);
             }
 
@@ -127,22 +119,22 @@ class BookingRequestController extends Controller
 
     public function rejectRequest(Request $request, $id)
     {
-        $bookingRequest = BookingRequest::with(['apartment', 'user'])
+        $booking = Booking::with(['apartment', 'user'])
             ->whereHas('apartment', function ($query) use ($request) {
                 $query->where('user_id', $request->user()->id);
             })
-            ->where('status', 'pending')
+            ->where('status', Booking::STATUS_PENDING)
             ->findOrFail($id);
 
-        $bookingRequest->update(['status' => 'rejected']);
+        $booking->update(['status' => Booking::STATUS_REJECTED]);
 
         // Notify user
         \App\Models\Notification::create([
-            'user_id' => $bookingRequest->user_id,
+            'user_id' => $booking->user_id,
             'type' => 'booking_rejected',
             'title' => 'Booking Request Rejected',
-            'message' => "Your booking request for {$bookingRequest->apartment->title} has been rejected.",
-            'data' => ['booking_request_id' => $bookingRequest->id]
+            'message' => "Your booking request for {$booking->apartment->title} has been rejected.",
+            'data' => ['booking_id' => $booking->id]
         ]);
 
         return response()->json([

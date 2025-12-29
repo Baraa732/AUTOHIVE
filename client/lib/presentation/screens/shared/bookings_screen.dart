@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../core/core.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/booking_provider.dart';
 
 class BookingsScreen extends ConsumerStatefulWidget {
   const BookingsScreen({super.key});
@@ -12,17 +13,13 @@ class BookingsScreen extends ConsumerStatefulWidget {
 
 class _BookingsScreenState extends ConsumerState<BookingsScreen>
     with SingleTickerProviderStateMixin {
-  final ApiService _apiService = ApiService();
-  
-  List<Booking> _bookings = [];
-  bool _isLoading = true;
   late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _loadBookings();
+    _loadData();
   }
 
   @override
@@ -31,59 +28,15 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
     super.dispose();
   }
 
-  Future<void> _loadBookings() async {
-    if (!mounted) return;
-    setState(() => _isLoading = true);
-    try {
-      final result = await _apiService.getMyBookings();
-      if (!mounted) return;
-      if (result['success'] == true) {
-        final data = result['data'];
-        List<Booking> bookings = [];
-        
-        if (data is Map && data['data'] != null) {
-          bookings = (data['data'] as List)
-              .map((json) => Booking.fromJson(json))
-              .toList();
-        } else if (data is List) {
-          bookings = data.map((json) => Booking.fromJson(json)).toList();
-        }
-        
-        if (mounted) {
-          setState(() {
-            _bookings = bookings;
-            _isLoading = false;
-          });
-        }
-      } else {
-        if (mounted) {
-          setState(() => _isLoading = false);
-          ErrorHandler.showError(context, null,
-              customMessage: result['message'] ?? 'Failed to load bookings');
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isLoading = false);
-        ErrorHandler.showError(context, e);
-      }
-    }
+  Future<void> _loadData() async {
+    final bookingNotifier = ref.read(bookingProvider.notifier);
+    await bookingNotifier.loadAllBookingsData();
   }
-
-  List<Booking> get _myBookings => _bookings
-      .where((b) => b.userId == ref.read(authProvider).user?.id)
-      .toList();
-
-  List<Booking> get _receivedBookings => _bookings
-      .where((b) {
-        final apartmentOwnerId = b.apartment?['user_id']?.toString();
-        return apartmentOwnerId == ref.read(authProvider).user?.id;
-      })
-      .toList();
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bookingState = ref.watch(bookingProvider);
     
     return Scaffold(
       backgroundColor: AppTheme.getBackgroundColor(isDark),
@@ -108,14 +61,41 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
           ],
         ),
       ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFFff6f2d)))
+      body: bookingState.error != null
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Error loading bookings',
+                    style: TextStyle(
+                      color: AppTheme.getTextColor(isDark),
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    bookingState.error ?? 'Unknown error',
+                    style: TextStyle(
+                      color: AppTheme.getSubtextColor(isDark),
+                      fontSize: 14,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: _loadData,
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            )
           : TabBarView(
               controller: _tabController,
               children: [
-                _buildBookingsList(_myBookings, 'No bookings yet'),
-                _buildBookingsList(_receivedBookings, 'No received bookings'),
+                _buildBookingsList(bookingState.bookings, 'No bookings yet'),
+                _buildBookingsList(bookingState.apartmentBookings, 'No received bookings'),
               ],
             ),
     );
@@ -137,7 +117,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
     }
 
     return RefreshIndicator(
-      onRefresh: _loadBookings,
+      onRefresh: _loadData,
       color: AppTheme.primaryOrange,
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
@@ -152,6 +132,11 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
 
   Widget _buildBookingCard(Booking booking) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final userName = booking.user?['first_name'] != null
+        ? '${booking.user?['first_name']} ${booking.user?['last_name'] ?? ''}'
+        : 'User';
+    final nights = booking.checkOut.difference(booking.checkIn).inDays;
+    final pricePerNight = nights > 0 ? (booking.totalPrice / nights).toStringAsFixed(2) : '0.00';
     
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -184,12 +169,36 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
                       fontWeight: FontWeight.bold,
                       color: AppTheme.getTextColor(isDark),
                     ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                const SizedBox(width: 8),
                 _buildStatusBadge(booking.status),
               ],
             ),
             const SizedBox(height: 12),
+            Row(
+              children: [
+                Icon(
+                  Icons.person,
+                  size: 16,
+                  color: AppTheme.getSubtextColor(isDark),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    userName,
+                    style: TextStyle(
+                      color: AppTheme.getSubtextColor(isDark),
+                      fontSize: 14,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
             Row(
               children: [
                 Icon(
@@ -198,29 +207,44 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
                   color: AppTheme.getSubtextColor(isDark),
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  '${DateFormat('MMM d, y').format(booking.checkIn)} - ${DateFormat('MMM d, y').format(booking.checkOut)}',
-                  style: TextStyle(
-                    color: AppTheme.getSubtextColor(isDark),
-                    fontSize: 14,
+                Expanded(
+                  child: Text(
+                    '${DateFormat('MMM d, y').format(booking.checkIn)} - ${DateFormat('MMM d, y').format(booking.checkOut)} ($nights nights)',
+                    style: TextStyle(
+                      color: AppTheme.getSubtextColor(isDark),
+                      fontSize: 14,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Icon(
-                  Icons.attach_money,
-                  size: 16,
-                  color: AppTheme.getSubtextColor(isDark),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.attach_money,
+                      size: 16,
+                      color: AppTheme.primaryOrange,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '\$${pricePerNight}/night',
+                      style: TextStyle(
+                        color: AppTheme.getSubtextColor(isDark),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
                 Text(
-                  '\$${booking.totalPrice}',
+                  'Total: \$${booking.totalPrice.toStringAsFixed(2)}',
                   style: TextStyle(
                     color: AppTheme.primaryOrange,
-                    fontSize: 16,
+                    fontSize: 15,
                     fontWeight: FontWeight.bold,
                   ),
                 ),

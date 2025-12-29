@@ -324,6 +324,14 @@ class ApiService {
     try {
       final headers = await _getHeaders();
       final apiUrl = await AppConfig.baseUrl;
+      
+      print('📝 Creating booking request:');
+      print('   URL: $apiUrl/booking-requests');
+      print('   ApartmentID: $apartmentId');
+      print('   CheckIn: $checkIn');
+      print('   CheckOut: $checkOut');
+      print('   Guests: $guests');
+      
       final response = await http.post(
         Uri.parse('$apiUrl/booking-requests'),
         headers: headers,
@@ -336,13 +344,52 @@ class ApiService {
         }),
       ).timeout(const Duration(seconds: 30));
       
+      print('   Status Code: ${response.statusCode}');
+      print('   Response Body: ${response.body}');
+      
       final data = json.decode(response.body);
-      return {
-        'success': response.statusCode == 201,
-        'message': data['message'] ?? 'Booking request sent successfully',
-        'data': data['data']
-      };
+      
+      if (response.statusCode == 201) {
+        return {
+          'success': true,
+          'message': data['message'] ?? 'Booking request sent successfully',
+          'data': data['data']
+        };
+      } else {
+        // Handle error response
+        String errorMessage = 'Failed to create booking request';
+        String? errorDetails;
+        
+        if (data is Map<String, dynamic>) {
+          errorMessage = data['message'] ?? errorMessage;
+          
+          // Extract validation errors if present
+          if (data['errors'] is Map) {
+            final errors = data['errors'] as Map<String, dynamic>;
+            final errorList = <String>[];
+            errors.forEach((key, value) {
+              if (value is List && value.isNotEmpty) {
+                errorList.add('${key.replaceAll('_', ' ')}: ${value.first}');
+              } else if (value is String) {
+                errorList.add('${key.replaceAll('_', ' ')}: $value');
+              }
+            });
+            if (errorList.isNotEmpty) {
+              errorDetails = errorList.join('\n');
+            }
+          }
+        }
+        
+        return {
+          'success': false,
+          'message': errorMessage,
+          'details': errorDetails,
+          'data': null
+        };
+      }
     } catch (e, stackTrace) {
+      print('❌ Exception in createBookingRequest: $e');
+      print('Stack Trace: $stackTrace');
       ErrorHandler.logError('createBookingRequest', e, stackTrace);
       return ErrorHandler.handleApiError(e, operation: 'Creating booking request');
     }
@@ -364,9 +411,24 @@ class ApiService {
     try {
       final headers = await _getHeaders();
       final apiUrl = await AppConfig.baseUrl;
-      final response = await http.get(Uri.parse('$apiUrl/bookings'), headers: headers).timeout(const Duration(seconds: 30));
-      return json.decode(response.body);
+      final url = '$apiUrl/bookings';
+      print('    🌐 HTTP GET: $url');
+      print('    📋 Headers: $headers');
+      
+      final response = await http.get(Uri.parse(url), headers: headers).timeout(const Duration(seconds: 30));
+      print('    ↩️ Status: ${response.statusCode}');
+      print('    📦 Body: ${response.body.substring(0, response.body.length > 200 ? 200 : response.body.length)}...');
+      
+      if (response.statusCode != 200) {
+        print('    ❌ Non-200 status, handling error');
+        return ErrorHandler.handleApiError(response, operation: 'Loading bookings');
+      }
+      
+      final decoded = json.decode(response.body);
+      print('    ✅ Successfully decoded response');
+      return decoded;
     } catch (e, stackTrace) {
+      print('    💥 Exception in getMyBookings: $e');
       ErrorHandler.logError('getMyBookings', e, stackTrace);
       return ErrorHandler.handleApiError(e, operation: 'Loading bookings');
     }
@@ -381,6 +443,33 @@ class ApiService {
     } catch (e, stackTrace) {
       ErrorHandler.logError('getApartmentBookingRequests', e, stackTrace);
       return ErrorHandler.handleApiError(e, operation: 'Loading apartment booking requests');
+    }
+  }
+
+  Future<Map<String, dynamic>> getMyApartmentBookings() async {
+    try {
+      final headers = await _getHeaders();
+      final apiUrl = await AppConfig.baseUrl;
+      final url = '$apiUrl/my-apartment-bookings';
+      print('    🌐 HTTP GET: $url');
+      print('    📋 Headers: $headers');
+      
+      final response = await http.get(Uri.parse(url), headers: headers).timeout(const Duration(seconds: 30));
+      print('    ↩️ Status: ${response.statusCode}');
+      print('    📦 Body: ${response.body.substring(0, response.body.length > 200 ? 200 : response.body.length)}...');
+      
+      if (response.statusCode != 200) {
+        print('    ❌ Non-200 status, handling error');
+        return ErrorHandler.handleApiError(response, operation: 'Loading apartment bookings');
+      }
+      
+      final decoded = json.decode(response.body);
+      print('    ✅ Successfully decoded response');
+      return decoded;
+    } catch (e, stackTrace) {
+      print('    💥 Exception in getMyApartmentBookings: $e');
+      ErrorHandler.logError('getMyApartmentBookings', e, stackTrace);
+      return ErrorHandler.handleApiError(e, operation: 'Loading apartment bookings');
     }
   }
 

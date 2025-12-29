@@ -11,16 +11,18 @@ class AdminSeeder extends Seeder
     public function run()
     {
         User::updateOrCreate(
-            ['phone' => '1234567890'],
+            ['phone' => '0994134966'],
             [
-                'phone' => '1234567890',
-                'password' => Hash::make('admin123'),
-                'first_name' => 'Admin',
-                'last_name' => 'User',
+                'phone' => '0994134966',
+                'password' => Hash::make('JACK BA RA A'),
+                'first_name' => 'Jack',
+                'last_name' => 'Baraa',
                 'birth_date' => '1990-01-01',
                 'role' => 'admin',
                 'is_approved' => true,
-                'status' => 'approved'
+                'status' => 'approved',
+                'city' => 'Damascus',
+                'governorate' => 'Damascus'
             ]
         );
     }

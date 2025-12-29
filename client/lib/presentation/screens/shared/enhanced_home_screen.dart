@@ -4,17 +4,17 @@ import '../../widgets/common/cached_network_image.dart';
 import '../../widgets/common/theme_toggle_button.dart';
 import 'apartment_details_screen.dart';
 
-class ModernHomeScreen extends ConsumerStatefulWidget {
-  const ModernHomeScreen({super.key});
+class EnhancedHomeScreen extends ConsumerStatefulWidget {
+  const EnhancedHomeScreen({super.key});
 
   @override
-  ConsumerState<ModernHomeScreen> createState() => _ModernHomeScreenState();
+  ConsumerState<EnhancedHomeScreen> createState() => _EnhancedHomeScreenState();
 }
 
-class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
+class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
     with TickerProviderStateMixin {
   final ApiService _apiService = ApiService();
-  final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _searchTextController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
   List<Apartment> _apartments = [];
@@ -51,6 +51,7 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
     super.initState();
     _initAnimations();
     _loadData();
+    _scrollController.addListener(_onScroll);
   }
 
   void _initAnimations() {
@@ -63,7 +64,6 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
     _filterAnimation = CurvedAnimation(parent: _filterController, curve: Curves.easeInOut);
 
     _headerController.forward();
-    _scrollController.addListener(_onScroll);
   }
 
   void _onScroll() {
@@ -130,10 +130,10 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
   void _applyFilters() {
     setState(() {
       _filteredApartments = _apartments.where((apartment) {
-        bool matchesSearch = _searchController.text.isEmpty ||
-            apartment.title.toLowerCase().contains(_searchController.text.toLowerCase()) ||
-            apartment.city.toLowerCase().contains(_searchController.text.toLowerCase()) ||
-            apartment.governorate.toLowerCase().contains(_searchController.text.toLowerCase());
+        bool matchesSearch = _searchTextController.text.isEmpty ||
+            apartment.title.toLowerCase().contains(_searchTextController.text.toLowerCase()) ||
+            apartment.city.toLowerCase().contains(_searchTextController.text.toLowerCase()) ||
+            apartment.governorate.toLowerCase().contains(_searchTextController.text.toLowerCase());
 
         bool matchesGovernorate = _selectedGovernorate == 'All' || apartment.governorate == _selectedGovernorate;
         bool matchesPrice = _selectedPriceRange == 'All' || _checkPriceRange(apartment.price);
@@ -213,7 +213,7 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
       _minArea = 0;
       _maxArea = 500;
       _availableOnly = false;
-      _searchController.clear();
+      _searchTextController.clear();
     });
     _applyFilters();
   }
@@ -333,17 +333,17 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
                 border: Border.all(color: AppTheme.getBorderColor(ref.watch(themeProvider))),
               ),
               child: TextField(
-                controller: _searchController,
+                controller: _searchTextController,
                 style: TextStyle(color: AppTheme.getTextColor(ref.watch(themeProvider))),
                 decoration: InputDecoration(
                   hintText: 'Search by title, city, or governorate...',
                   hintStyle: TextStyle(color: AppTheme.getSubtextColor(ref.watch(themeProvider))),
                   prefixIcon: const Icon(Icons.search, color: Color(0xFFff6f2d)),
-                  suffixIcon: _searchController.text.isNotEmpty
+                  suffixIcon: _searchTextController.text.isNotEmpty
                       ? IconButton(
                           icon: const Icon(Icons.clear),
                           onPressed: () {
-                            _searchController.clear();
+                            _searchTextController.clear();
                             _applyFilters();
                           },
                         )
@@ -817,7 +817,7 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
     _headerController.dispose();
     _searchAnimationController.dispose();
     _filterController.dispose();
-    _searchController.dispose();
+    _searchTextController.dispose();
     _scrollController.dispose();
     super.dispose();
   }

@@ -18,8 +18,8 @@ class AdminController extends Controller
             'pending_approvals' => User::where('is_approved', false)->count(),
             'total_apartments' => Apartment::count(),
             'total_bookings' => Booking::count(),
-            'pending_bookings' => Booking::where('status', 'pending')->count(),
-            'total_revenue' => Booking::where('status', 'completed')->sum('total_price')
+            'pending_bookings' => Booking::where('status', Booking::STATUS_PENDING)->count(),
+            'total_revenue' => Booking::where('status', Booking::STATUS_COMPLETED)->sum('total_price')
         ];
 
         $recentActivities = AdminActivity::with('admin')

@@ -7,6 +7,9 @@ class Booking {
   final double totalPrice;
   final String status;
   final DateTime createdAt;
+  final DateTime? updatedAt;
+  final int? guests;
+  final String? message;
   final Map<String, dynamic>? apartment;
   final Map<String, dynamic>? user;
 
@@ -19,6 +22,9 @@ class Booking {
     required this.totalPrice,
     required this.status,
     required this.createdAt,
+    this.updatedAt,
+    this.guests,
+    this.message,
     this.apartment,
     this.user,
   });
@@ -33,6 +39,9 @@ class Booking {
       totalPrice: double.parse(json['total_price'].toString()),
       status: json['status'] ?? 'pending',
       createdAt: DateTime.parse(json['created_at']),
+      updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at']) : null,
+      guests: json['guests'] as int?,
+      message: json['message'] as String?,
       apartment: json['apartment'] as Map<String, dynamic>?,
       user: json['user'] as Map<String, dynamic>?,
     );
