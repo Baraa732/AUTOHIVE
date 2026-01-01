@@ -20,6 +20,8 @@ class AuthService {
   }) async {
     try {
       final url = await AppConfig.baseUrl;
+      print('📝 Registration attempt to: $url/register');
+      print('📱 Phone: $phone, Name: $firstName $lastName');
       
       var request = http.MultipartRequest('POST', Uri.parse('$url/register'));
       request.headers['Accept'] = 'application/json';
@@ -56,13 +58,18 @@ class AuthService {
         );
       }
       
+      print('🚀 Sending registration request...');
       final streamedResponse = await request.send().timeout(const Duration(seconds: 60));
       final responseBody = await streamedResponse.stream.bytesToString();
+      
+      print('📊 Registration response status: ${streamedResponse.statusCode}');
+      print('📦 Registration response body: $responseBody');
       
       Map<String, dynamic> data;
       try {
         data = json.decode(responseBody);
       } catch (e) {
+        print('❌ Failed to decode JSON: $e');
         return {
           'success': false,
           'message': 'Server connection failed. Make sure your AUTOHIVE backend is running on http://10.0.2.2:8000',
@@ -70,6 +77,7 @@ class AuthService {
       }
 
       if (streamedResponse.statusCode == 201 || streamedResponse.statusCode == 200) {
+        print('✅ Registration successful!');
         return {
           'success': true,
           'message': data['message'] ?? 'Registration successful',
@@ -90,6 +98,7 @@ class AuthService {
         }
       }
       
+      print('❌ Registration failed: $errorMessage');
       return {
         'success': false,
         'message': errorMessage,
@@ -97,6 +106,7 @@ class AuthService {
         'errors': data['errors'],
       };
     } catch (e) {
+      print('❌ Registration exception: $e');
       return {
         'success': false,
         'message': 'Unable to connect to server. Please check your internet connection.',
@@ -107,6 +117,9 @@ class AuthService {
   Future<Map<String, dynamic>> login(String phone, String password) async {
     try {
       final url = await AppConfig.baseUrl;
+      print('🔑 Login attempt to: $url/login');
+      print('📱 Phone: $phone');
+      
       final response = await http.post(
         Uri.parse('$url/login'),
         headers: {
@@ -120,12 +133,16 @@ class AuthService {
         }),
       ).timeout(const Duration(seconds: 30));
 
+      print('📊 Login response status: ${response.statusCode}');
+      print('📦 Login response body: ${response.body}');
+      
       final data = json.decode(response.body);
 
       if (response.statusCode == 200) {
         if (data['success'] == true && data['data'] != null) {
           final token = data['data']['token'];
           final user = data['data']['user'];
+          print('✅ Login successful, token received');
 
           return {
             'success': true,
@@ -146,12 +163,14 @@ class AuthService {
         errorMessage = data['message'] ?? 'Account access denied';
       }
       
+      print('❌ Login failed: $errorMessage');
       return {
         'success': false,
         'message': errorMessage,
         'errors': data['errors'],
       };
     } catch (e) {
+      print('❌ Login exception: $e');
       return {
         'success': false,
         'message': 'Connection failed. Make sure AUTOHIVE backend is running.'

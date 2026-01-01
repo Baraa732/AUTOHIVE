@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../core/core.dart';
-import '../../../core/state/state.dart';
 import 'navigation_screen.dart';
 import '../../providers/auth_provider.dart';
 

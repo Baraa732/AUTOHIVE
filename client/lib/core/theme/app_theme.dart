@@ -33,41 +33,41 @@ class NavbarThemeData {
 
 class AppTheme {
   // Brand Colors - Updated to match welcome screen
-  static const Color primaryBlue = Color(0xFF4a90e2);
-  static const Color primaryPink = Color(0xFFEC4899);
-  static const Color primaryOrange = Color(0xFFff6f2d);
-  static const Color primaryGreen = Color(0xFF10B981);
+  static Color primaryBlue = const Color(0xFF4a90e2);
+  static Color primaryPink = const Color(0xFFEC4899);
+  static Color primaryOrange = const Color(0xFFff6f2d);
+  static Color primaryGreen = const Color(0xFF10B981);
   
   // Dark Theme Colors - Updated to match welcome screen
-  static const Color darkPrimary = Color(0xFF0F0F23);
-  static const Color darkSecondary = Color(0xFF1A1A2E);
-  static const Color darkTertiary = Color(0xFF16213E);
-  static const Color darkSurface = Color(0xFF1E1E2E);
-  static const Color darkCard = Color(0xFF2A2A3E);
+  static Color darkPrimary = const Color(0xFF0F0F23);
+  static Color darkSecondary = const Color(0xFF1A1A2E);
+  static Color darkTertiary = const Color(0xFF16213E);
+  static Color darkSurface = const Color(0xFF1E1E2E);
+  static Color darkCard = const Color(0xFF2A2A3E);
   
   // Light Theme Colors - Updated to match welcome screen
-  static const Color lightPrimary = Color(0xFFF8FAFC);
-  static const Color lightSecondary = Color(0xFFE2E8F0);
-  static const Color lightSurface = Color(0xFFFFFFFF);
-  static const Color lightCard = Color(0xFFF1F5F9);
+  static Color lightPrimary = const Color(0xFFF8FAFC);
+  static Color lightSecondary = const Color(0xFFE2E8F0);
+  static Color lightSurface = const Color(0xFFFFFFFF);
+  static Color lightCard = const Color(0xFFF1F5F9);
   
   // Gradients - Updated to match welcome screen
-  static const LinearGradient primaryGradient = LinearGradient(
+  static LinearGradient get primaryGradient => LinearGradient(
     colors: [primaryOrange, primaryBlue],
   );
   
-  static const LinearGradient darkBackgroundGradient = LinearGradient(
+  static LinearGradient get darkBackgroundGradient => LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [darkPrimary, darkSecondary, darkTertiary],
-    stops: [0.0, 0.5, 1.0],
+    stops: const [0.0, 0.5, 1.0],
   );
   
-  static const LinearGradient lightBackgroundGradient = LinearGradient(
+  static LinearGradient get lightBackgroundGradient => LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [lightPrimary, lightSecondary],
-    stops: [0.0, 1.0],
+    stops: const [0.0, 1.0],
   );
   
   static const LinearGradient darkCardGradient = LinearGradient(
@@ -79,39 +79,39 @@ class AppTheme {
   );
   
   // Text Styles
-  static const TextStyle heroTitleDark = TextStyle(
+  static TextStyle get heroTitleDark => const TextStyle(
     fontSize: 36,
     fontWeight: FontWeight.bold,
     color: Colors.white,
     height: 1.2,
   );
   
-  static const TextStyle heroTitleLight = TextStyle(
+  static TextStyle get heroTitleLight => const TextStyle(
     fontSize: 36,
     fontWeight: FontWeight.bold,
     color: Color(0xFF1E293B),
     height: 1.2,
   );
   
-  static const TextStyle titleDark = TextStyle(
+  static TextStyle get titleDark => const TextStyle(
     fontSize: 24,
     fontWeight: FontWeight.bold,
     color: Colors.white,
   );
   
-  static const TextStyle titleLight = TextStyle(
+  static TextStyle get titleLight => const TextStyle(
     fontSize: 24,
     fontWeight: FontWeight.bold,
     color: Color(0xFF1E293B),
   );
   
-  static const TextStyle subtitleDark = TextStyle(
+  static TextStyle get subtitleDark => const TextStyle(
     fontSize: 16,
     color: Color(0xB3FFFFFF),
     fontWeight: FontWeight.w500,
   );
   
-  static const TextStyle subtitleLight = TextStyle(
+  static TextStyle get subtitleLight => const TextStyle(
     fontSize: 16,
     color: Color(0xFF64748B),
     fontWeight: FontWeight.w500,
@@ -128,12 +128,12 @@ class AppTheme {
     dividerColor: const Color(0xFFE2E8F0),
     
     // AppBar Theme
-    appBarTheme: const AppBarTheme(
+    appBarTheme: AppBarTheme(
       backgroundColor: Colors.transparent,
       elevation: 0,
       systemOverlayStyle: SystemUiOverlayStyle.dark,
       titleTextStyle: titleLight,
-      iconTheme: IconThemeData(color: Color(0xFF1E293B)),
+      iconTheme: const IconThemeData(color: Color(0xFF1E293B)),
     ),
     
     // Card Theme
@@ -145,12 +145,12 @@ class AppTheme {
     ),
     
     // Text Theme
-    textTheme: const TextTheme(
+    textTheme: TextTheme(
       displayLarge: titleLight,
-      displayMedium: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: Color(0xFF1E293B)),
-      bodyLarge: TextStyle(fontSize: 16, color: Color(0xFF334155)),
-      bodyMedium: TextStyle(fontSize: 14, color: Color(0xFF64748B)),
-      labelLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF1E293B)),
+      displayMedium: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: Color(0xFF1E293B)),
+      bodyLarge: const TextStyle(fontSize: 16, color: Color(0xFF334155)),
+      bodyMedium: const TextStyle(fontSize: 14, color: Color(0xFF64748B)),
+      labelLarge: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF1E293B)),
     ),
     
     // Icon Theme
@@ -175,7 +175,7 @@ class AppTheme {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: primaryBlue, width: 2),
+        borderSide: BorderSide(color: primaryBlue, width: 2),
       ),
     ),
     
@@ -190,14 +190,14 @@ class AppTheme {
       ),
     ),
     
-    colorScheme: const ColorScheme.light(
+    colorScheme: ColorScheme.light(
       primary: primaryBlue,
       secondary: primaryPink,
       surface: lightSurface,
-      error: Color(0xFFEF4444),
+      error: const Color(0xFFEF4444),
       onPrimary: Colors.white,
       onSecondary: Colors.white,
-      onSurface: Color(0xFF1E293B),
+      onSurface: const Color(0xFF1E293B),
       onError: Colors.white,
     ),
   );
@@ -212,12 +212,12 @@ class AppTheme {
     dividerColor: const Color(0xFF374151),
     
     // AppBar Theme
-    appBarTheme: const AppBarTheme(
+    appBarTheme: AppBarTheme(
       backgroundColor: Colors.transparent,
       elevation: 0,
       systemOverlayStyle: SystemUiOverlayStyle.light,
       titleTextStyle: titleDark,
-      iconTheme: IconThemeData(color: Colors.white),
+      iconTheme: const IconThemeData(color: Colors.white),
     ),
     
     // Card Theme
@@ -229,12 +229,12 @@ class AppTheme {
     ),
     
     // Text Theme
-    textTheme: const TextTheme(
+    textTheme: TextTheme(
       displayLarge: titleDark,
-      displayMedium: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: Colors.white),
-      bodyLarge: TextStyle(fontSize: 16, color: Color(0xFFE2E8F0)),
-      bodyMedium: TextStyle(fontSize: 14, color: Color(0xFFB3FFFF)),
-      labelLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+      displayMedium: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: Colors.white),
+      bodyLarge: const TextStyle(fontSize: 16, color: Color(0xFFE2E8F0)),
+      bodyMedium: const TextStyle(fontSize: 14, color: Color(0xFFB3FFFF)),
+      labelLarge: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
     ),
     
     // Icon Theme
@@ -259,7 +259,7 @@ class AppTheme {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: primaryBlue, width: 2),
+        borderSide: BorderSide(color: primaryBlue, width: 2),
       ),
     ),
     
@@ -274,11 +274,11 @@ class AppTheme {
       ),
     ),
     
-    colorScheme: const ColorScheme.dark(
+    colorScheme: ColorScheme.dark(
       primary: primaryBlue,
       secondary: primaryPink,
       surface: darkSurface,
-      error: Color(0xFFEF4444),
+      error: const Color(0xFFEF4444),
       onPrimary: Colors.white,
       onSecondary: Colors.white,
       onSurface: Colors.white,
@@ -325,34 +325,34 @@ class AppTheme {
   );
 
   // Navbar Theme - Dark
-  static const NavbarThemeData darkNavbarTheme = NavbarThemeData(
+  static NavbarThemeData get darkNavbarTheme => NavbarThemeData(
     backgroundColor: darkCard,
     accentColor: primaryOrange,
     secondaryColor: primaryBlue,
-    textLight: Color(0xFFf8fafc),
-    textDim: Color(0xFF94a3b8),
+    textLight: const Color(0xFFf8fafc),
+    textDim: const Color(0xFF94a3b8),
     navHeight: 72,
     radius: 22,
     indicatorSize: 40,
     cutoutWidth: 80,
     cutoutHeight: 40,
-    transitionDuration: Duration(milliseconds: 550),
+    transitionDuration: const Duration(milliseconds: 550),
     transitionCurve: Curves.easeInOutCubic,
   );
 
   // Navbar Theme - Light
-  static const NavbarThemeData lightNavbarTheme = NavbarThemeData(
-    backgroundColor: Color(0xFFF8FAFC),
+  static NavbarThemeData get lightNavbarTheme => NavbarThemeData(
+    backgroundColor: const Color(0xFFF8FAFC),
     accentColor: primaryOrange,
     secondaryColor: primaryBlue,
-    textLight: Color(0xFF1E293B),
-    textDim: Color(0xFF64748B),
+    textLight: const Color(0xFF1E293B),
+    textDim: const Color(0xFF64748B),
     navHeight: 72,
     radius: 22,
     indicatorSize: 40,
     cutoutWidth: 80,
     cutoutHeight: 40,
-    transitionDuration: Duration(milliseconds: 550),
+    transitionDuration: const Duration(milliseconds: 550),
     transitionCurve: Curves.easeInOutCubic,
   );
 

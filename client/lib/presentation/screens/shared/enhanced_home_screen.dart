@@ -22,7 +22,7 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
   bool _isLoading = true;
   bool _isSearchExpanded = false;
   bool _isFilterExpanded = false;
-  
+
   // Filter states
   String _selectedGovernorate = 'All';
   String _selectedPriceRange = 'All';
@@ -40,11 +40,31 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
   late Animation<double> _searchAnimation;
   late Animation<double> _filterAnimation;
 
-  final List<String> _governorates = ['All', 'Cairo', 'Giza', 'Alexandria', 'Luxor', 'Aswan'];
-  final List<String> _priceRanges = ['All', '0-500', '500-1000', '1000-2000', '2000+'];
+  final List<String> _governorates = [
+    'All',
+    'Cairo',
+    'Giza',
+    'Alexandria',
+    'Luxor',
+    'Aswan',
+  ];
+  final List<String> _priceRanges = [
+    'All',
+    '0-500',
+    '500-1000',
+    '1000-2000',
+    '2000+',
+  ];
   final List<String> _bedroomOptions = ['All', '1', '2', '3', '4+'];
   final List<String> _bathroomOptions = ['All', '1', '2', '3', '4+'];
-  final List<String> _sortOptions = ['newest', 'oldest', 'price_low', 'price_high', 'area_small', 'area_large'];
+  final List<String> _sortOptions = [
+    'newest',
+    'oldest',
+    'price_low',
+    'price_high',
+    'area_small',
+    'area_large',
+  ];
 
   @override
   void initState() {
@@ -55,13 +75,31 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
   }
 
   void _initAnimations() {
-    _headerController = AnimationController(duration: const Duration(milliseconds: 800), vsync: this);
-    _searchAnimationController = AnimationController(duration: const Duration(milliseconds: 400), vsync: this);
-    _filterController = AnimationController(duration: const Duration(milliseconds: 400), vsync: this);
+    _headerController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _searchAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+    _filterController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
 
-    _headerAnimation = CurvedAnimation(parent: _headerController, curve: Curves.easeOutCubic);
-    _searchAnimation = CurvedAnimation(parent: _searchAnimationController, curve: Curves.easeInOut);
-    _filterAnimation = CurvedAnimation(parent: _filterController, curve: Curves.easeInOut);
+    _headerAnimation = CurvedAnimation(
+      parent: _headerController,
+      curve: Curves.easeOutCubic,
+    );
+    _searchAnimation = CurvedAnimation(
+      parent: _searchAnimationController,
+      curve: Curves.easeInOut,
+    );
+    _filterAnimation = CurvedAnimation(
+      parent: _filterController,
+      curve: Curves.easeInOut,
+    );
 
     _headerController.forward();
   }
@@ -78,12 +116,16 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
 
   void _toggleSearch() {
     setState(() => _isSearchExpanded = !_isSearchExpanded);
-    _isSearchExpanded ? _searchAnimationController.forward() : _searchAnimationController.reverse();
+    _isSearchExpanded
+        ? _searchAnimationController.forward()
+        : _searchAnimationController.reverse();
   }
 
   void _toggleFilters() {
     setState(() => _isFilterExpanded = !_isFilterExpanded);
-    _isFilterExpanded ? _filterController.forward() : _filterController.reverse();
+    _isFilterExpanded
+        ? _filterController.forward()
+        : _filterController.reverse();
   }
 
   Future<void> _loadData() async {
@@ -98,13 +140,15 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
       if (result['success'] == true) {
         final data = result['data'];
         List<Apartment> apartments = [];
-        
+
         if (data is Map && data['data'] != null) {
-          apartments = (data['data'] as List).map((json) => Apartment.fromJson(json)).toList();
+          apartments = (data['data'] as List)
+              .map((json) => Apartment.fromJson(json))
+              .toList();
         } else if (data is List) {
           apartments = data.map((json) => Apartment.fromJson(json)).toList();
         }
-        
+
         if (mounted) {
           setState(() {
             _apartments = apartments;
@@ -116,7 +160,11 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
       } else {
         if (mounted) {
           setState(() => _isLoading = false);
-          ErrorHandler.showError(context, null, customMessage: result['message'] ?? 'Failed to load apartments');
+          ErrorHandler.showError(
+            context,
+            null,
+            customMessage: result['message'] ?? 'Failed to load apartments',
+          );
         }
       }
     } catch (e) {
@@ -130,20 +178,38 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
   void _applyFilters() {
     setState(() {
       _filteredApartments = _apartments.where((apartment) {
-        bool matchesSearch = _searchTextController.text.isEmpty ||
-            apartment.title.toLowerCase().contains(_searchTextController.text.toLowerCase()) ||
-            apartment.city.toLowerCase().contains(_searchTextController.text.toLowerCase()) ||
-            apartment.governorate.toLowerCase().contains(_searchTextController.text.toLowerCase());
+        bool matchesSearch =
+            _searchTextController.text.isEmpty ||
+            apartment.title.toLowerCase().contains(
+              _searchTextController.text.toLowerCase(),
+            ) ||
+            apartment.city.toLowerCase().contains(
+              _searchTextController.text.toLowerCase(),
+            ) ||
+            apartment.governorate.toLowerCase().contains(
+              _searchTextController.text.toLowerCase(),
+            );
 
-        bool matchesGovernorate = _selectedGovernorate == 'All' || apartment.governorate == _selectedGovernorate;
-        bool matchesPrice = _selectedPriceRange == 'All' || _checkPriceRange(apartment.price);
-        bool matchesBedrooms = _selectedBedrooms == 'All' || _checkBedrooms(apartment.bedrooms);
-        bool matchesBathrooms = _selectedBathrooms == 'All' || _checkBathrooms(apartment.bathrooms);
-        bool matchesArea = apartment.area >= _minArea && apartment.area <= _maxArea;
+        bool matchesGovernorate =
+            _selectedGovernorate == 'All' ||
+            apartment.governorate == _selectedGovernorate;
+        bool matchesPrice =
+            _selectedPriceRange == 'All' || _checkPriceRange(apartment.price);
+        bool matchesBedrooms =
+            _selectedBedrooms == 'All' || _checkBedrooms(apartment.bedrooms);
+        bool matchesBathrooms =
+            _selectedBathrooms == 'All' || _checkBathrooms(apartment.bathrooms);
+        bool matchesArea =
+            apartment.area >= _minArea && apartment.area <= _maxArea;
         bool matchesAvailability = !_availableOnly || apartment.isAvailable;
 
-        return matchesSearch && matchesGovernorate && matchesPrice && 
-               matchesBedrooms && matchesBathrooms && matchesArea && matchesAvailability;
+        return matchesSearch &&
+            matchesGovernorate &&
+            matchesPrice &&
+            matchesBedrooms &&
+            matchesBathrooms &&
+            matchesArea &&
+            matchesAvailability;
       }).toList();
 
       _sortApartments();
@@ -175,31 +241,46 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
 
   bool _checkPriceRange(double price) {
     switch (_selectedPriceRange) {
-      case '0-500': return price <= 500;
-      case '500-1000': return price > 500 && price <= 1000;
-      case '1000-2000': return price > 1000 && price <= 2000;
-      case '2000+': return price > 2000;
-      default: return true;
+      case '0-500':
+        return price <= 500;
+      case '500-1000':
+        return price > 500 && price <= 1000;
+      case '1000-2000':
+        return price > 1000 && price <= 2000;
+      case '2000+':
+        return price > 2000;
+      default:
+        return true;
     }
   }
 
   bool _checkBedrooms(int bedrooms) {
     switch (_selectedBedrooms) {
-      case '1': return bedrooms == 1;
-      case '2': return bedrooms == 2;
-      case '3': return bedrooms == 3;
-      case '4+': return bedrooms >= 4;
-      default: return true;
+      case '1':
+        return bedrooms == 1;
+      case '2':
+        return bedrooms == 2;
+      case '3':
+        return bedrooms == 3;
+      case '4+':
+        return bedrooms >= 4;
+      default:
+        return true;
     }
   }
 
   bool _checkBathrooms(int bathrooms) {
     switch (_selectedBathrooms) {
-      case '1': return bathrooms == 1;
-      case '2': return bathrooms == 2;
-      case '3': return bathrooms == 3;
-      case '4+': return bathrooms >= 4;
-      default: return true;
+      case '1':
+        return bathrooms == 1;
+      case '2':
+        return bathrooms == 2;
+      case '3':
+        return bathrooms == 3;
+      case '4+':
+        return bathrooms >= 4;
+      default:
+        return true;
     }
   }
 
@@ -265,7 +346,9 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
                 border: Border.all(color: AppTheme.getBorderColor(isDarkMode)),
                 boxShadow: [
                   BoxShadow(
-                    color: isDarkMode ? Colors.black.withOpacity(0.3) : Colors.grey.withOpacity(0.15),
+                    color: isDarkMode
+                        ? Colors.black.withOpacity(0.3)
+                        : Colors.grey.withOpacity(0.15),
                     blurRadius: 15,
                     offset: const Offset(0, 8),
                   ),
@@ -274,17 +357,37 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(colors: [Color(0xFFff6f2d), Color(0xFF4a90e2)]),
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFff6f2d), Color(0xFF4a90e2)],
+                      ),
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    child: const Text('AUTOHIVE', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
+                    child: const Text(
+                      'AUTOHIVE',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
                   const Spacer(),
-                  _buildActionButton(Icons.search, _toggleSearch, _isSearchExpanded),
+                  _buildActionButton(
+                    Icons.search,
+                    _toggleSearch,
+                    _isSearchExpanded,
+                  ),
                   const SizedBox(width: 8),
-                  _buildActionButton(Icons.tune, _toggleFilters, _isFilterExpanded),
+                  _buildActionButton(
+                    Icons.tune,
+                    _toggleFilters,
+                    _isFilterExpanded,
+                  ),
                   const SizedBox(width: 8),
                   const ThemeToggleButton(),
                 ],
@@ -305,12 +408,16 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
           color: isActive ? const Color(0xFFff6f2d) : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isActive ? const Color(0xFFff6f2d) : AppTheme.getBorderColor(ref.watch(themeProvider)),
+            color: isActive
+                ? const Color(0xFFff6f2d)
+                : AppTheme.getBorderColor(ref.watch(themeProvider)),
           ),
         ),
         child: Icon(
           icon,
-          color: isActive ? Colors.white : AppTheme.getTextColor(ref.watch(themeProvider)),
+          color: isActive
+              ? Colors.white
+              : AppTheme.getTextColor(ref.watch(themeProvider)),
           size: 20,
         ),
       ),
@@ -330,15 +437,24 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
               decoration: BoxDecoration(
                 color: AppTheme.getCardColor(ref.watch(themeProvider)),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.getBorderColor(ref.watch(themeProvider))),
+                border: Border.all(
+                  color: AppTheme.getBorderColor(ref.watch(themeProvider)),
+                ),
               ),
               child: TextField(
                 controller: _searchTextController,
-                style: TextStyle(color: AppTheme.getTextColor(ref.watch(themeProvider))),
+                style: TextStyle(
+                  color: AppTheme.getTextColor(ref.watch(themeProvider)),
+                ),
                 decoration: InputDecoration(
                   hintText: 'Search by title, city, or governorate...',
-                  hintStyle: TextStyle(color: AppTheme.getSubtextColor(ref.watch(themeProvider))),
-                  prefixIcon: const Icon(Icons.search, color: Color(0xFFff6f2d)),
+                  hintStyle: TextStyle(
+                    color: AppTheme.getSubtextColor(ref.watch(themeProvider)),
+                  ),
+                  prefixIcon: const Icon(
+                    Icons.search,
+                    color: Color(0xFFff6f2d),
+                  ),
                   suffixIcon: _searchTextController.text.isNotEmpty
                       ? IconButton(
                           icon: const Icon(Icons.clear),
@@ -350,7 +466,9 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
                       : null,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: AppTheme.getBorderColor(ref.watch(themeProvider))),
+                    borderSide: BorderSide(
+                      color: AppTheme.getBorderColor(ref.watch(themeProvider)),
+                    ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -379,7 +497,9 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
               decoration: BoxDecoration(
                 color: AppTheme.getCardColor(ref.watch(themeProvider)),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.getBorderColor(ref.watch(themeProvider))),
+                border: Border.all(
+                  color: AppTheme.getBorderColor(ref.watch(themeProvider)),
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -391,13 +511,18 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: AppTheme.getTextColor(ref.watch(themeProvider)),
+                          color: AppTheme.getTextColor(
+                            ref.watch(themeProvider),
+                          ),
                         ),
                       ),
                       const Spacer(),
                       TextButton(
                         onPressed: _resetFilters,
-                        child: const Text('Reset', style: TextStyle(color: Color(0xFFff6f2d))),
+                        child: const Text(
+                          'Reset',
+                          style: TextStyle(color: Color(0xFFff6f2d)),
+                        ),
                       ),
                     ],
                   ),
@@ -425,44 +550,74 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
       crossAxisSpacing: 12,
       mainAxisSpacing: 12,
       children: [
-        _buildDropdownFilter('Location', _selectedGovernorate, _governorates, (v) {
+        _buildDropdownFilter('Location', _selectedGovernorate, _governorates, (
+          v,
+        ) {
           setState(() => _selectedGovernorate = v!);
           _applyFilters();
         }),
-        _buildDropdownFilter('Price Range', _selectedPriceRange, _priceRanges, (v) {
+        _buildDropdownFilter('Price Range', _selectedPriceRange, _priceRanges, (
+          v,
+        ) {
           setState(() => _selectedPriceRange = v!);
           _applyFilters();
         }),
-        _buildDropdownFilter('Bedrooms', _selectedBedrooms, _bedroomOptions, (v) {
+        _buildDropdownFilter('Bedrooms', _selectedBedrooms, _bedroomOptions, (
+          v,
+        ) {
           setState(() => _selectedBedrooms = v!);
           _applyFilters();
         }),
-        _buildDropdownFilter('Bathrooms', _selectedBathrooms, _bathroomOptions, (v) {
-          setState(() => _selectedBathrooms = v!);
-          _applyFilters();
-        }),
+        _buildDropdownFilter(
+          'Bathrooms',
+          _selectedBathrooms,
+          _bathroomOptions,
+          (v) {
+            setState(() => _selectedBathrooms = v!);
+            _applyFilters();
+          },
+        ),
       ],
     );
   }
 
-  Widget _buildDropdownFilter(String label, String value, List<String> options, Function(String?) onChanged) {
+  Widget _buildDropdownFilter(
+    String label,
+    String value,
+    List<String> options,
+    Function(String?) onChanged,
+  ) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        border: Border.all(color: AppTheme.getBorderColor(ref.watch(themeProvider))),
+        border: Border.all(
+          color: AppTheme.getBorderColor(ref.watch(themeProvider)),
+        ),
         borderRadius: BorderRadius.circular(12),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: value,
           isExpanded: true,
-          hint: Text(label, style: TextStyle(color: AppTheme.getSubtextColor(ref.watch(themeProvider)))),
+          hint: Text(
+            label,
+            style: TextStyle(
+              color: AppTheme.getSubtextColor(ref.watch(themeProvider)),
+            ),
+          ),
           dropdownColor: AppTheme.getCardColor(ref.watch(themeProvider)),
-          style: TextStyle(color: AppTheme.getTextColor(ref.watch(themeProvider)), fontSize: 14),
-          items: options.map((option) => DropdownMenuItem(
-            value: option,
-            child: Text(option == 'All' ? label : option),
-          )).toList(),
+          style: TextStyle(
+            color: AppTheme.getTextColor(ref.watch(themeProvider)),
+            fontSize: 14,
+          ),
+          items: options
+              .map(
+                (option) => DropdownMenuItem(
+                  value: option,
+                  child: Text(option == 'All' ? label : option),
+                ),
+              )
+              .toList(),
           onChanged: onChanged,
         ),
       ),
@@ -516,16 +671,23 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
               const SizedBox(width: 8),
               Text(
                 'Available Only',
-                style: TextStyle(color: AppTheme.getTextColor(ref.watch(themeProvider))),
+                style: TextStyle(
+                  color: AppTheme.getTextColor(ref.watch(themeProvider)),
+                ),
               ),
             ],
           ),
         ),
         Expanded(
-          child: _buildDropdownFilter('Sort By', _selectedSortBy, _sortOptions, (v) {
-            setState(() => _selectedSortBy = v!);
-            _applyFilters();
-          }),
+          child: _buildDropdownFilter(
+            'Sort By',
+            _selectedSortBy,
+            _sortOptions,
+            (v) {
+              setState(() => _selectedSortBy = v!);
+              _applyFilters();
+            },
+          ),
         ),
       ],
     );
@@ -537,7 +699,9 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: AppTheme.getCardColor(ref.watch(themeProvider)).withOpacity(0.7),
+          color: AppTheme.getCardColor(
+            ref.watch(themeProvider),
+          ).withOpacity(0.7),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -567,20 +731,29 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
 
   String _getSortLabel() {
     switch (_selectedSortBy) {
-      case 'newest': return 'Newest first';
-      case 'oldest': return 'Oldest first';
-      case 'price_low': return 'Price: Low to High';
-      case 'price_high': return 'Price: High to Low';
-      case 'area_small': return 'Area: Small to Large';
-      case 'area_large': return 'Area: Large to Small';
-      default: return '';
+      case 'newest':
+        return 'Newest first';
+      case 'oldest':
+        return 'Oldest first';
+      case 'price_low':
+        return 'Price: Low to High';
+      case 'price_high':
+        return 'Price: High to Low';
+      case 'area_small':
+        return 'Area: Small to Large';
+      case 'area_large':
+        return 'Area: Large to Small';
+      default:
+        return '';
     }
   }
 
   Widget _buildApartmentsList() {
     if (_isLoading) {
       return const SliverFillRemaining(
-        child: Center(child: CircularProgressIndicator(color: Color(0xFFff6f2d))),
+        child: Center(
+          child: CircularProgressIndicator(color: Color(0xFFff6f2d)),
+        ),
       );
     }
     if (_filteredApartments.isEmpty) {
@@ -617,7 +790,8 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
     }
     return SliverList(
       delegate: SliverChildBuilderDelegate(
-        (context, index) => _buildApartmentCard(_filteredApartments[index], index),
+        (context, index) =>
+            _buildApartmentCard(_filteredApartments[index], index),
         childCount: _filteredApartments.length,
       ),
     );
@@ -628,7 +802,9 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
     return GestureDetector(
       onTap: () => Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => ApartmentDetailsScreen(apartmentId: apartment.id)),
+        MaterialPageRoute(
+          builder: (_) => ApartmentDetailsScreen(apartmentId: apartment.id),
+        ),
       ),
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -638,7 +814,9 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
           border: Border.all(color: AppTheme.getBorderColor(isDarkMode)),
           boxShadow: [
             BoxShadow(
-              color: isDarkMode ? Colors.black.withOpacity(0.15) : Colors.grey.withOpacity(0.1),
+              color: isDarkMode
+                  ? Colors.black.withOpacity(0.15)
+                  : Colors.grey.withOpacity(0.1),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
@@ -671,25 +849,58 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      const Icon(Icons.location_on, color: Color(0xFFff6f2d), size: 16),
+                      const Icon(
+                        Icons.location_on,
+                        color: Color(0xFFff6f2d),
+                        size: 16,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         '${apartment.city}, ${apartment.governorate}',
-                        style: TextStyle(color: AppTheme.getSubtextColor(isDarkMode)),
+                        style: TextStyle(
+                          color: AppTheme.getSubtextColor(isDarkMode),
+                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      Icon(Icons.bed, size: 16, color: AppTheme.getSubtextColor(isDarkMode)),
-                      Text(' ${apartment.bedrooms}', style: TextStyle(color: AppTheme.getSubtextColor(isDarkMode))),
+                      Icon(
+                        Icons.bed,
+                        size: 16,
+                        color: AppTheme.getSubtextColor(isDarkMode),
+                      ),
+                      Text(
+                        ' ${apartment.bedrooms}',
+                        style: TextStyle(
+                          color: AppTheme.getSubtextColor(isDarkMode),
+                        ),
+                      ),
                       const SizedBox(width: 16),
-                      Icon(Icons.bathtub, size: 16, color: AppTheme.getSubtextColor(isDarkMode)),
-                      Text(' ${apartment.bathrooms}', style: TextStyle(color: AppTheme.getSubtextColor(isDarkMode))),
+                      Icon(
+                        Icons.bathtub,
+                        size: 16,
+                        color: AppTheme.getSubtextColor(isDarkMode),
+                      ),
+                      Text(
+                        ' ${apartment.bathrooms}',
+                        style: TextStyle(
+                          color: AppTheme.getSubtextColor(isDarkMode),
+                        ),
+                      ),
                       const SizedBox(width: 16),
-                      Icon(Icons.square_foot, size: 16, color: AppTheme.getSubtextColor(isDarkMode)),
-                      Text(' ${apartment.area}m²', style: TextStyle(color: AppTheme.getSubtextColor(isDarkMode))),
+                      Icon(
+                        Icons.square_foot,
+                        size: 16,
+                        color: AppTheme.getSubtextColor(isDarkMode),
+                      ),
+                      Text(
+                        ' ${apartment.area}m²',
+                        style: TextStyle(
+                          color: AppTheme.getSubtextColor(isDarkMode),
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -731,7 +942,9 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
                 fit: BoxFit.cover,
                 placeholder: Container(
                   color: Colors.grey[300],
-                  child: const Center(child: CircularProgressIndicator(color: Color(0xFFff6f2d))),
+                  child: const Center(
+                    child: CircularProgressIndicator(color: Color(0xFFff6f2d)),
+                  ),
                 ),
                 errorWidget: Container(
                   color: Colors.grey,
@@ -755,14 +968,18 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
       ),
       child: Text(
         isAvailable ? 'Available' : 'Booked',
-        style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }
 
   Widget _buildOwnerProfile(Apartment apartment) {
     if (apartment.owner == null) return const SizedBox();
-    
+
     return GestureDetector(
       onTap: () => _showOwnerInfo(apartment.owner!),
       child: Container(
@@ -780,7 +997,10 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
           child: apartment.owner!['profile_image_url'] == null
               ? Text(
                   apartment.owner!['first_name']?[0]?.toUpperCase() ?? 'O',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
                 )
               : null,
         ),
@@ -799,7 +1019,8 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
           children: [
             if (owner['phone'] != null) Text('Phone: ${owner['phone']}'),
             if (owner['city'] != null) Text('City: ${owner['city']}'),
-            if (owner['governorate'] != null) Text('Governorate: ${owner['governorate']}'),
+            if (owner['governorate'] != null)
+              Text('Governorate: ${owner['governorate']}'),
           ],
         ),
         actions: [

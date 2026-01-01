@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
 import '../../../core/network/api_service.dart';
 import '../../../data/models/rental_application.dart';
+import '../../../presentation/widgets/application_status_badge.dart';
+import '../../../presentation/widgets/tenant_profile_card.dart';
+import '../shared/modification_review_screen.dart';
 
 class RentalApplicationDetailScreen extends StatefulWidget {
   final RentalApplication application;
+  final VoidCallback? onApplicationUpdated;
 
   const RentalApplicationDetailScreen({
     Key? key,
     required this.application,
+    this.onApplicationUpdated,
   }) : super(key: key);
 
   @override
@@ -18,6 +23,8 @@ class _RentalApplicationDetailScreenState extends State<RentalApplicationDetailS
   late ApiService _apiService;
   late RentalApplication _application;
   bool _isProcessing = false;
+  bool _loadingModifications = false;
+  List<dynamic> _modifications = [];
   final TextEditingController _rejectionReasonController = TextEditingController();
 
   @override
@@ -25,6 +32,37 @@ class _RentalApplicationDetailScreenState extends State<RentalApplicationDetailS
     super.initState();
     _apiService = ApiService();
     _application = widget.application;
+    _debugLogApplicationStatus();
+    if (_application.hasModification()) {
+      _loadModifications();
+    }
+  }
+
+  void _debugLogApplicationStatus() {
+    print('🔍 DEBUG: Application Detail Screen Loaded');
+    print('   - ID: ${_application.id}');
+    print('   - Status: ${_application.status}');
+    print('   - Tenant: ${_application.user?['first_name']} ${_application.user?['last_name']}');
+    print('   - Apartment: ${_application.apartment?['title']}');
+    print('   - Status allows approve/reject: ${_application.status == 'pending' || _application.status == 'modified-pending'}');
+  }
+
+  Future<void> _loadModifications() async {
+    setState(() => _loadingModifications = true);
+    try {
+      final response = await _apiService.getModificationHistory(_application.id);
+      if (response['success'] == true && mounted) {
+        setState(() {
+          _modifications = response['data'] as List<dynamic>? ?? [];
+          _loadingModifications = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading modifications: $e');
+      if (mounted) {
+        setState(() => _loadingModifications = false);
+      }
+    }
   }
 
   @override
@@ -34,30 +72,55 @@ class _RentalApplicationDetailScreenState extends State<RentalApplicationDetailS
   }
 
   Future<void> _approveApplication() async {
+    print('👍 DEBUG: Approve button pressed for application ${_application.id}');
+    print('   - Current status: ${_application.status}');
+    
+    if (_application.status != 'pending' && _application.status != 'modified-pending') {
+      print('❌ DEBUG: Cannot approve - invalid status');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Cannot approve - application status does not allow it')),
+        );
+      }
+      return;
+    }
+
     setState(() => _isProcessing = true);
+    print('⏳ DEBUG: Starting approval API call...');
 
     try {
       final response = await _apiService.approveRentalApplication(_application.id);
+      print('📡 DEBUG: Approval API response: ${response['success']}');
 
       if (mounted) {
         if (response['success'] == true) {
+          print('✅ DEBUG: Approval successful');
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Application approved successfully!')),
           );
+          
+          if (widget.onApplicationUpdated != null) {
+            widget.onApplicationUpdated!();
+          }
+          
           await Future.delayed(const Duration(milliseconds: 500));
           if (mounted && Navigator.of(context).canPop()) {
             Navigator.pop(context, true);
           }
         } else {
+          final message = response['message'] ?? 'Failed to approve application';
+          print('❌ DEBUG: Approval failed: $message');
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(response['message'] ?? 'Failed to approve application')),
+            SnackBar(content: Text(message)),
           );
           if (mounted) {
             setState(() => _isProcessing = false);
           }
         }
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('❌ DEBUG: Exception during approval: $e');
+      print('   Stack: $stackTrace');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $e')),
@@ -68,7 +131,22 @@ class _RentalApplicationDetailScreenState extends State<RentalApplicationDetailS
   }
 
   Future<void> _rejectApplication() async {
+    print('👎 DEBUG: Reject button pressed for application ${_application.id}');
+    print('   - Current status: ${_application.status}');
+    print('   - Rejection reason: ${_rejectionReasonController.text}');
+    
+    if (_application.status != 'pending') {
+      print('❌ DEBUG: Cannot reject - invalid status (only pending can be rejected)');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Cannot reject - only pending applications can be rejected')),
+        );
+      }
+      return;
+    }
+
     setState(() => _isProcessing = true);
+    print('⏳ DEBUG: Starting rejection API call...');
 
     try {
       final response = await _apiService.rejectRentalApplication(
@@ -77,26 +155,37 @@ class _RentalApplicationDetailScreenState extends State<RentalApplicationDetailS
             ? null 
             : _rejectionReasonController.text,
       );
+      print('📡 DEBUG: Rejection API response: ${response['success']}');
 
       if (mounted) {
         if (response['success'] == true) {
+          print('✅ DEBUG: Rejection successful');
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Application rejected')),
           );
+          
+          if (widget.onApplicationUpdated != null) {
+            widget.onApplicationUpdated!();
+          }
+          
           await Future.delayed(const Duration(milliseconds: 500));
           if (mounted && Navigator.of(context).canPop()) {
             Navigator.pop(context, true);
           }
         } else {
+          final message = response['message'] ?? 'Failed to reject application';
+          print('❌ DEBUG: Rejection failed: $message');
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(response['message'] ?? 'Failed to reject application')),
+            SnackBar(content: Text(message)),
           );
           if (mounted) {
             setState(() => _isProcessing = false);
           }
         }
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('❌ DEBUG: Exception during rejection: $e');
+      print('   Stack: $stackTrace');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $e')),
@@ -107,6 +196,7 @@ class _RentalApplicationDetailScreenState extends State<RentalApplicationDetailS
   }
 
   void _showRejectDialog() {
+    print('🗑️ DEBUG: Reject dialog opened');
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -140,11 +230,15 @@ class _RentalApplicationDetailScreenState extends State<RentalApplicationDetailS
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              print('🗑️ DEBUG: Reject dialog cancelled');
+              Navigator.pop(context);
+            },
             child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () {
+              print('🗑️ DEBUG: Reject dialog confirmed');
               Navigator.pop(context);
               _rejectApplication();
             },
@@ -176,6 +270,29 @@ class _RentalApplicationDetailScreenState extends State<RentalApplicationDetailS
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    apartmentTitle,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                ApplicationStatusBadge(
+                  status: _application.status,
+                  timestamp: _application.respondedAt ?? _application.submittedAt,
+                  showTimestamp: false,
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -194,8 +311,8 @@ class _RentalApplicationDetailScreenState extends State<RentalApplicationDetailS
                     Text(
                       apartmentTitle,
                       style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
@@ -216,44 +333,10 @@ class _RentalApplicationDetailScreenState extends State<RentalApplicationDetailS
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          backgroundColor: Colors.blue[100],
-                          radius: 32,
-                          child: Text(
-                            tenantName.substring(0, 1).toUpperCase(),
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 24,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                tenantName,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                tenantPhone,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                    const SizedBox(height: 12),
+                    TenantProfileCard(
+                      user: _application.user,
+                      horizontal: true,
                     ),
                   ],
                 ),
@@ -324,49 +407,182 @@ class _RentalApplicationDetailScreenState extends State<RentalApplicationDetailS
                 ),
               ),
             ],
-            const SizedBox(height: 32),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _isProcessing ? null : _approveApplication,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: Colors.green,
-                ),
-                child: _isProcessing
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
-                      )
-                    : const Text(
-                        'Approve Application',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+            if (_application.status == 'modified-pending' && _modifications.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Card(
+                color: Colors.purple[50],
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.edit, color: Colors.purple, size: 20),
+                          const SizedBox(width: 8),
+                          const Text(
+                            'Pending Modification',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.purple,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'The applicant has requested to modify this application. Review the changes below.',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _loadingModifications
+                              ? null
+                              : () async {
+                                  final modification = _modifications.isNotEmpty
+                                      ? _modifications[0] as Map<String, dynamic>
+                                      : null;
+                                  if (modification != null) {
+                                    final result = await Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) => ModificationReviewScreen(
+                                          application: _application,
+                                          modification: modification,
+                                        ),
+                                      ),
+                                    );
+                                    if (result == true && mounted) {
+                                      Navigator.pop(context, true);
+                                    }
+                                  }
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.purple,
+                          ),
+                          child: _loadingModifications
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  ),
+                                )
+                              : const Text('Review Modification'),
                         ),
                       ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: _isProcessing ? null : _showRejectDialog,
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  side: const BorderSide(color: Colors.red),
-                ),
-                child: const Text(
-                  'Reject Application',
-                  style: TextStyle(color: Colors.red),
+                    ],
+                  ),
                 ),
               ),
-            ),
+            ],
+            if (_application.status == 'pending' || _application.status == 'modified-pending') ...[
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _isProcessing ? null : _approveApplication,
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    backgroundColor: Colors.green,
+                  ),
+                  child: _isProcessing
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : const Text(
+                          'Approve Application',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: _isProcessing ? null : _showRejectDialog,
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    side: const BorderSide(color: Colors.red),
+                  ),
+                  child: const Text(
+                    'Reject Application',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                ),
+              ),
+            ] else if (_application.status == 'rejected') ...[
+              const SizedBox(height: 32),
+              Card(
+                color: Colors.red[50],
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Application Status',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'This application has been rejected',
+                        style: TextStyle(color: Colors.red[700]),
+                      ),
+                      if (_application.rejectedReason != null && _application.rejectedReason!.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          'Reason: ${_application.rejectedReason}',
+                          style: TextStyle(color: Colors.red[700], fontSize: 12),
+                        ),
+                      ]
+                    ],
+                  ),
+                ),
+              ),
+            ] else ...[
+              const SizedBox(height: 32),
+              Card(
+                color: Colors.green[50],
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Application Status',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'This application has been ${_application.status}',
+                        style: TextStyle(color: Colors.green[700]),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),

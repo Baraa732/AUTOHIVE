@@ -55,6 +55,8 @@ class User extends Authenticatable
         'status',
         'city',
         'governorate',
+        'rental_status',
+        'rental_end_date',
     ];
 
     protected $hidden = [
@@ -65,6 +67,7 @@ class User extends Authenticatable
     protected $casts = [
         'birth_date' => 'date',
         'is_approved' => 'boolean',
+        'rental_end_date' => 'date',
     ];
 
     // Profile image accessor

@@ -53,9 +53,13 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
     _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic),
     );
-    _slideAnimation = Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic),
-    );
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _animationController,
+            curve: Curves.easeOutCubic,
+          ),
+        );
     _scaleAnimation = Tween<double>(begin: 0.8, end: 1).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.elasticOut),
     );
@@ -172,24 +176,26 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
                                   ),
                                 ),
                               ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.location_on,
-                                color: AppTheme.primaryOrange,
-                                size: 20,
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.location_on,
+                                    color: AppTheme.primaryOrange,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '${_apartment!['city'] ?? ''}, ${_apartment!['governorate'] ?? ''}',
+                                    style: TextStyle(
+                                      color: AppTheme.getSubtextColor(
+                                        isDarkMode,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${_apartment!['city'] ?? ''}, ${_apartment!['governorate'] ?? ''}',
-                                style: TextStyle(
-                                  color: AppTheme.getSubtextColor(isDarkMode),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
+                              const SizedBox(height: 16),
                               ScaleTransition(
                                 scale: _scaleAnimation,
                                 child: Text(
@@ -201,7 +207,7 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
                                   ),
                                 ),
                               ),
-                          const SizedBox(height: 24),
+                              const SizedBox(height: 24),
                               ScaleTransition(
                                 scale: _scaleAnimation,
                                 child: Row(
@@ -223,7 +229,7 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
                                   ],
                                 ),
                               ),
-                          const SizedBox(height: 24),
+                              const SizedBox(height: 24),
                               ScaleTransition(
                                 scale: _scaleAnimation,
                                 child: Column(
@@ -234,7 +240,9 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
                                       style: TextStyle(
                                         fontSize: 18,
                                         fontWeight: FontWeight.bold,
-                                        color: AppTheme.getTextColor(isDarkMode),
+                                        color: AppTheme.getTextColor(
+                                          isDarkMode,
+                                        ),
                                       ),
                                     ),
                                     const SizedBox(height: 8),
@@ -242,38 +250,45 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
                                       _apartment!['description'] ??
                                           'No description available',
                                       style: TextStyle(
-                                        color: AppTheme.getSubtextColor(isDarkMode),
+                                        color: AppTheme.getSubtextColor(
+                                          isDarkMode,
+                                        ),
                                         height: 1.5,
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
-                          const SizedBox(height: 24),
-                          if (_apartment!['features'] != null && (_apartment!['features'] as List).isNotEmpty)
-                            ScaleTransition(
-                              scale: _scaleAnimation,
-                              child: _buildFeaturesSection(),
-                            ),
-                          if (_apartment!['features'] != null && (_apartment!['features'] as List).isNotEmpty)
-                            const SizedBox(height: 24),
-                          ScaleTransition(
-                            scale: _scaleAnimation,
-                            child: _buildLocationSection(),
-                          ),
-                          const SizedBox(height: 24),
-                          ScaleTransition(
-                            scale: _scaleAnimation,
-                            child: _buildOwnerSection(),
-                          ),
-                          const SizedBox(height: 24),
-                          ScaleTransition(
-                            scale: _scaleAnimation,
-                            child: _currentUser != null
-                                ? _buildBookingButton()
-                                : _buildLoginPrompt(),
-                          ),
-                          SizedBox(height: MediaQuery.of(context).padding.bottom + 20),
+                              const SizedBox(height: 24),
+                              if (_apartment!['features'] != null &&
+                                  (_apartment!['features'] as List).isNotEmpty)
+                                ScaleTransition(
+                                  scale: _scaleAnimation,
+                                  child: _buildFeaturesSection(),
+                                ),
+                              if (_apartment!['features'] != null &&
+                                  (_apartment!['features'] as List).isNotEmpty)
+                                const SizedBox(height: 24),
+                              ScaleTransition(
+                                scale: _scaleAnimation,
+                                child: _buildLocationSection(),
+                              ),
+                              const SizedBox(height: 24),
+                              ScaleTransition(
+                                scale: _scaleAnimation,
+                                child: _buildOwnerSection(),
+                              ),
+                              const SizedBox(height: 24),
+                              ScaleTransition(
+                                scale: _scaleAnimation,
+                                child: _currentUser != null
+                                    ? _buildBookingButton()
+                                    : _buildLoginPrompt(),
+                              ),
+                              SizedBox(
+                                height:
+                                    MediaQuery.of(context).padding.bottom + 20,
+                              ),
                             ],
                           ),
                         ),
@@ -330,20 +345,22 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
   }
 
   Widget _buildBookingButton() {
-    final isOwner = _currentUser != null && 
-      _apartment != null &&
-      (_currentUser!['id'].toString() == _apartment!['user_id']?.toString() || 
-       _currentUser!['id'].toString() == _apartment!['user']?['id']?.toString());
-    
+    final isOwner =
+        _currentUser != null &&
+        _apartment != null &&
+        (_currentUser!['id'].toString() == _apartment!['user_id']?.toString() ||
+            _currentUser!['id'].toString() ==
+                _apartment!['user']?['id']?.toString());
+
     if (isOwner) {
       return _buildOwnerActionButton();
     }
-    
+
     return Container(
       width: double.infinity,
       height: 56,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           colors: [AppTheme.primaryOrange, AppTheme.primaryBlue],
         ),
         borderRadius: BorderRadius.circular(16),
@@ -396,7 +413,7 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
       width: double.infinity,
       height: 56,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           colors: [AppTheme.primaryBlue, AppTheme.primaryOrange],
         ),
         borderRadius: BorderRadius.circular(16),
@@ -451,23 +468,25 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: isDarkMode
-          ? LinearGradient(
-              colors: [
-                AppTheme.primaryOrange.withValues(alpha: 0.15),
-                AppTheme.primaryBlue.withValues(alpha: 0.1),
-              ],
-            )
-          : LinearGradient(
-              colors: [
-                AppTheme.primaryOrange.withValues(alpha: 0.08),
-                AppTheme.primaryBlue.withValues(alpha: 0.05),
-              ],
-            ),
+            ? LinearGradient(
+                colors: [
+                  AppTheme.primaryOrange.withValues(alpha: 0.15),
+                  AppTheme.primaryBlue.withValues(alpha: 0.1),
+                ],
+              )
+            : LinearGradient(
+                colors: [
+                  AppTheme.primaryOrange.withValues(alpha: 0.08),
+                  AppTheme.primaryBlue.withValues(alpha: 0.05),
+                ],
+              ),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppTheme.getBorderColor(isDarkMode)),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryOrange.withValues(alpha: isDarkMode ? 0.2 : 0.1),
+            color: AppTheme.primaryOrange.withValues(
+              alpha: isDarkMode ? 0.2 : 0.1,
+            ),
             blurRadius: 12,
             spreadRadius: 0,
           ),
@@ -515,8 +534,12 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
                       colors: [
-                        AppTheme.primaryOrange.withValues(alpha: isDarkMode ? 0.3 : 0.1),
-                        AppTheme.primaryBlue.withValues(alpha: isDarkMode ? 0.2 : 0.05),
+                        AppTheme.primaryOrange.withValues(
+                          alpha: isDarkMode ? 0.3 : 0.1,
+                        ),
+                        AppTheme.primaryBlue.withValues(
+                          alpha: isDarkMode ? 0.2 : 0.05,
+                        ),
                         Colors.transparent,
                       ],
                     ),
@@ -536,8 +559,12 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
                     borderRadius: BorderRadius.circular(25),
                     gradient: LinearGradient(
                       colors: [
-                        AppTheme.primaryBlue.withValues(alpha: isDarkMode ? 0.4 : 0.1),
-                        AppTheme.primaryOrange.withValues(alpha: isDarkMode ? 0.3 : 0.08),
+                        AppTheme.primaryBlue.withValues(
+                          alpha: isDarkMode ? 0.4 : 0.1,
+                        ),
+                        AppTheme.primaryOrange.withValues(
+                          alpha: isDarkMode ? 0.3 : 0.08,
+                        ),
                       ],
                     ),
                   ),
@@ -556,8 +583,12 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
                       colors: [
-                        AppTheme.primaryOrange.withValues(alpha: isDarkMode ? 0.5 : 0.12),
-                        AppTheme.primaryBlue.withValues(alpha: isDarkMode ? 0.3 : 0.08),
+                        AppTheme.primaryOrange.withValues(
+                          alpha: isDarkMode ? 0.5 : 0.12,
+                        ),
+                        AppTheme.primaryBlue.withValues(
+                          alpha: isDarkMode ? 0.3 : 0.08,
+                        ),
                       ],
                     ),
                   ),
@@ -573,7 +604,7 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
   Widget _buildFeaturesSection() {
     final isDarkMode = ref.watch(themeProvider);
     final features = List<String>.from(_apartment!['features'] ?? []);
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -589,27 +620,36 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: features.map((feature) => Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  AppTheme.primaryOrange.withValues(alpha: 0.1),
-                  AppTheme.primaryBlue.withValues(alpha: 0.05),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppTheme.primaryOrange.withValues(alpha: 0.3)),
-            ),
-            child: Text(
-              feature,
-              style: TextStyle(
-                color: AppTheme.primaryOrange,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          )).toList(),
+          children: features
+              .map(
+                (feature) => Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppTheme.primaryOrange.withValues(alpha: 0.1),
+                        AppTheme.primaryBlue.withValues(alpha: 0.05),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: AppTheme.primaryOrange.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Text(
+                    feature,
+                    style: TextStyle(
+                      color: AppTheme.primaryOrange,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              )
+              .toList(),
         ),
       ],
     );
@@ -617,7 +657,7 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
 
   Widget _buildLocationSection() {
     final isDarkMode = ref.watch(themeProvider);
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -634,18 +674,18 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             gradient: isDarkMode
-              ? LinearGradient(
-                  colors: [
-                    AppTheme.primaryBlue.withValues(alpha: 0.15),
-                    AppTheme.primaryOrange.withValues(alpha: 0.1),
-                  ],
-                )
-              : LinearGradient(
-                  colors: [
-                    AppTheme.primaryOrange.withValues(alpha: 0.08),
-                    AppTheme.primaryBlue.withValues(alpha: 0.05),
-                  ],
-                ),
+                ? LinearGradient(
+                    colors: [
+                      AppTheme.primaryBlue.withValues(alpha: 0.15),
+                      AppTheme.primaryOrange.withValues(alpha: 0.1),
+                    ],
+                  )
+                : LinearGradient(
+                    colors: [
+                      AppTheme.primaryOrange.withValues(alpha: 0.08),
+                      AppTheme.primaryBlue.withValues(alpha: 0.05),
+                    ],
+                  ),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: AppTheme.getBorderColor(isDarkMode)),
           ),
@@ -653,7 +693,11 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
             children: [
               Row(
                 children: [
-                  Icon(Icons.location_city, color: AppTheme.primaryOrange, size: 20),
+                  Icon(
+                    Icons.location_city,
+                    color: AppTheme.primaryOrange,
+                    size: 20,
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     'City: ${_apartment!['city'] ?? 'N/A'}',
@@ -672,17 +716,24 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
                   ),
                 ],
               ),
-              if (_apartment!['address'] != null && _apartment!['address'].toString().isNotEmpty) ...[
+              if (_apartment!['address'] != null &&
+                  _apartment!['address'].toString().isNotEmpty) ...[
                 const SizedBox(height: 8),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.location_on, color: AppTheme.primaryOrange, size: 20),
+                    Icon(
+                      Icons.location_on,
+                      color: AppTheme.primaryOrange,
+                      size: 20,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Address: ${_apartment!['address']}',
-                        style: TextStyle(color: AppTheme.getTextColor(isDarkMode)),
+                        style: TextStyle(
+                          color: AppTheme.getTextColor(isDarkMode),
+                        ),
                       ),
                     ),
                   ],
@@ -698,9 +749,9 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
   Widget _buildOwnerSection() {
     final isDarkMode = ref.watch(themeProvider);
     final owner = _apartment!['user'] ?? _apartment!['owner'];
-    
+
     if (owner == null) return const SizedBox.shrink();
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -717,18 +768,18 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             gradient: isDarkMode
-              ? LinearGradient(
-                  colors: [
-                    AppTheme.primaryBlue.withValues(alpha: 0.15),
-                    AppTheme.primaryOrange.withValues(alpha: 0.1),
-                  ],
-                )
-              : LinearGradient(
-                  colors: [
-                    AppTheme.primaryOrange.withValues(alpha: 0.08),
-                    AppTheme.primaryBlue.withValues(alpha: 0.05),
-                  ],
-                ),
+                ? LinearGradient(
+                    colors: [
+                      AppTheme.primaryBlue.withValues(alpha: 0.15),
+                      AppTheme.primaryOrange.withValues(alpha: 0.1),
+                    ],
+                  )
+                : LinearGradient(
+                    colors: [
+                      AppTheme.primaryOrange.withValues(alpha: 0.08),
+                      AppTheme.primaryBlue.withValues(alpha: 0.05),
+                    ],
+                  ),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: AppTheme.getBorderColor(isDarkMode)),
           ),
@@ -782,24 +833,26 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          gradient: isDarkMode 
-            ? LinearGradient(
-                colors: [
-                  AppTheme.primaryBlue.withValues(alpha: 0.15),
-                  AppTheme.primaryOrange.withValues(alpha: 0.1),
-                ],
-              )
-            : LinearGradient(
-                colors: [
-                  AppTheme.primaryOrange.withValues(alpha: 0.08),
-                  AppTheme.primaryBlue.withValues(alpha: 0.05),
-                ],
-              ),
+          gradient: isDarkMode
+              ? LinearGradient(
+                  colors: [
+                    AppTheme.primaryBlue.withValues(alpha: 0.15),
+                    AppTheme.primaryOrange.withValues(alpha: 0.1),
+                  ],
+                )
+              : LinearGradient(
+                  colors: [
+                    AppTheme.primaryOrange.withValues(alpha: 0.08),
+                    AppTheme.primaryBlue.withValues(alpha: 0.05),
+                  ],
+                ),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: AppTheme.getBorderColor(isDarkMode)),
           boxShadow: [
             BoxShadow(
-              color: AppTheme.primaryOrange.withValues(alpha: isDarkMode ? 0.2 : 0.1),
+              color: AppTheme.primaryOrange.withValues(
+                alpha: isDarkMode ? 0.2 : 0.1,
+              ),
               blurRadius: 12,
               spreadRadius: 0,
             ),

@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\RentalApplication;
+use App\Models\RentalApplicationModification;
 use App\Models\Booking;
+use App\Services\RentalApplicationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -108,7 +110,7 @@ class RentalApplicationController extends Controller
         $applications = RentalApplication::with(['apartment', 'apartment.user'])
             ->where('user_id', $request->user()->id)
             ->orderBy('created_at', 'desc')
-            ->paginate(20);
+            ->get();
 
         return response()->json([
             'success' => true,
@@ -152,14 +154,13 @@ class RentalApplicationController extends Controller
             ->whereHas('apartment', function ($query) use ($userId) {
                 $query->where('user_id', $userId);
             })
-            ->where('status', 'pending')
+            ->whereIn('status', ['pending', 'modified-pending', 'approved', 'modified-approved'])
             ->orderBy('created_at', 'desc')
-            ->paginate(20);
+            ->get();
 
         \Log::info('Incoming Applications Retrieved', [
             'landlord_id' => $userId,
-            'count' => $applications->count(),
-            'total' => $applications->total(),
+            'count' => count($applications),
         ]);
 
         return response()->json([
@@ -175,11 +176,17 @@ class RentalApplicationController extends Controller
             ->whereHas('apartment', function ($query) use ($request) {
                 $query->where('user_id', $request->user()->id);
             })
-            ->where('status', 'pending')
+            ->whereIn('status', [
+                RentalApplication::STATUS_PENDING,
+                RentalApplication::STATUS_MODIFIED_PENDING,
+            ])
             ->findOrFail($id);
 
         DB::beginTransaction();
         try {
+            $checkIn = $application->check_in;
+            $checkOut = $application->check_out;
+
             $application->update([
                 'status' => 'approved',
                 'responded_at' => now(),
@@ -188,13 +195,18 @@ class RentalApplicationController extends Controller
             $booking = Booking::create([
                 'user_id' => $application->user_id,
                 'apartment_id' => $application->apartment_id,
-                'check_in' => $application->check_in,
-                'check_out' => $application->check_out,
+                'check_in' => $checkIn,
+                'check_out' => $checkOut,
                 'total_price' => $this->calculateTotalPrice($application),
                 'status' => 'confirmed',
             ]);
 
             $application->apartment->update(['is_available' => false]);
+
+            $application->user->update([
+                'rental_status' => 'active',
+                'rental_end_date' => $checkOut,
+            ]);
 
             DB::commit();
 
@@ -255,6 +267,160 @@ class RentalApplicationController extends Controller
             'success' => true,
             'message' => 'Application rejected successfully'
         ]);
+    }
+
+    public function modify(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'check_in' => 'required|date|after_or_equal:today',
+            'check_out' => 'required|date|after:check_in',
+            'message' => 'nullable|string|max:1000',
+        ]);
+
+        try {
+            $application = RentalApplication::with(['apartment', 'user'])
+                ->findOrFail($id);
+
+            if ($application->user_id !== $request->user()->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized'
+                ], 403);
+            }
+
+            $service = new RentalApplicationService();
+            $modification = $service->submitModification(
+                $id,
+                $validated,
+                $validated['message'] ?? null
+            );
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'application' => $application->fresh()->load('user', 'apartment', 'modifications'),
+                    'modification' => $modification
+                ],
+                'message' => 'Modification submitted successfully'
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 422);
+        }
+    }
+
+    public function getModifications(Request $request, $id)
+    {
+        try {
+            $application = RentalApplication::findOrFail($id);
+
+            $userId = $request->user()->id;
+            $isTenant = $application->user_id === $userId;
+            $isOwner = $application->apartment->user_id === $userId;
+
+            if (!$isTenant && !$isOwner) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized'
+                ], 403);
+            }
+
+            $modifications = RentalApplicationModification::where('rental_application_id', $id)
+                ->orderBy('submitted_at', 'desc')
+                ->get()
+                ->map(function ($mod) {
+                    return [
+                        'id' => $mod->id,
+                        'status' => $mod->status,
+                        'previous_values' => $mod->previous_values,
+                        'new_values' => $mod->new_values,
+                        'diff' => $mod->getDiff(),
+                        'modification_reason' => $mod->modification_reason,
+                        'rejection_reason' => $mod->rejection_reason,
+                        'submitted_at' => $mod->submitted_at,
+                        'responded_at' => $mod->responded_at,
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'data' => $modifications,
+                'message' => 'Modification history retrieved successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function approveModification(Request $request, $id, $modificationId)
+    {
+        try {
+            $application = RentalApplication::with(['apartment', 'user'])
+                ->findOrFail($id);
+
+            if ($application->apartment->user_id !== $request->user()->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized'
+                ], 403);
+            }
+
+            $service = new RentalApplicationService();
+            $result = $service->approveModification($id, $modificationId);
+
+            return response()->json([
+                'success' => true,
+                'data' => $result,
+                'message' => 'Modification approved successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 422);
+        }
+    }
+
+    public function rejectModification(Request $request, $id, $modificationId)
+    {
+        $validated = $request->validate([
+            'rejection_reason' => 'nullable|string|max:500',
+        ]);
+
+        try {
+            $application = RentalApplication::with(['apartment', 'user'])
+                ->findOrFail($id);
+
+            if ($application->apartment->user_id !== $request->user()->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized'
+                ], 403);
+            }
+
+            $service = new RentalApplicationService();
+            $result = $service->rejectModification(
+                $id,
+                $modificationId,
+                $validated['rejection_reason'] ?? null
+            );
+
+            return response()->json([
+                'success' => true,
+                'data' => $result,
+                'message' => 'Modification rejected successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 422);
+        }
     }
 
     private function calculateTotalPrice($application)

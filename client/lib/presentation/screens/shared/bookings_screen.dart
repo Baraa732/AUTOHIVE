@@ -37,7 +37,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bookingState = ref.watch(bookingProvider);
-    
+
     return Scaffold(
       backgroundColor: AppTheme.getBackgroundColor(isDark),
       appBar: AppBar(
@@ -95,7 +95,10 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
               controller: _tabController,
               children: [
                 _buildBookingsList(bookingState.bookings, 'No bookings yet'),
-                _buildBookingsList(bookingState.apartmentBookings, 'No received bookings'),
+                _buildBookingsList(
+                  bookingState.apartmentBookings,
+                  'No received bookings',
+                ),
               ],
             ),
     );
@@ -103,7 +106,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
 
   Widget _buildBookingsList(List<Booking> bookings, String emptyMessage) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     if (bookings.isEmpty) {
       return Center(
         child: Text(
@@ -136,8 +139,10 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
         ? '${booking.user?['first_name']} ${booking.user?['last_name'] ?? ''}'
         : 'User';
     final nights = booking.checkOut.difference(booking.checkIn).inDays;
-    final pricePerNight = nights > 0 ? (booking.totalPrice / nights).toStringAsFixed(2) : '0.00';
-    
+    final pricePerNight = nights > 0
+        ? (booking.totalPrice / nights).toStringAsFixed(2)
+        : '0.00';
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -146,9 +151,9 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
         border: Border.all(color: AppTheme.getBorderColor(isDark)),
         boxShadow: [
           BoxShadow(
-            color: isDark 
-              ? Colors.black.withValues(alpha: 0.1)
-              : Colors.grey.withValues(alpha: 0.08),
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.1)
+                : Colors.grey.withValues(alpha: 0.08),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),

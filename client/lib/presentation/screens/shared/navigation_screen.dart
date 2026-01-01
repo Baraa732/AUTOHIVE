@@ -26,9 +26,7 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
     if (!authState.isAuthenticated || authState.user == null) {
       return Scaffold(
         backgroundColor: AppTheme.getBackgroundColor(isDark),
-        body: const Center(
-          child: CircularProgressIndicator(),
-        ),
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -64,10 +62,7 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
 
     return Scaffold(
       backgroundColor: AppTheme.getBackgroundColor(isDark),
-      body: IndexedStack(
-        index: _currentIndex,
-        children: screens,
-      ),
+      body: IndexedStack(index: _currentIndex, children: screens),
       bottomNavigationBar: EnhancedAnimatedNavbar(
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),

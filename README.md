@@ -63,8 +63,15 @@ php artisan migrate
 ```
 
 7. Start the development server:
+
+**For Android Studio Emulator:**
 ```bash
 php artisan serve
+```
+
+**For Physical Device Testing:**
+```bash
+php artisan serve --host=0.0.0.0 --port=8000
 ```
 
 ### Frontend Setup
@@ -80,9 +87,21 @@ flutter pub get
 ```
 
 3. Run the application:
+
+**For Android Studio Emulator:**
 ```bash
 flutter run
 ```
+
+**For Physical Device:**
+- Enable USB Debugging on your phone
+- Connect via USB or ensure same WiFi network
+- Make sure backend is running with: `php artisan serve --host=0.0.0.0 --port=8000`
+```bash
+flutter run
+```
+
+See `DEVICE_SETUP_GUIDE.md` for detailed setup instructions.
 
 ## API Documentation
 

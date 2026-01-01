@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../core/network/api_service.dart';
 import '../../../data/models/rental_application.dart';
 import '../../../data/models/apartment.dart';
+import '../../../presentation/widgets/application_status_badge.dart';
+import '../shared/modify_application_form.dart';
 
 class RentalApplicationsListScreen extends StatefulWidget {
   const RentalApplicationsListScreen({Key? key}) : super(key: key);
@@ -29,10 +31,20 @@ class _RentalApplicationsListScreenState extends State<RentalApplicationsListScr
       final response = await _apiService.getMyRentalApplications();
       
       if (response['success'] == true) {
-        final data = response['data'] as Map<String, dynamic>;
-        final applicationsList = (data['data'] as List?)?.map((app) {
+        late List<dynamic> appsList;
+        final data = response['data'];
+        
+        if (data is List) {
+          appsList = data;
+        } else if (data is Map && data.containsKey('data')) {
+          appsList = data['data'] as List<dynamic>? ?? [];
+        } else {
+          appsList = [];
+        }
+        
+        final applicationsList = appsList.map((app) {
           return RentalApplication.fromJson(app as Map<String, dynamic>);
-        }).toList() ?? [];
+        }).toList();
         
         setState(() {
           _applications = applicationsList;
@@ -90,12 +102,6 @@ class _RentalApplicationsListScreenState extends State<RentalApplicationsListScr
   }
 
   Widget _buildApplicationCard(RentalApplication app) {
-    final statusColor = app.status == 'approved'
-        ? Colors.green
-        : app.status == 'rejected'
-            ? Colors.red
-            : Colors.orange;
-
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       child: Padding(
@@ -117,23 +123,10 @@ class _RentalApplicationsListScreenState extends State<RentalApplicationsListScr
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    app.status.toUpperCase(),
-                    style: TextStyle(
-                      color: statusColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                  ),
+                const SizedBox(width: 12),
+                ApplicationStatusBadge(
+                  status: app.status,
+                  showTimestamp: false,
                 ),
               ],
             ),
@@ -204,15 +197,81 @@ class _RentalApplicationsListScreenState extends State<RentalApplicationsListScr
                 ),
               ),
             ],
+            if (app.modificationSubmittedAt != null) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.purple[50],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.purple[200]!),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Last Modified:',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.purple,
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      app.modificationSubmittedAt.toString().split(' ')[0],
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            if (app.canBeModified()) ...[
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    final result = await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => ModifyApplicationFormScreen(
+                          application: app,
+                        ),
+                      ),
+                    );
+                    if (result == true && mounted) {
+                      await Future.delayed(const Duration(milliseconds: 300));
+                      if (mounted) {
+                        _loadApplications();
+                      }
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                  ),
+                  child: const Text('Modify Application'),
+                ),
+              ),
+            ],
             if (app.status == 'rejected' && app.submissionAttempt < 2) ...[
               const SizedBox(height: 12),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Resubmission feature coming soon')),
+                  onPressed: () async {
+                    final result = await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => ModifyApplicationFormScreen(
+                          application: app,
+                        ),
+                      ),
                     );
+                    if (result == true && mounted) {
+                      await Future.delayed(const Duration(milliseconds: 300));
+                      if (mounted) {
+                        _loadApplications();
+                      }
+                    }
                   },
                   child: const Text('Resubmit Application'),
                 ),

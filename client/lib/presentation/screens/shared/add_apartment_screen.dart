@@ -25,7 +25,7 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
   final _bedroomsController = TextEditingController();
   final _bathroomsController = TextEditingController();
   final _areaController = TextEditingController();
-  
+
   String? _selectedGovernorate;
   String? _selectedCity;
   List<File> _selectedImages = [];
@@ -45,7 +45,7 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
     'Lattakia',
     'Tartus',
   ];
-  
+
   final Map<String, List<String>> _cities = {
     'Damascus': ['Damascus', 'Jaramana', 'Sahnaya'],
     'Aleppo': ['Aleppo', 'Afrin', 'Al-Bab'],
@@ -62,7 +62,10 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
       duration: const Duration(milliseconds: 1200),
       vsync: this,
     );
-    _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(_animationController);
+    _fadeAnimation = Tween<double>(
+      begin: 0,
+      end: 1,
+    ).animate(_animationController);
     _animationController.forward();
     _loadAvailableFeatures();
     if (widget.apartment != null) {
@@ -80,7 +83,7 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
     _bedroomsController.text = apt['bedrooms']?.toString() ?? '';
     _bathroomsController.text = apt['bathrooms']?.toString() ?? '';
     _areaController.text = apt['area']?.toString() ?? '';
-    
+
     setState(() {
       _selectedGovernorate = apt['governorate'];
       _selectedCity = apt['city'];
@@ -97,10 +100,12 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
       if (result['success'] == true && result['data'] != null) {
         setState(() {
           _availableFeatures = List<Map<String, String>>.from(
-            (result['data'] as List).map((feature) => {
-              'value': feature['value']?.toString() ?? '',
-              'label': feature['label']?.toString() ?? '',
-            }),
+            (result['data'] as List).map(
+              (feature) => {
+                'value': feature['value']?.toString() ?? '',
+                'label': feature['label']?.toString() ?? '',
+              },
+            ),
           );
         });
       }
@@ -145,7 +150,7 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
       _showError('Please select governorate and city');
       return;
     }
-    
+
     if (widget.apartment == null && _selectedImages.isEmpty) {
       _showError('Please select at least one image');
       return;
@@ -170,17 +175,21 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
 
     try {
       if (widget.apartment != null) {
-        await ref.read(apartmentProvider.notifier).updateApartment(
-          widget.apartment!['id'].toString(),
-          apartmentData,
-          _selectedImages,
-        );
+        await ref
+            .read(apartmentProvider.notifier)
+            .updateApartment(
+              widget.apartment!['id'].toString(),
+              apartmentData,
+              _selectedImages,
+            );
         if (mounted) {
           _showSuccessDialog(isEdit: true);
           Navigator.pop(context, true);
         }
       } else {
-        await ref.read(apartmentProvider.notifier).addApartment(apartmentData, _selectedImages);
+        await ref
+            .read(apartmentProvider.notifier)
+            .addApartment(apartmentData, _selectedImages);
         if (mounted) {
           _clearForm();
           _showSuccessDialog();
@@ -227,7 +236,7 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
 
   void _showSuccessDialog({bool isEdit = false}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -270,10 +279,7 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
                 }
               }
             },
-            child: Text(
-              'OK',
-              style: TextStyle(color: AppTheme.primaryOrange),
-            ),
+            child: Text('OK', style: TextStyle(color: AppTheme.primaryOrange)),
           ),
         ],
       ),
@@ -343,7 +349,9 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
             ),
           ),
           Text(
-            isEdit ? 'Update your apartment details' : 'Create your apartment listing',
+            isEdit
+                ? 'Update your apartment details'
+                : 'Create your apartment listing',
             style: TextStyle(
               fontSize: 16,
               color: AppTheme.getSubtextColor(isDark),
@@ -355,340 +363,337 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
   }
 
   Widget _buildBasicInfoSection(bool isDark) {
-    return _buildSection(
-      'Basic Information',
-      isDark,
-      [
-        TextFormField(
-          controller: _titleController,
-          decoration: _getInputDecoration('Title', Icons.home, isDark),
-          validator: (value) {
-            if (value?.isEmpty ?? true) return 'Title is required';
-            if (value!.length < 3) return 'Title must be at least 3 characters';
-            return null;
-          },
+    return _buildSection('Basic Information', isDark, [
+      TextFormField(
+        controller: _titleController,
+        decoration: _getInputDecoration('Title', Icons.home, isDark),
+        validator: (value) {
+          if (value?.isEmpty ?? true) return 'Title is required';
+          if (value!.length < 3) return 'Title must be at least 3 characters';
+          return null;
+        },
+      ),
+      const SizedBox(height: 20),
+      TextFormField(
+        controller: _descriptionController,
+        decoration: _getInputDecoration(
+          'Description',
+          Icons.description,
+          isDark,
         ),
-        const SizedBox(height: 20),
-        TextFormField(
-          controller: _descriptionController,
-          decoration: _getInputDecoration('Description', Icons.description, isDark),
-          maxLines: 4,
-          validator: (value) {
-            if (value?.isEmpty ?? true) return 'Description is required';
-            if (value!.length < 10) return 'Description must be at least 10 characters';
-            return null;
-          },
-        ),
-      ],
-    );
+        maxLines: 4,
+        validator: (value) {
+          if (value?.isEmpty ?? true) return 'Description is required';
+          if (value!.length < 10)
+            return 'Description must be at least 10 characters';
+          return null;
+        },
+      ),
+    ]);
   }
 
   Widget _buildLocationSection(bool isDark) {
-    return _buildSection(
-      'Location',
-      isDark,
-      [
-        Row(
-          children: [
-            Expanded(
-              child: DropdownButtonFormField<String>(
-                initialValue: _selectedGovernorate,
-                decoration: _getInputDecoration('Governorate', Icons.location_city, isDark),
-                items: _governorates
-                    .map((gov) => DropdownMenuItem(value: gov, child: Text(gov)))
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedGovernorate = value;
-                    _selectedCity = null;
-                  });
-                },
-                validator: (value) => value == null ? 'Please select governorate' : null,
+    return _buildSection('Location', isDark, [
+      Row(
+        children: [
+          Expanded(
+            child: DropdownButtonFormField<String>(
+              initialValue: _selectedGovernorate,
+              decoration: _getInputDecoration(
+                'Governorate',
+                Icons.location_city,
+                isDark,
               ),
+              items: _governorates
+                  .map((gov) => DropdownMenuItem(value: gov, child: Text(gov)))
+                  .toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedGovernorate = value;
+                  _selectedCity = null;
+                });
+              },
+              validator: (value) =>
+                  value == null ? 'Please select governorate' : null,
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: DropdownButtonFormField<String>(
-                initialValue: _selectedCity,
-                decoration: _getInputDecoration('City', Icons.location_on, isDark),
-                items: _selectedGovernorate != null
-                    ? _cities[_selectedGovernorate]!
-                        .map((city) => DropdownMenuItem(value: city, child: Text(city)))
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: DropdownButtonFormField<String>(
+              initialValue: _selectedCity,
+              decoration: _getInputDecoration(
+                'City',
+                Icons.location_on,
+                isDark,
+              ),
+              items: _selectedGovernorate != null
+                  ? _cities[_selectedGovernorate]!
+                        .map(
+                          (city) =>
+                              DropdownMenuItem(value: city, child: Text(city)),
+                        )
                         .toList()
-                    : [],
-                onChanged: _selectedGovernorate != null
-                    ? (value) => setState(() => _selectedCity = value)
-                    : null,
-                validator: (value) => value == null ? 'Please select city' : null,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDetailsSection(bool isDark) {
-    return _buildSection(
-      'Details',
-      isDark,
-      [
-        AnimatedInputField(
-          controller: _priceController,
-          label: 'Price per Night (\$)',
-          icon: Icons.attach_money,
-          isDark: isDark,
-          hintText: 'Enter price per night',
-          keyboardType: TextInputType.number,
-          primaryColor: AppTheme.primaryOrange,
-          secondaryColor: AppTheme.primaryBlue,
-          validator: (value) {
-            if (value?.isEmpty ?? true) return 'Price is required';
-            final price = double.tryParse(value!);
-            if (price == null || price <= 0) return 'Enter a valid price';
-            return null;
-          },
-        ),
-        const SizedBox(height: 20),
-        Row(
-          children: [
-            Expanded(
-              child: AnimatedInputField(
-                controller: _maxGuestsController,
-                label: 'Max Guests',
-                icon: Icons.people,
-                isDark: isDark,
-                hintText: '1',
-                keyboardType: TextInputType.number,
-                primaryColor: AppTheme.primaryOrange,
-                secondaryColor: AppTheme.primaryBlue,
-                validator: (value) {
-                  if (value?.isEmpty ?? true) return 'Required';
-                  final guests = int.tryParse(value!);
-                  if (guests == null || guests <= 0) return 'Invalid';
-                  return null;
-                },
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: AnimatedInputField(
-                controller: _roomsController,
-                label: 'Rooms',
-                icon: Icons.meeting_room,
-                isDark: isDark,
-                hintText: '1',
-                keyboardType: TextInputType.number,
-                primaryColor: AppTheme.primaryOrange,
-                secondaryColor: AppTheme.primaryBlue,
-                validator: (value) {
-                  if (value?.isEmpty ?? true) return 'Required';
-                  final rooms = int.tryParse(value!);
-                  if (rooms == null || rooms <= 0) return 'Invalid';
-                  return null;
-                },
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 20),
-        Row(
-          children: [
-            Expanded(
-              child: AnimatedInputField(
-                controller: _bedroomsController,
-                label: 'Bedrooms',
-                icon: Icons.bed,
-                isDark: isDark,
-                hintText: '1',
-                keyboardType: TextInputType.number,
-                primaryColor: AppTheme.primaryOrange,
-                secondaryColor: AppTheme.primaryBlue,
-                validator: (value) {
-                  if (value?.isEmpty ?? true) return 'Required';
-                  final bedrooms = int.tryParse(value!);
-                  if (bedrooms == null || bedrooms <= 0) return 'Invalid';
-                  return null;
-                },
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: AnimatedInputField(
-                controller: _bathroomsController,
-                label: 'Bathrooms',
-                icon: Icons.bathtub,
-                isDark: isDark,
-                hintText: '1',
-                keyboardType: TextInputType.number,
-                primaryColor: AppTheme.primaryOrange,
-                secondaryColor: AppTheme.primaryBlue,
-                validator: (value) {
-                  if (value?.isEmpty ?? true) return 'Required';
-                  final bathrooms = int.tryParse(value!);
-                  if (bathrooms == null || bathrooms <= 0) return 'Invalid';
-                  return null;
-                },
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 20),
-        AnimatedInputField(
-          controller: _areaController,
-          label: 'Area (m²)',
-          icon: Icons.square_foot,
-          isDark: isDark,
-          hintText: 'Enter area in square meters',
-          keyboardType: TextInputType.number,
-          primaryColor: AppTheme.primaryOrange,
-          secondaryColor: AppTheme.primaryBlue,
-          validator: (value) {
-            if (value?.isEmpty ?? true) return 'Area is required';
-            final area = double.tryParse(value!);
-            if (area == null || area <= 0) return 'Enter a valid area';
-            return null;
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFeaturesSection(bool isDark) {
-    return _buildSection(
-      'Features & Amenities',
-      isDark,
-      [
-        if (_availableFeatures.isEmpty)
-          Center(
-            child: Text(
-              'Loading features...',
-              style: TextStyle(color: AppTheme.getSubtextColor(isDark)),
-            ),
-          )
-        else
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _availableFeatures.map((feature) {
-              final featureValue = feature['value'] ?? '';
-              final featureLabel = feature['label'] ?? '';
-              final isSelected = _selectedFeatures.contains(featureValue);
-              return FilterChip(
-                label: Text(featureLabel),
-                selected: isSelected,
-                onSelected: (selected) {
-                  setState(() {
-                    if (selected) {
-                      _selectedFeatures.add(featureValue);
-                    } else {
-                      _selectedFeatures.remove(featureValue);
-                    }
-                  });
-                },
-                selectedColor: AppTheme.primaryOrange.withValues(alpha: 0.3),
-                checkmarkColor: AppTheme.primaryOrange,
-                backgroundColor: AppTheme.getCardColor(isDark),
-                labelStyle: TextStyle(
-                  color: isSelected ? AppTheme.primaryOrange : AppTheme.getTextColor(isDark),
-                ),
-              );
-            }).toList(),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildImageSection(bool isDark) {
-    return _buildSection(
-      'Images',
-      isDark,
-      [
-        GestureDetector(
-          onTap: _pickImages,
-          child: Container(
-            height: 120,
-            decoration: BoxDecoration(
-              border: Border.all(color: AppTheme.getBorderColor(isDark)),
-              borderRadius: BorderRadius.circular(12),
-              color: AppTheme.getCardColor(isDark),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.add_photo_alternate,
-                  size: 40,
-                  color: AppTheme.getSubtextColor(isDark),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Tap to add images',
-                  style: TextStyle(
-                    color: AppTheme.getSubtextColor(isDark),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        if (_selectedImages.isNotEmpty) ...[
-          const SizedBox(height: 16),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-            ),
-            itemCount: _selectedImages.length,
-            itemBuilder: (context, index) {
-              return Stack(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.file(
-                      _selectedImages[index],
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                      height: double.infinity,
-                    ),
-                  ),
-                  Positioned(
-                    top: 4,
-                    right: 4,
-                    child: GestureDetector(
-                      onTap: () => _removeImage(index),
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.close,
-                          color: Colors.white,
-                          size: 16,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '${_selectedImages.length} image(s) selected',
-            style: TextStyle(
-              color: AppTheme.getSubtextColor(isDark),
-              fontSize: 12,
+                  : [],
+              onChanged: _selectedGovernorate != null
+                  ? (value) => setState(() => _selectedCity = value)
+                  : null,
+              validator: (value) => value == null ? 'Please select city' : null,
             ),
           ),
         ],
+      ),
+    ]);
+  }
+
+  Widget _buildDetailsSection(bool isDark) {
+    return _buildSection('Details', isDark, [
+      AnimatedInputField(
+        controller: _priceController,
+        label: 'Price per Night (\$)',
+        icon: Icons.attach_money,
+        isDark: isDark,
+        hintText: 'Enter price per night',
+        keyboardType: TextInputType.number,
+        primaryColor: AppTheme.primaryOrange,
+        secondaryColor: AppTheme.primaryBlue,
+        validator: (value) {
+          if (value?.isEmpty ?? true) return 'Price is required';
+          final price = double.tryParse(value!);
+          if (price == null || price <= 0) return 'Enter a valid price';
+          return null;
+        },
+      ),
+      const SizedBox(height: 20),
+      Row(
+        children: [
+          Expanded(
+            child: AnimatedInputField(
+              controller: _maxGuestsController,
+              label: 'Max Guests',
+              icon: Icons.people,
+              isDark: isDark,
+              hintText: '1',
+              keyboardType: TextInputType.number,
+              primaryColor: AppTheme.primaryOrange,
+              secondaryColor: AppTheme.primaryBlue,
+              validator: (value) {
+                if (value?.isEmpty ?? true) return 'Required';
+                final guests = int.tryParse(value!);
+                if (guests == null || guests <= 0) return 'Invalid';
+                return null;
+              },
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: AnimatedInputField(
+              controller: _roomsController,
+              label: 'Rooms',
+              icon: Icons.meeting_room,
+              isDark: isDark,
+              hintText: '1',
+              keyboardType: TextInputType.number,
+              primaryColor: AppTheme.primaryOrange,
+              secondaryColor: AppTheme.primaryBlue,
+              validator: (value) {
+                if (value?.isEmpty ?? true) return 'Required';
+                final rooms = int.tryParse(value!);
+                if (rooms == null || rooms <= 0) return 'Invalid';
+                return null;
+              },
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 20),
+      Row(
+        children: [
+          Expanded(
+            child: AnimatedInputField(
+              controller: _bedroomsController,
+              label: 'Bedrooms',
+              icon: Icons.bed,
+              isDark: isDark,
+              hintText: '1',
+              keyboardType: TextInputType.number,
+              primaryColor: AppTheme.primaryOrange,
+              secondaryColor: AppTheme.primaryBlue,
+              validator: (value) {
+                if (value?.isEmpty ?? true) return 'Required';
+                final bedrooms = int.tryParse(value!);
+                if (bedrooms == null || bedrooms <= 0) return 'Invalid';
+                return null;
+              },
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: AnimatedInputField(
+              controller: _bathroomsController,
+              label: 'Bathrooms',
+              icon: Icons.bathtub,
+              isDark: isDark,
+              hintText: '1',
+              keyboardType: TextInputType.number,
+              primaryColor: AppTheme.primaryOrange,
+              secondaryColor: AppTheme.primaryBlue,
+              validator: (value) {
+                if (value?.isEmpty ?? true) return 'Required';
+                final bathrooms = int.tryParse(value!);
+                if (bathrooms == null || bathrooms <= 0) return 'Invalid';
+                return null;
+              },
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 20),
+      AnimatedInputField(
+        controller: _areaController,
+        label: 'Area (m²)',
+        icon: Icons.square_foot,
+        isDark: isDark,
+        hintText: 'Enter area in square meters',
+        keyboardType: TextInputType.number,
+        primaryColor: AppTheme.primaryOrange,
+        secondaryColor: AppTheme.primaryBlue,
+        validator: (value) {
+          if (value?.isEmpty ?? true) return 'Area is required';
+          final area = double.tryParse(value!);
+          if (area == null || area <= 0) return 'Enter a valid area';
+          return null;
+        },
+      ),
+    ]);
+  }
+
+  Widget _buildFeaturesSection(bool isDark) {
+    return _buildSection('Features & Amenities', isDark, [
+      if (_availableFeatures.isEmpty)
+        Center(
+          child: Text(
+            'Loading features...',
+            style: TextStyle(color: AppTheme.getSubtextColor(isDark)),
+          ),
+        )
+      else
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: _availableFeatures.map((feature) {
+            final featureValue = feature['value'] ?? '';
+            final featureLabel = feature['label'] ?? '';
+            final isSelected = _selectedFeatures.contains(featureValue);
+            return FilterChip(
+              label: Text(featureLabel),
+              selected: isSelected,
+              onSelected: (selected) {
+                setState(() {
+                  if (selected) {
+                    _selectedFeatures.add(featureValue);
+                  } else {
+                    _selectedFeatures.remove(featureValue);
+                  }
+                });
+              },
+              selectedColor: AppTheme.primaryOrange.withValues(alpha: 0.3),
+              checkmarkColor: AppTheme.primaryOrange,
+              backgroundColor: AppTheme.getCardColor(isDark),
+              labelStyle: TextStyle(
+                color: isSelected
+                    ? AppTheme.primaryOrange
+                    : AppTheme.getTextColor(isDark),
+              ),
+            );
+          }).toList(),
+        ),
+    ]);
+  }
+
+  Widget _buildImageSection(bool isDark) {
+    return _buildSection('Images', isDark, [
+      GestureDetector(
+        onTap: _pickImages,
+        child: Container(
+          height: 120,
+          decoration: BoxDecoration(
+            border: Border.all(color: AppTheme.getBorderColor(isDark)),
+            borderRadius: BorderRadius.circular(12),
+            color: AppTheme.getCardColor(isDark),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.add_photo_alternate,
+                size: 40,
+                color: AppTheme.getSubtextColor(isDark),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Tap to add images',
+                style: TextStyle(color: AppTheme.getSubtextColor(isDark)),
+              ),
+            ],
+          ),
+        ),
+      ),
+      if (_selectedImages.isNotEmpty) ...[
+        const SizedBox(height: 16),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+          ),
+          itemCount: _selectedImages.length,
+          itemBuilder: (context, index) {
+            return Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.file(
+                    _selectedImages[index],
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: double.infinity,
+                  ),
+                ),
+                Positioned(
+                  top: 4,
+                  right: 4,
+                  child: GestureDetector(
+                    onTap: () => _removeImage(index),
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.close,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+        const SizedBox(height: 8),
+        Text(
+          '${_selectedImages.length} image(s) selected',
+          style: TextStyle(
+            color: AppTheme.getSubtextColor(isDark),
+            fontSize: 12,
+          ),
+        ),
       ],
-    );
+    ]);
   }
 
   Widget _buildSubmitButton() {
@@ -724,10 +729,7 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
       decoration: BoxDecoration(
         color: AppTheme.getCardColor(isDark).withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppTheme.getBorderColor(isDark),
-          width: 1,
-        ),
+        border: Border.all(color: AppTheme.getBorderColor(isDark), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -747,7 +749,11 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
     );
   }
 
-  InputDecoration _getInputDecoration(String label, IconData icon, bool isDark) {
+  InputDecoration _getInputDecoration(
+    String label,
+    IconData icon,
+    bool isDark,
+  ) {
     return InputDecoration(
       labelText: label,
       prefixIcon: Icon(icon, color: AppTheme.primaryOrange),
@@ -764,7 +770,7 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppTheme.primaryOrange, width: 2),
+        borderSide: BorderSide(color: AppTheme.primaryOrange, width: 2),
       ),
     );
   }

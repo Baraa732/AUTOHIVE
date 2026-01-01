@@ -127,6 +127,10 @@ Route::middleware(['auth:sanctum', 'approved'])->group(function () {
     Route::get('/rental-applications/{id}', [RentalApplicationController::class, 'show']);
     Route::post('/rental-applications/{id}/approve', [RentalApplicationController::class, 'approve']);
     Route::post('/rental-applications/{id}/reject', [RentalApplicationController::class, 'reject']);
+    Route::post('/rental-applications/{id}/modify', [RentalApplicationController::class, 'modify']);
+    Route::get('/rental-applications/{id}/modifications', [RentalApplicationController::class, 'getModifications']);
+    Route::post('/rental-applications/{id}/modifications/{modificationId}/approve', [RentalApplicationController::class, 'approveModification']);
+    Route::post('/rental-applications/{id}/modifications/{modificationId}/reject', [RentalApplicationController::class, 'rejectModification']);
 
 
     //8 Booking Management (Create/Update/Delete - requires approval)

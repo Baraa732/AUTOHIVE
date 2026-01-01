@@ -63,8 +63,8 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
     if (_checkInDate == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please select check-in date first'),
+          SnackBar(
+            content: const Text('Please select check-in date first'),
             backgroundColor: AppTheme.primaryOrange,
           ),
         );
@@ -118,8 +118,8 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
       if (_checkInDate == null || _checkOutDate == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Please select check-in and check-out dates'),
+            SnackBar(
+              content: const Text('Please select check-in and check-out dates'),
               backgroundColor: Colors.red,
             ),
           );
@@ -149,21 +149,18 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
           if (result['success'] == true) {
             Navigator.pop(context, true);
           } else {
-            String errorMessage = result['message'] ?? 'Failed to create booking request';
+            String errorMessage =
+                result['message'] ?? 'Failed to create booking request';
             String? errorDetails = result['details'];
-            
+
             // Combine message and details if details exist
             if (errorDetails != null && errorDetails.isNotEmpty) {
               errorMessage = '$errorMessage\n\n$errorDetails';
             }
-            
+
             print('❌ Booking creation failed: $errorMessage');
-            
-            ErrorHandler.showError(
-              context,
-              null,
-              customMessage: errorMessage,
-            );
+
+            ErrorHandler.showError(context, null, customMessage: errorMessage);
           }
         }
       } catch (e) {

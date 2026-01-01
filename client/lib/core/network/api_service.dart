@@ -49,9 +49,16 @@ class ApiService {
     try {
       final headers = await _getHeaders();
       final apiUrl = await AppConfig.baseUrl;
+      print('🏠 Calling dashboard endpoint: $apiUrl/dashboard');
+      print('📋 Headers: $headers');
+      
       final response = await http.get(Uri.parse('$apiUrl/dashboard'), headers: headers).timeout(const Duration(seconds: 30));
+      print('📊 Dashboard response status: ${response.statusCode}');
+      print('📦 Dashboard response body: ${response.body}');
+      
       return json.decode(response.body);
     } catch (e, stackTrace) {
+      print('❌ Dashboard error: $e');
       ErrorHandler.logError('getHome', e, stackTrace);
       return ErrorHandler.handleApiError(e, operation: 'Loading home data');
     }
@@ -696,6 +703,117 @@ class ApiService {
     } catch (e, stackTrace) {
       ErrorHandler.logError('rejectRentalApplication', e, stackTrace);
       return ErrorHandler.handleApiError(e, operation: 'Rejecting rental application');
+    }
+  }
+
+  Future<Map<String, dynamic>> modifyRentalApplication(
+    String applicationId, {
+    required String checkIn,
+    required String checkOut,
+    String? message,
+  }) async {
+    try {
+      final headers = await _getHeaders();
+      final apiUrl = await AppConfig.baseUrl;
+      final body = {
+        'check_in': checkIn,
+        'check_out': checkOut,
+        if (message != null && message.isNotEmpty) 'message': message,
+      };
+      
+      final response = await http.post(
+        Uri.parse('$apiUrl/rental-applications/$applicationId/modify'),
+        headers: headers,
+        body: json.encode(body),
+      ).timeout(const Duration(seconds: 30));
+      
+      final data = json.decode(response.body);
+      return {
+        'success': response.statusCode == 201,
+        'message': data['message'] ?? 'Modification submitted successfully',
+        'data': data['data']
+      };
+    } catch (e, stackTrace) {
+      ErrorHandler.logError('modifyRentalApplication', e, stackTrace);
+      return ErrorHandler.handleApiError(e, operation: 'Modifying rental application');
+    }
+  }
+
+  Future<Map<String, dynamic>> getModificationHistory(String applicationId) async {
+    try {
+      final headers = await _getHeaders();
+      final apiUrl = await AppConfig.baseUrl;
+      
+      final response = await http.get(
+        Uri.parse('$apiUrl/rental-applications/$applicationId/modifications'),
+        headers: headers,
+      ).timeout(const Duration(seconds: 30));
+      
+      final data = json.decode(response.body);
+      return {
+        'success': response.statusCode == 200,
+        'message': data['message'] ?? 'Modification history retrieved successfully',
+        'data': data['data']
+      };
+    } catch (e, stackTrace) {
+      ErrorHandler.logError('getModificationHistory', e, stackTrace);
+      return ErrorHandler.handleApiError(e, operation: 'Fetching modification history');
+    }
+  }
+
+  Future<Map<String, dynamic>> approveModification(
+    String applicationId,
+    String modificationId,
+  ) async {
+    try {
+      final headers = await _getHeaders();
+      final apiUrl = await AppConfig.baseUrl;
+      
+      final response = await http.post(
+        Uri.parse('$apiUrl/rental-applications/$applicationId/modifications/$modificationId/approve'),
+        headers: headers,
+        body: json.encode({}),
+      ).timeout(const Duration(seconds: 30));
+      
+      final data = json.decode(response.body);
+      return {
+        'success': response.statusCode == 200,
+        'message': data['message'] ?? 'Modification approved successfully',
+        'data': data['data']
+      };
+    } catch (e, stackTrace) {
+      ErrorHandler.logError('approveModification', e, stackTrace);
+      return ErrorHandler.handleApiError(e, operation: 'Approving modification');
+    }
+  }
+
+  Future<Map<String, dynamic>> rejectModification(
+    String applicationId,
+    String modificationId, {
+    String? rejectionReason,
+  }) async {
+    try {
+      final headers = await _getHeaders();
+      final apiUrl = await AppConfig.baseUrl;
+      final body = {
+        if (rejectionReason != null && rejectionReason.isNotEmpty) 'rejection_reason': rejectionReason,
+      };
+      
+      final response = await http.post(
+        Uri.parse('$apiUrl/rental-applications/$applicationId/modifications/$modificationId/reject'),
+        headers: headers,
+        body: json.encode(body),
+      ).timeout(const Duration(seconds: 30));
+      
+      final data = json.decode(response.body);
+      return {
+        'success': response.statusCode == 200,
+        'message': data['message'] ?? 'Modification rejected successfully',
+        'data': data['data']
+      };
+    } catch (e, stackTrace) {
+      ErrorHandler.logError('rejectModification', e, stackTrace);
+      return ErrorHandler.handleApiError(e, operation: 'Rejecting modification');
     }
   }
 }

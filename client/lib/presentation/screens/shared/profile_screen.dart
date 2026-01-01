@@ -17,7 +17,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final isDarkMode = ref.watch(themeProvider);
     final authState = ref.watch(authProvider);
     final user = authState.user;
-    
+
     return Container(
       decoration: BoxDecoration(
         gradient: AppTheme.getBackgroundGradient(isDarkMode),
@@ -25,9 +25,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       child: Stack(
         children: [
           _buildAnimatedBackground(isDarkMode),
-          SafeArea(
-            child: _buildContent(isDarkMode, user),
-          ),
+          SafeArea(child: _buildContent(isDarkMode, user)),
         ],
       ),
     );
@@ -36,89 +34,105 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Future<void> _logout() async {
     await ref.read(authProvider.notifier).logout();
     if (!mounted) return;
-    Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const WelcomeScreen()), (route) => false);
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+      (route) => false,
+    );
   }
 
   Widget _buildContent(bool isDark, User? user) {
     if (user == null) {
       return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [Color(0xFFff6f2d).withValues(alpha: 0.3), Color(0xFF4a90e2).withValues(alpha: 0.3)],
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [
+                      Color(0xFFff6f2d).withValues(alpha: 0.3),
+                      Color(0xFF4a90e2).withValues(alpha: 0.3),
+                    ],
+                  ),
                 ),
-              ),
-              child: const Icon(Icons.person_off, size: 60, color: Colors.white),
-            ),
-            const SizedBox(height: 24),
-            ShaderMask(
-              shaderCallback: (bounds) => const LinearGradient(
-                colors: [Color(0xFFff6f2d), Color(0xFF4a90e2)],
-              ).createShader(bounds),
-              child: const Text(
-                'Not Logged In',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
+                child: const Icon(
+                  Icons.person_off,
+                  size: 60,
                   color: Colors.white,
                 ),
               ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Please login to view your profile',
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.7),
-                fontSize: 16,
-              ),
-            ),
-            const SizedBox(height: 32),
-            Container(
-              width: 200,
-              height: 56,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
+              const SizedBox(height: 24),
+              ShaderMask(
+                shaderCallback: (bounds) => const LinearGradient(
                   colors: [Color(0xFFff6f2d), Color(0xFF4a90e2)],
-                ),
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFFff6f2d).withValues(alpha: 0.4),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
-              ),
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (_) => const WelcomeScreen()),
-                    (route) => false,
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                  shadowColor: Colors.transparent,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                ),
+                ).createShader(bounds),
                 child: const Text(
-                  'Go to Login',
+                  'Not Logged In',
                   style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
+                    fontSize: 28,
                     fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 12),
+              Text(
+                'Please login to view your profile',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.7),
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 32),
+              Container(
+                width: 200,
+                height: 56,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFff6f2d), Color(0xFF4a90e2)],
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFff6f2d).withValues(alpha: 0.4),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+                      (route) => false,
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                  child: const Text(
+                    'Go to Login',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -127,11 +141,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
-          ProfileAvatar(
-            user: user.toJson(),
-            size: 140,
-            showBorder: true,
-          ),
+          ProfileAvatar(user: user.toJson(), size: 140, showBorder: true),
           const SizedBox(height: 24),
           ShaderMask(
             shaderCallback: (bounds) => const LinearGradient(
@@ -190,7 +200,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.transparent,
                 shadowColor: Colors.transparent,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
               ),
               child: const Text(
                 'Logout',
@@ -202,6 +214,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ),
             ),
           ),
+          const SizedBox(height: 24), // Extra bottom padding
         ],
       ),
     );
@@ -222,10 +235,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              gradient: const LinearGradient(colors: [Color(0xFFff6f2d), Color(0xFF4a90e2)]),
+              gradient: const LinearGradient(
+                colors: [Color(0xFFff6f2d), Color(0xFF4a90e2)],
+              ),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(isDarkMode ? Icons.dark_mode : Icons.light_mode, color: Colors.white, size: 20),
+            child: Icon(
+              isDarkMode ? Icons.dark_mode : Icons.light_mode,
+              color: Colors.white,
+              size: 20,
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -240,7 +259,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
           Switch(
             value: isDarkMode,
-            onChanged: (value) => ref.read(themeProvider.notifier).toggleTheme(),
+            onChanged: (value) =>
+                ref.read(themeProvider.notifier).toggleTheme(),
             activeThumbColor: const Color(0xFFff6f2d),
           ),
         ],
@@ -265,7 +285,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [Color(0xFFff6f2d), Color(0xFF4a90e2)]),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFff6f2d), Color(0xFF4a90e2)],
+                ),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, color: Colors.white, size: 20),
@@ -306,7 +328,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               gradient: RadialGradient(
                 colors: [
                   const Color(0xFFff6f2d).withValues(alpha: isDark ? 0.3 : 0.1),
-                  const Color(0xFF4a90e2).withValues(alpha: isDark ? 0.2 : 0.05),
+                  const Color(
+                    0xFF4a90e2,
+                  ).withValues(alpha: isDark ? 0.2 : 0.05),
                   Colors.transparent,
                 ],
               ),
@@ -323,8 +347,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               borderRadius: BorderRadius.circular(25),
               gradient: LinearGradient(
                 colors: [
-                  const Color(0xFF4a90e2).withValues(alpha: isDark ? 0.4 : 0.08),
-                  const Color(0xFFff6f2d).withValues(alpha: isDark ? 0.3 : 0.06),
+                  const Color(
+                    0xFF4a90e2,
+                  ).withValues(alpha: isDark ? 0.4 : 0.08),
+                  const Color(
+                    0xFFff6f2d,
+                  ).withValues(alpha: isDark ? 0.3 : 0.06),
                 ],
               ),
             ),

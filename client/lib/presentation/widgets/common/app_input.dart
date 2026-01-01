@@ -31,7 +31,7 @@ class AppInput extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeService = ThemeService.instance;
-    
+
     return Container(
       decoration: BoxDecoration(
         color: themeService.getCardColor(context),
@@ -61,16 +61,12 @@ class AppInput extends StatelessWidget {
         decoration: InputDecoration(
           labelText: label,
           hintText: hintText,
-          labelStyle: TextStyle(
-            color: themeService.getSubtitleColor(context),
-          ),
-          hintStyle: TextStyle(
-            color: themeService.getSubtitleColor(context),
-          ),
+          labelStyle: TextStyle(color: themeService.getSubtitleColor(context)),
+          hintStyle: TextStyle(color: themeService.getSubtitleColor(context)),
           prefixIcon: Container(
             margin: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
+              gradient: LinearGradient(
                 colors: [AppTheme.primaryBlue, AppTheme.primaryPink],
               ),
               borderRadius: BorderRadius.circular(12),
@@ -80,15 +76,12 @@ class AppInput extends StatelessWidget {
           suffixIcon: suffixIcon,
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
-            horizontal: 20, 
+            horizontal: 20,
             vertical: 20,
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(
-              color: AppTheme.primaryBlue,
-              width: 2,
-            ),
+            borderSide: BorderSide(color: AppTheme.primaryBlue, width: 2),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
@@ -99,10 +92,7 @@ class AppInput extends StatelessWidget {
           ),
           errorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(
-              color: Colors.red,
-              width: 1,
-            ),
+            borderSide: const BorderSide(color: Colors.red, width: 1),
           ),
         ),
         validator: validator,

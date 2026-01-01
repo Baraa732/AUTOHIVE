@@ -2,12 +2,13 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ConnectionManager {
-  // Simple URLs for Android Emulator
+  // URLs for different connection types
   static const List<String> _urls = [
     'http://10.0.2.2:8000/api',       // Android Emulator (Laravel default)
+    'http://10.65.2.42:8000/api',     // Your current Ethernet IP for physical devices
+    'http://192.168.137.1:8000/api',  // Your hotspot IP for physical devices
     'http://127.0.0.1:8000/api',      // Localhost
     'http://localhost:8000/api',      // Alternative localhost
-    'http://192.168.1.100:8000/api',  // Local network IP (adjust as needed)
   ];
 
   static String? _workingUrl;
@@ -69,25 +70,32 @@ class ConnectionManager {
 
   static Future<void> _findWorkingUrl() async {
     final prefs = await SharedPreferences.getInstance();
+    print('🔍 Searching for working backend URL...');
     
     for (String url in _urls) {
       if (await _testUrl(url)) {
         _workingUrl = url;
         await prefs.setString(_urlCacheKey, url);
+        print('✅ Found working URL: $url');
         return;
       }
     }
+    print('❌ No working URL found!');
   }
 
   static Future<bool> _testUrl(String url) async {
     try {
+      print('🔍 Testing URL: $url');
       final response = await http.get(
         Uri.parse(url),
         headers: {'Accept': 'application/json'},
-      ).timeout(const Duration(seconds: 3)); // Increased timeout for better stability
+      ).timeout(const Duration(seconds: 3));
       
-      return response.statusCode == 200;
+      final isWorking = response.statusCode == 200;
+      print('${isWorking ? '✅' : '❌'} URL $url - Status: ${response.statusCode}');
+      return isWorking;
     } catch (e) {
+      print('❌ URL $url - Error: $e');
       return false;
     }
   }
