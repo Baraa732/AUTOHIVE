@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/core.dart';
 import '../../widgets/common/cached_network_image.dart';
 import '../../widgets/common/theme_toggle_button.dart';
+import '../../providers/favorite_provider.dart';
 import 'apartment_details_screen.dart';
 
 class ModernHomeScreen extends ConsumerStatefulWidget {
@@ -916,6 +917,37 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
                       ),
                       const Spacer(),
                       _buildOwnerProfile(apartment),
+                      const SizedBox(width: 8),
+                      Consumer(
+                        builder: (context, ref, _) {
+                          final favoriteState = ref.watch(favoriteProvider);
+                          final isFav = favoriteState.favorites.any((f) => f.apartmentId == apartment.id.toString());
+                          return IconButton(
+                            icon: Icon(
+                              isFav ? Icons.favorite : Icons.favorite_border,
+                              color: Colors.red,
+                            ),
+                            onPressed: () async {
+                              if (isFav) {
+                                final favId = favoriteState.favorites.firstWhere((f) => f.apartmentId == apartment.id.toString()).id;
+                                await ref.read(favoriteProvider.notifier).removeFromFavorites(favId);
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Removed from favorites')),
+                                  );
+                                }
+                              } else {
+                                await ref.read(favoriteProvider.notifier).addToFavorites(apartment.id.toString());
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Added to favorites')),
+                                  );
+                                }
+                              }
+                            },
+                          );
+                        },
+                      ),
                     ],
                   ),
                 ],

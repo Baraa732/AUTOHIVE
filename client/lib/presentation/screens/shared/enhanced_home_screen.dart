@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/core.dart';
+import '../../providers/favorite_provider.dart';
 import '../../widgets/common/cached_network_image.dart';
 import '../../widgets/common/theme_toggle_button.dart';
 import 'apartment_details_screen.dart';
@@ -72,6 +73,7 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
     _initAnimations();
     _loadData();
     _scrollController.addListener(_onScroll);
+    Future.microtask(() => ref.read(favoriteProvider.notifier).loadFavorites());
   }
 
   void _initAnimations() {
@@ -822,10 +824,15 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
             ),
           ],
         ),
+        clipBehavior: Clip.antiAlias,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildApartmentImage(apartment),
+            SizedBox(
+              width: double.infinity,
+              height: 200,
+              child: _buildApartmentImage(apartment),
+            ),
             Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -916,6 +923,53 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
                       ),
                       const Spacer(),
                       _buildOwnerProfile(apartment),
+                      const SizedBox(width: 8),
+                      Consumer(
+                        builder: (context, ref, _) {
+                          final favoriteState = ref.watch(favoriteProvider);
+                          final isFav = favoriteState.favorites.any(
+                            (f) => f.apartmentId == apartment.id.toString(),
+                          );
+                          return IconButton(
+                            icon: Icon(
+                              isFav ? Icons.favorite : Icons.favorite_border,
+                              color: Colors.red,
+                            ),
+                            onPressed: () async {
+                              if (isFav) {
+                                final favId = favoriteState.favorites
+                                    .firstWhere(
+                                      (f) =>
+                                          f.apartmentId ==
+                                          apartment.id.toString(),
+                                    )
+                                    .id;
+                                await ref
+                                    .read(favoriteProvider.notifier)
+                                    .removeFromFavorites(favId);
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Removed from favorites'),
+                                    ),
+                                  );
+                                }
+                              } else {
+                                await ref
+                                    .read(favoriteProvider.notifier)
+                                    .addToFavorites(apartment.id.toString());
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Added to favorites'),
+                                    ),
+                                  );
+                                }
+                              }
+                            },
+                          );
+                        },
+                      ),
                     ],
                   ),
                 ],
@@ -928,35 +982,31 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
   }
 
   Widget _buildApartmentImage(Apartment apartment) {
-    return Container(
-      height: 200,
-      width: double.infinity,
-      decoration: const BoxDecoration(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      child: ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-        child: apartment.images.isNotEmpty
-            ? AppCachedNetworkImage(
-                imageUrl: AppConfig.getImageUrlSync(apartment.images.first),
-                fit: BoxFit.cover,
-                placeholder: Container(
-                  color: Colors.grey[300],
-                  child: const Center(
-                    child: CircularProgressIndicator(color: Color(0xFFff6f2d)),
-                  ),
+    return apartment.images.isNotEmpty
+        ? SizedBox(
+            width: double.infinity,
+            height: double.infinity,
+            child: AppCachedNetworkImage(
+              imageUrl: AppConfig.getImageUrlSync(apartment.images.first),
+              fit: BoxFit.cover,
+              placeholder: Container(
+                color: Colors.grey[300],
+                child: const Center(
+                  child: CircularProgressIndicator(color: Color(0xFFff6f2d)),
                 ),
-                errorWidget: Container(
-                  color: Colors.grey,
-                  child: const Icon(Icons.image, color: Colors.white, size: 50),
-                ),
-              )
-            : Container(
+              ),
+              errorWidget: Container(
                 color: Colors.grey,
                 child: const Icon(Icons.image, color: Colors.white, size: 50),
               ),
-      ),
-    );
+            ),
+          )
+        : Container(
+            width: double.infinity,
+            height: double.infinity,
+            color: Colors.grey,
+            child: const Icon(Icons.image, color: Colors.white, size: 50),
+          );
   }
 
   Widget _buildStatusBadge(bool isAvailable) {
