@@ -12,98 +12,425 @@ class DocsController extends Controller
             'app' => 'AUTOHIVE API',
             'version' => '1.0.0',
             'base_url' => url('/api'),
-            'endpoints' => [
-                'auth' => [
-                    'POST /register' => 'Register new user',
-                    'POST /login' => 'Login user',
-                    'POST /logout' => 'Logout user (auth required)',
-                    'POST /change-password' => 'Change password (auth required)',
-                    'DELETE /delete-account' => 'Delete account (auth required)',
-                ],
-                'profile' => [
-                    'GET /profile' => 'Get user profile',
-                    'PUT /profile' => 'Update profile',
-                    'POST /upload-id' => 'Upload ID image',
-                ],
-                'files' => [
-                    'POST /files/profile-image' => 'Upload profile image',
-                    'POST /files/apartment-images' => 'Upload apartment images',
-                    'DELETE /files/image' => 'Delete image',
-                    'GET /files/image-url/{path}' => 'Get image URL',
-                ],
-                'locations' => [
-                    'GET /locations/governorates' => 'Get all governorates',
-                    'GET /locations/cities/{governorate?}' => 'Get cities by governorate',
-                    'GET /locations/features' => 'Get available features',
-                ],
-                'search' => [
-                    'GET /search/apartments' => 'Search apartments with filters',
-                    'GET /search/suggestions' => 'Get search suggestions',
-                    'GET /search/nearby' => 'Find nearby apartments',
-                ],
-                'apartments' => [
-                    'GET /apartments' => 'List apartments with filters',
-                    'GET /apartments/{id}' => 'Get apartment details',
-                    'POST /apartments' => 'Create apartment (landlord only)',
-                    'PUT /apartments/{id}' => 'Update apartment (landlord only)',
-                    'DELETE /apartments/{id}' => 'Delete apartment (landlord only)',
-                    'GET /my-apartments' => 'Get landlord apartments (landlord only)',
-                    'POST /apartments/{id}/toggle-availability' => 'Toggle availability (landlord only)',
-                ],
-                'bookings' => [
-                    'GET /bookings' => 'Get user bookings',
-                    'GET /bookings/{id}' => 'Get booking details',
-                    'POST /bookings' => 'Create booking',
-                    'PUT /bookings/{id}' => 'Update booking',
-                    'DELETE /bookings/{id}' => 'Cancel booking',
-                    'GET /bookings/history' => 'Get booking history',
-                    'GET /bookings/upcoming' => 'Get upcoming bookings',
-                    'GET /landlord/bookings' => 'Get landlord bookings (landlord only)',
-                    'GET /landlord/bookings/{id}' => 'Get landlord booking details (landlord only)',
-                    'POST /bookings/{id}/approve' => 'Approve booking (landlord only)',
-                    'POST /bookings/{id}/reject' => 'Reject booking (landlord only)',
-                ],
-                'reviews' => [
-                    'GET /apartments/{id}/reviews' => 'Get apartment reviews',
-                    'POST /reviews' => 'Create review',
-                ],
-                'favorites' => [
-                    'GET /favorites' => 'Get user favorites',
-                    'POST /favorites' => 'Add to favorites',
-                    'DELETE /favorites/{id}' => 'Remove from favorites',
-                ],
-                'messages' => [
-                    'GET /messages/{user_id}' => 'Get conversation',
-                    'POST /messages' => 'Send message',
-                    'POST /messages/{user_id}/read' => 'Mark messages as read',
-                ],
-                'notifications' => [
-                    'GET /notifications' => 'Get notifications',
-                    'POST /notifications/read' => 'Mark notifications as read',
-                ],
-                'statistics' => [
-                    'GET /stats/user' => 'Get user statistics',
-                    'GET /stats/apartment/{id}' => 'Get apartment statistics',
-                ],
-                'settings' => [
-                    'GET /settings' => 'Get user settings',
-                    'PUT /settings' => 'Update settings',
-                ],
-            ],
+            'documentation' => url('/api/docs'),
+            
             'authentication' => [
-                'type' => 'Bearer Token',
+                'type' => 'Bearer Token (Laravel Sanctum)',
                 'header' => 'Authorization: Bearer {token}',
-                'note' => 'Required for all protected routes'
+                'obtain_token' => 'POST /api/login or POST /api/register',
+                'note' => 'Include token in Authorization header for protected routes'
             ],
+
+            'endpoints' => [
+                
+                // Authentication
+                'auth' => [
+                    [
+                        'method' => 'POST',
+                        'endpoint' => '/register',
+                        'description' => 'Register new user',
+                        'auth_required' => false,
+                        'body' => [
+                            'first_name' => 'string (required)',
+                            'last_name' => 'string (required)',
+                            'phone' => 'string (required, unique)',
+                            'password' => 'string (required, min:8)',
+                            'password_confirmation' => 'string (required)',
+                            'city' => 'string (required)',
+                            'governorate' => 'string (required)',
+                            'birth_date' => 'date (optional, format: Y-m-d)',
+                            'profile_image' => 'file (optional, image)',
+                            'id_image' => 'file (optional, image)'
+                        ],
+                        'response' => [
+                            'success' => true,
+                            'message' => 'Registration successful',
+                            'data' => ['user' => '...', 'token' => '...']
+                        ]
+                    ],
+                    [
+                        'method' => 'POST',
+                        'endpoint' => '/login',
+                        'description' => 'Login user',
+                        'auth_required' => false,
+                        'body' => [
+                            'phone' => 'string (required)',
+                            'password' => 'string (required)',
+                            'device_name' => 'string (optional)'
+                        ],
+                        'response' => [
+                            'success' => true,
+                            'data' => ['user' => '...', 'token' => '...']
+                        ]
+                    ],
+                    [
+                        'method' => 'POST',
+                        'endpoint' => '/logout',
+                        'description' => 'Logout user',
+                        'auth_required' => true
+                    ],
+                    [
+                        'method' => 'POST',
+                        'endpoint' => '/change-password',
+                        'description' => 'Change user password',
+                        'auth_required' => true,
+                        'body' => [
+                            'current_password' => 'string (required)',
+                            'new_password' => 'string (required, min:8)',
+                            'new_password_confirmation' => 'string (required)'
+                        ]
+                    ]
+                ],
+
+                // Profile
+                'profile' => [
+                    [
+                        'method' => 'GET',
+                        'endpoint' => '/profile',
+                        'description' => 'Get authenticated user profile',
+                        'auth_required' => true
+                    ],
+                    [
+                        'method' => 'PUT',
+                        'endpoint' => '/profile',
+                        'description' => 'Update user profile',
+                        'auth_required' => true,
+                        'body' => [
+                            'first_name' => 'string (optional)',
+                            'last_name' => 'string (optional)',
+                            'phone' => 'string (optional)',
+                            'profile_image' => 'file (optional)'
+                        ]
+                    ]
+                ],
+
+                // Dashboard
+                'dashboard' => [
+                    [
+                        'method' => 'GET',
+                        'endpoint' => '/dashboard',
+                        'description' => 'Get user dashboard data (apartments, bookings, stats)',
+                        'auth_required' => true,
+                        'response' => [
+                            'success' => true,
+                            'data' => [
+                                'apartments' => [],
+                                'bookings' => [],
+                                'stats' => []
+                            ]
+                        ]
+                    ]
+                ],
+
+                // Apartments - Public
+                'apartments_public' => [
+                    [
+                        'method' => 'GET',
+                        'endpoint' => '/apartments/public',
+                        'description' => 'Get public apartments list (available only)',
+                        'auth_required' => false,
+                        'query_params' => [
+                            'search' => 'string (optional)',
+                            'available' => 'boolean (optional, default: 1)'
+                        ]
+                    ],
+                    [
+                        'method' => 'GET',
+                        'endpoint' => '/apartments/{id}/public',
+                        'description' => 'Get public apartment details',
+                        'auth_required' => false
+                    ],
+                    [
+                        'method' => 'GET',
+                        'endpoint' => '/apartments/features/available',
+                        'description' => 'Get available apartment features',
+                        'auth_required' => true
+                    ]
+                ],
+
+                // Apartments - Authenticated
+                'apartments' => [
+                    [
+                        'method' => 'GET',
+                        'endpoint' => '/apartments',
+                        'description' => 'Get apartments list',
+                        'auth_required' => true,
+                        'query_params' => [
+                            'search' => 'string (optional)'
+                        ]
+                    ],
+                    [
+                        'method' => 'GET',
+                        'endpoint' => '/apartments/{id}',
+                        'description' => 'Get apartment details with owner info',
+                        'auth_required' => true
+                    ],
+                    [
+                        'method' => 'POST',
+                        'endpoint' => '/apartments',
+                        'description' => 'Create new apartment',
+                        'auth_required' => true,
+                        'content_type' => 'multipart/form-data',
+                        'body' => [
+                            'title' => 'string (required)',
+                            'description' => 'string (required)',
+                            'price' => 'numeric (required)',
+                            'bedrooms' => 'integer (required)',
+                            'bathrooms' => 'integer (required)',
+                            'area' => 'numeric (required)',
+                            'address' => 'string (required)',
+                            'city' => 'string (required)',
+                            'governorate' => 'string (required)',
+                            'latitude' => 'numeric (optional)',
+                            'longitude' => 'numeric (optional)',
+                            'features' => 'array (optional)',
+                            'images[0]' => 'file (required, at least 1 image)',
+                            'images[1]' => 'file (optional)',
+                            'available' => 'boolean (optional, default: true)'
+                        ]
+                    ],
+                    [
+                        'method' => 'PUT',
+                        'endpoint' => '/apartments/{id}',
+                        'description' => 'Update apartment',
+                        'auth_required' => true,
+                        'content_type' => 'multipart/form-data',
+                        'body' => 'Same as create apartment'
+                    ],
+                    [
+                        'method' => 'DELETE',
+                        'endpoint' => '/apartments/{id}',
+                        'description' => 'Delete apartment',
+                        'auth_required' => true
+                    ],
+                    [
+                        'method' => 'GET',
+                        'endpoint' => '/my-apartments',
+                        'description' => 'Get authenticated user apartments',
+                        'auth_required' => true
+                    ],
+                    [
+                        'method' => 'POST',
+                        'endpoint' => '/apartments/{id}/toggle-availability',
+                        'description' => 'Toggle apartment availability',
+                        'auth_required' => true
+                    ]
+                ],
+
+                // Bookings
+                'bookings' => [
+                    [
+                        'method' => 'POST',
+                        'endpoint' => '/booking-requests',
+                        'description' => 'Create booking request',
+                        'auth_required' => true,
+                        'body' => [
+                            'apartment_id' => 'string (required)',
+                            'check_in' => 'date (required, format: Y-m-d)',
+                            'check_out' => 'date (required, format: Y-m-d)',
+                            'guests' => 'integer (required)',
+                            'message' => 'string (optional)'
+                        ]
+                    ],
+                    [
+                        'method' => 'GET',
+                        'endpoint' => '/bookings',
+                        'description' => 'Get user bookings',
+                        'auth_required' => true
+                    ],
+                    [
+                        'method' => 'GET',
+                        'endpoint' => '/my-apartment-bookings',
+                        'description' => 'Get bookings for user apartments (landlord)',
+                        'auth_required' => true
+                    ],
+                    [
+                        'method' => 'GET',
+                        'endpoint' => '/my-booking-requests',
+                        'description' => 'Get user booking requests',
+                        'auth_required' => true
+                    ],
+                    [
+                        'method' => 'GET',
+                        'endpoint' => '/my-apartment-booking-requests',
+                        'description' => 'Get booking requests for user apartments',
+                        'auth_required' => true
+                    ],
+                    [
+                        'method' => 'POST',
+                        'endpoint' => '/booking-requests/{id}/approve',
+                        'description' => 'Approve booking request (landlord)',
+                        'auth_required' => true
+                    ],
+                    [
+                        'method' => 'POST',
+                        'endpoint' => '/booking-requests/{id}/reject',
+                        'description' => 'Reject booking request (landlord)',
+                        'auth_required' => true
+                    ],
+                    [
+                        'method' => 'DELETE',
+                        'endpoint' => '/bookings/{id}',
+                        'description' => 'Cancel booking',
+                        'auth_required' => true
+                    ],
+                    [
+                        'method' => 'GET',
+                        'endpoint' => '/bookings/check-availability/{apartmentId}',
+                        'description' => 'Check apartment availability',
+                        'auth_required' => true,
+                        'query_params' => [
+                            'check_in' => 'date (required, format: Y-m-d)',
+                            'check_out' => 'date (required, format: Y-m-d)'
+                        ]
+                    ]
+                ],
+
+                // Rental Applications
+                'rental_applications' => [
+                    [
+                        'method' => 'POST',
+                        'endpoint' => '/rental-applications',
+                        'description' => 'Submit rental application',
+                        'auth_required' => true,
+                        'body' => [
+                            'apartment_id' => 'string (required)',
+                            'check_in' => 'date (required, format: Y-m-d)',
+                            'check_out' => 'date (required, format: Y-m-d)',
+                            'message' => 'string (optional)'
+                        ]
+                    ],
+                    [
+                        'method' => 'GET',
+                        'endpoint' => '/rental-applications/my-applications',
+                        'description' => 'Get user rental applications',
+                        'auth_required' => true
+                    ],
+                    [
+                        'method' => 'GET',
+                        'endpoint' => '/rental-applications/incoming',
+                        'description' => 'Get incoming rental applications (landlord)',
+                        'auth_required' => true
+                    ],
+                    [
+                        'method' => 'GET',
+                        'endpoint' => '/rental-applications/{id}',
+                        'description' => 'Get rental application details',
+                        'auth_required' => true
+                    ],
+                    [
+                        'method' => 'POST',
+                        'endpoint' => '/rental-applications/{id}/approve',
+                        'description' => 'Approve rental application (landlord)',
+                        'auth_required' => true
+                    ],
+                    [
+                        'method' => 'POST',
+                        'endpoint' => '/rental-applications/{id}/reject',
+                        'description' => 'Reject rental application (landlord)',
+                        'auth_required' => true,
+                        'body' => [
+                            'rejected_reason' => 'string (optional)'
+                        ]
+                    ],
+                    [
+                        'method' => 'POST',
+                        'endpoint' => '/rental-applications/{id}/modify',
+                        'description' => 'Modify rental application (tenant)',
+                        'auth_required' => true,
+                        'body' => [
+                            'check_in' => 'date (required, format: Y-m-d)',
+                            'check_out' => 'date (required, format: Y-m-d)',
+                            'message' => 'string (optional)'
+                        ]
+                    ],
+                    [
+                        'method' => 'GET',
+                        'endpoint' => '/rental-applications/{id}/modifications',
+                        'description' => 'Get modification history',
+                        'auth_required' => true
+                    ],
+                    [
+                        'method' => 'POST',
+                        'endpoint' => '/rental-applications/{id}/modifications/{modificationId}/approve',
+                        'description' => 'Approve modification (landlord)',
+                        'auth_required' => true
+                    ],
+                    [
+                        'method' => 'POST',
+                        'endpoint' => '/rental-applications/{id}/modifications/{modificationId}/reject',
+                        'description' => 'Reject modification (landlord)',
+                        'auth_required' => true,
+                        'body' => [
+                            'rejection_reason' => 'string (optional)'
+                        ]
+                    ]
+                ],
+
+                // Favorites
+                'favorites' => [
+                    [
+                        'method' => 'GET',
+                        'endpoint' => '/favorites',
+                        'description' => 'Get user favorites',
+                        'auth_required' => true
+                    ],
+                    [
+                        'method' => 'POST',
+                        'endpoint' => '/favorites',
+                        'description' => 'Add apartment to favorites',
+                        'auth_required' => true,
+                        'body' => [
+                            'apartment_id' => 'string (required)'
+                        ]
+                    ],
+                    [
+                        'method' => 'DELETE',
+                        'endpoint' => '/favorites/{id}',
+                        'description' => 'Remove from favorites',
+                        'auth_required' => true
+                    ]
+                ],
+
+                // Notifications
+                'notifications' => [
+                    [
+                        'method' => 'GET',
+                        'endpoint' => '/notifications',
+                        'description' => 'Get user notifications',
+                        'auth_required' => true
+                    ],
+                    [
+                        'method' => 'POST',
+                        'endpoint' => '/notifications/{id}/read',
+                        'description' => 'Mark notification as read',
+                        'auth_required' => true
+                    ]
+                ]
+            ],
+
             'response_format' => [
-                'success' => '200-299 status codes with JSON data',
-                'error' => '400+ status codes with error message',
-                'pagination' => 'Includes meta data for paginated results'
+                'success_response' => [
+                    'success' => true,
+                    'message' => 'Success message',
+                    'data' => 'Response data'
+                ],
+                'error_response' => [
+                    'success' => false,
+                    'message' => 'Error message',
+                    'errors' => 'Validation errors (if applicable)'
+                ]
             ],
-            'admin_panel' => '/admin/login',
-            'test_accounts' => [
-                'admin' => 'phone: 0912345678, password: admin123',
-                'note' => 'Create tenant/landlord accounts via /register endpoint'
+
+            'status_codes' => [
+                '200' => 'Success',
+                '201' => 'Created',
+                '400' => 'Bad Request',
+                '401' => 'Unauthorized',
+                '403' => 'Forbidden',
+                '404' => 'Not Found',
+                '422' => 'Validation Error',
+                '500' => 'Server Error'
             ]
         ]);
     }

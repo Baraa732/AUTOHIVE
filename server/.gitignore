@@ -21,3 +21,7 @@ yarn-error.log
 # Backup and restore documentation
 BACKUP_RESTORE_GUIDE.md
 PROGRAM_MIGRATION_GUIDE.md
+
+# API Documentation files (exclude all .md except README.md)
+*.md
+!README.md
