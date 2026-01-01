@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/auth_provider.dart';
 import '../shared/modern_home_screen.dart';
 import '../shared/bookings_screen.dart';
+import '../shared/favorites_screen.dart';
 import '../shared/add_apartment_screen.dart';
 import '../shared/profile_screen.dart';
 import '../../widgets/common/enhanced_animated_navbar.dart';
@@ -33,6 +34,7 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
     final List<Widget> screens = [
       const ModernHomeScreen(),
       const BookingsScreen(),
+      const FavoritesScreen(),
       const AddApartmentScreen(),
       const ProfileScreen(),
     ];
@@ -47,6 +49,11 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
         icon: Icons.calendar_today_outlined,
         activeIcon: Icons.calendar_today,
         label: 'Bookings',
+      ),
+      const BottomNavItem(
+        icon: Icons.favorite_outline,
+        activeIcon: Icons.favorite,
+        label: 'Favorites',
       ),
       const BottomNavItem(
         icon: Icons.add_circle_outline,

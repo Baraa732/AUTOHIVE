@@ -1,0 +1,1000 @@
+{
+	"info": {
+		"_postman_id": "autohive-api-collection",
+		"name": "AUTOHIVE API - Complete Collection",
+		"description": "Complete API collection for AUTOHIVE mobile app",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000/api",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Register",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "first_name",
+									"value": "John",
+									"type": "text"
+								},
+								{
+									"key": "last_name",
+									"value": "Doe",
+									"type": "text"
+								},
+								{
+									"key": "phone",
+									"value": "0912345678",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "password123",
+									"type": "text"
+								},
+								{
+									"key": "password_confirmation",
+									"value": "password123",
+									"type": "text"
+								},
+								{
+									"key": "city",
+									"value": "Baghdad",
+									"type": "text"
+								},
+								{
+									"key": "governorate",
+									"value": "Baghdad",
+									"type": "text"
+								},
+								{
+									"key": "birth_date",
+									"value": "1990-01-01",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "profile_image",
+									"type": "file",
+									"src": [],
+									"disabled": true
+								},
+								{
+									"key": "id_image",
+									"type": "file",
+									"src": [],
+									"disabled": true
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/register",
+							"host": ["{{base_url}}"],
+							"path": ["register"]
+						}
+					}
+				},
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"phone\": \"0912345678\",\n    \"password\": \"password123\",\n    \"device_name\": \"Postman\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/login",
+							"host": ["{{base_url}}"],
+							"path": ["login"]
+						}
+					}
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/logout",
+							"host": ["{{base_url}}"],
+							"path": ["logout"]
+						}
+					}
+				},
+				{
+					"name": "Change Password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"current_password\": \"password123\",\n    \"new_password\": \"newpassword123\",\n    \"new_password_confirmation\": \"newpassword123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/change-password",
+							"host": ["{{base_url}}"],
+							"path": ["change-password"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Profile",
+			"item": [
+				{
+					"name": "Get Profile",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/profile",
+							"host": ["{{base_url}}"],
+							"path": ["profile"]
+						}
+					}
+				},
+				{
+					"name": "Update Profile",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "first_name",
+									"value": "John",
+									"type": "text"
+								},
+								{
+									"key": "last_name",
+									"value": "Doe",
+									"type": "text"
+								},
+								{
+									"key": "phone",
+									"value": "0912345678",
+									"type": "text"
+								},
+								{
+									"key": "profile_image",
+									"type": "file",
+									"src": [],
+									"disabled": true
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/profile",
+							"host": ["{{base_url}}"],
+							"path": ["profile"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Dashboard",
+			"item": [
+				{
+					"name": "Get Dashboard",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/dashboard",
+							"host": ["{{base_url}}"],
+							"path": ["dashboard"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Apartments",
+			"item": [
+				{
+					"name": "Get Public Apartments",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/apartments/public?search=&available=1",
+							"host": ["{{base_url}}"],
+							"path": ["apartments", "public"],
+							"query": [
+								{
+									"key": "search",
+									"value": ""
+								},
+								{
+									"key": "available",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Apartment Details (Public)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/apartments/1/public",
+							"host": ["{{base_url}}"],
+							"path": ["apartments", "1", "public"]
+						}
+					}
+				},
+				{
+					"name": "Get Apartment Details (Auth)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/apartments/1",
+							"host": ["{{base_url}}"],
+							"path": ["apartments", "1"]
+						}
+					}
+				},
+				{
+					"name": "Create Apartment",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "title",
+									"value": "Modern Apartment",
+									"type": "text"
+								},
+								{
+									"key": "description",
+									"value": "Beautiful modern apartment",
+									"type": "text"
+								},
+								{
+									"key": "price",
+									"value": "500",
+									"type": "text"
+								},
+								{
+									"key": "bedrooms",
+									"value": "2",
+									"type": "text"
+								},
+								{
+									"key": "bathrooms",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "area",
+									"value": "100",
+									"type": "text"
+								},
+								{
+									"key": "address",
+									"value": "Street 10",
+									"type": "text"
+								},
+								{
+									"key": "city",
+									"value": "Baghdad",
+									"type": "text"
+								},
+								{
+									"key": "governorate",
+									"value": "Baghdad",
+									"type": "text"
+								},
+								{
+									"key": "features[0]",
+									"value": "wifi",
+									"type": "text"
+								},
+								{
+									"key": "features[1]",
+									"value": "parking",
+									"type": "text"
+								},
+								{
+									"key": "images[0]",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/apartments",
+							"host": ["{{base_url}}"],
+							"path": ["apartments"]
+						}
+					}
+				},
+				{
+					"name": "Update Apartment",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "title",
+									"value": "Updated Apartment",
+									"type": "text"
+								},
+								{
+									"key": "price",
+									"value": "600",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/apartments/1",
+							"host": ["{{base_url}}"],
+							"path": ["apartments", "1"]
+						}
+					}
+				},
+				{
+					"name": "Delete Apartment",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/apartments/1",
+							"host": ["{{base_url}}"],
+							"path": ["apartments", "1"]
+						}
+					}
+				},
+				{
+					"name": "Get My Apartments",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/my-apartments",
+							"host": ["{{base_url}}"],
+							"path": ["my-apartments"]
+						}
+					}
+				},
+				{
+					"name": "Toggle Availability",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/apartments/1/toggle-availability",
+							"host": ["{{base_url}}"],
+							"path": ["apartments", "1", "toggle-availability"]
+						}
+					}
+				},
+				{
+					"name": "Get Features",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/apartments/features/available",
+							"host": ["{{base_url}}"],
+							"path": ["apartments", "features", "available"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Bookings",
+			"item": [
+				{
+					"name": "Create Booking Request",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"apartment_id\": \"1\",\n    \"check_in\": \"2024-02-01\",\n    \"check_out\": \"2024-02-05\",\n    \"guests\": 2,\n    \"message\": \"Looking forward to staying\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/booking-requests",
+							"host": ["{{base_url}}"],
+							"path": ["booking-requests"]
+						}
+					}
+				},
+				{
+					"name": "Get My Bookings",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/bookings",
+							"host": ["{{base_url}}"],
+							"path": ["bookings"]
+						}
+					}
+				},
+				{
+					"name": "Get My Apartment Bookings",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/my-apartment-bookings",
+							"host": ["{{base_url}}"],
+							"path": ["my-apartment-bookings"]
+						}
+					}
+				},
+				{
+					"name": "Get My Booking Requests",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/my-booking-requests",
+							"host": ["{{base_url}}"],
+							"path": ["my-booking-requests"]
+						}
+					}
+				},
+				{
+					"name": "Get Apartment Booking Requests",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/my-apartment-booking-requests",
+							"host": ["{{base_url}}"],
+							"path": ["my-apartment-booking-requests"]
+						}
+					}
+				},
+				{
+					"name": "Approve Booking Request",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/booking-requests/1/approve",
+							"host": ["{{base_url}}"],
+							"path": ["booking-requests", "1", "approve"]
+						}
+					}
+				},
+				{
+					"name": "Reject Booking Request",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/booking-requests/1/reject",
+							"host": ["{{base_url}}"],
+							"path": ["booking-requests", "1", "reject"]
+						}
+					}
+				},
+				{
+					"name": "Cancel Booking",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/bookings/1",
+							"host": ["{{base_url}}"],
+							"path": ["bookings", "1"]
+						}
+					}
+				},
+				{
+					"name": "Check Availability",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/bookings/check-availability/1?check_in=2024-02-01&check_out=2024-02-05",
+							"host": ["{{base_url}}"],
+							"path": ["bookings", "check-availability", "1"],
+							"query": [
+								{
+									"key": "check_in",
+									"value": "2024-02-01"
+								},
+								{
+									"key": "check_out",
+									"value": "2024-02-05"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Rental Applications",
+			"item": [
+				{
+					"name": "Submit Application",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"apartment_id\": \"1\",\n    \"check_in\": \"2024-02-01\",\n    \"check_out\": \"2024-02-05\",\n    \"message\": \"I would like to rent\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/rental-applications",
+							"host": ["{{base_url}}"],
+							"path": ["rental-applications"]
+						}
+					}
+				},
+				{
+					"name": "Get My Applications",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/rental-applications/my-applications",
+							"host": ["{{base_url}}"],
+							"path": ["rental-applications", "my-applications"]
+						}
+					}
+				},
+				{
+					"name": "Get Incoming Applications",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/rental-applications/incoming",
+							"host": ["{{base_url}}"],
+							"path": ["rental-applications", "incoming"]
+						}
+					}
+				},
+				{
+					"name": "Get Application Details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/rental-applications/1",
+							"host": ["{{base_url}}"],
+							"path": ["rental-applications", "1"]
+						}
+					}
+				},
+				{
+					"name": "Approve Application",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/rental-applications/1/approve",
+							"host": ["{{base_url}}"],
+							"path": ["rental-applications", "1", "approve"]
+						}
+					}
+				},
+				{
+					"name": "Reject Application",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"rejected_reason\": \"Not available\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/rental-applications/1/reject",
+							"host": ["{{base_url}}"],
+							"path": ["rental-applications", "1", "reject"]
+						}
+					}
+				},
+				{
+					"name": "Modify Application",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"check_in\": \"2024-02-10\",\n    \"check_out\": \"2024-02-15\",\n    \"message\": \"Changed dates\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/rental-applications/1/modify",
+							"host": ["{{base_url}}"],
+							"path": ["rental-applications", "1", "modify"]
+						}
+					}
+				},
+				{
+					"name": "Get Modifications",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/rental-applications/1/modifications",
+							"host": ["{{base_url}}"],
+							"path": ["rental-applications", "1", "modifications"]
+						}
+					}
+				},
+				{
+					"name": "Approve Modification",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/rental-applications/1/modifications/1/approve",
+							"host": ["{{base_url}}"],
+							"path": ["rental-applications", "1", "modifications", "1", "approve"]
+						}
+					}
+				},
+				{
+					"name": "Reject Modification",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"rejection_reason\": \"Dates not available\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/rental-applications/1/modifications/1/reject",
+							"host": ["{{base_url}}"],
+							"path": ["rental-applications", "1", "modifications", "1", "reject"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Favorites",
+			"item": [
+				{
+					"name": "Get Favorites",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/favorites",
+							"host": ["{{base_url}}"],
+							"path": ["favorites"]
+						}
+					}
+				},
+				{
+					"name": "Add to Favorites",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"apartment_id\": \"1\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/favorites",
+							"host": ["{{base_url}}"],
+							"path": ["favorites"]
+						}
+					}
+				},
+				{
+					"name": "Remove from Favorites",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/favorites/1",
+							"host": ["{{base_url}}"],
+							"path": ["favorites", "1"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Notifications",
+			"item": [
+				{
+					"name": "Get Notifications",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/notifications",
+							"host": ["{{base_url}}"],
+							"path": ["notifications"]
+						}
+					}
+				},
+				{
+					"name": "Mark as Read",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/notifications/1/read",
+							"host": ["{{base_url}}"],
+							"path": ["notifications", "1", "read"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "System",
+			"item": [
+				{
+					"name": "API Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/status",
+							"host": ["{{base_url}}"],
+							"path": ["status"]
+						}
+					}
+				},
+				{
+					"name": "API Documentation",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/docs",
+							"host": ["{{base_url}}"],
+							"path": ["docs"]
+						}
+					}
+				}
+			]
+		}
+	]
+}

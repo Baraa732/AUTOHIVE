@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/core.dart';
 import '../../widgets/common/cached_network_image.dart';
+import '../../providers/favorite_provider.dart';
 import 'create_booking_screen.dart';
 import 'add_apartment_screen.dart';
 
@@ -34,6 +35,7 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
     _initAnimations();
     _loadDetails();
     _loadUser();
+    Future.microtask(() => ref.read(favoriteProvider.notifier).loadFavorites());
   }
 
   void _initAnimations() {
@@ -142,6 +144,50 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
                   expandedHeight: 300,
                   pinned: true,
                   backgroundColor: AppTheme.getBackgroundColor(isDarkMode),
+                  actions: [
+                    Consumer(
+                      builder: (context, ref, _) {
+                        final favoriteState = ref.watch(favoriteProvider);
+                        final isFav = favoriteState.favorites.any(
+                          (f) => f.apartmentId == widget.apartmentId,
+                        );
+                        return IconButton(
+                          icon: Icon(
+                            isFav ? Icons.favorite : Icons.favorite_border,
+                            color: Colors.red,
+                          ),
+                          onPressed: () async {
+                            if (isFav) {
+                              final favId = favoriteState.favorites
+                                  .firstWhere(
+                                    (f) => f.apartmentId == widget.apartmentId,
+                                  )
+                                  .id;
+                              await ref
+                                  .read(favoriteProvider.notifier)
+                                  .removeFromFavorites(favId);
+                              if (mounted)
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Removed from favorites'),
+                                  ),
+                                );
+                            } else {
+                              await ref
+                                  .read(favoriteProvider.notifier)
+                                  .addToFavorites(widget.apartmentId);
+                              if (mounted)
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Added to favorites'),
+                                  ),
+                                );
+                            }
+                          },
+                        );
+                      },
+                    ),
+                  ],
                   flexibleSpace: FlexibleSpaceBar(
                     background: Stack(
                       children: [
