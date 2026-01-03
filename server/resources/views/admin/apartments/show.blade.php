@@ -964,7 +964,7 @@
                                 <tr>
                                     <td>
                                         @if($booking->tenant && $booking->tenant->first_name)
-                                            <a href="{{ route('admin.users.show', $booking->tenant_id) }}" class="guest-link">
+                                            <div class="guest-link">
                                                 <div class="small-avatar">
                                                     {{ substr($booking->tenant->first_name, 0, 1) }}{{ substr($booking->tenant->last_name ?? '', 0, 1) }}
                                                 </div>
@@ -972,7 +972,7 @@
                                                     <div style="font-weight: 600;">{{ $booking->tenant->first_name }} {{ $booking->tenant->last_name ?? '' }}</div>
                                                     <div style="font-size: 0.8rem; color: var(--text-grey);">{{ $booking->tenant->phone ?? 'N/A' }}</div>
                                                 </div>
-                                            </a>
+                                            </div>
                                         @else
                                             <span style="color: var(--text-grey); font-style: italic;">Guest N/A</span>
                                         @endif

@@ -429,20 +429,77 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
   }
 
   Future<void> _handleApproveBooking(Booking booking) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Approve Booking'),
-        content: Text('Are you sure you want to approve this booking for ${booking.apartment?['title']}?'),
+        backgroundColor: AppTheme.getCardColor(isDark),
+        title: Text(
+          'Approve Booking',
+          style: TextStyle(color: AppTheme.getTextColor(isDark)),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Are you sure you want to approve this booking?',
+              style: TextStyle(color: AppTheme.getTextColor(isDark)),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryOrange.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: AppTheme.primaryOrange.withValues(alpha: 0.3),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Apartment: ${booking.apartment?['title']}',
+                    style: TextStyle(
+                      color: AppTheme.getTextColor(isDark),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Amount: \$${booking.totalPrice.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      color: AppTheme.primaryOrange,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'The payment will be automatically transferred from the tenant\'s wallet to your wallet.',
+                    style: TextStyle(
+                      color: AppTheme.getSubtextColor(isDark),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: AppTheme.getSubtextColor(isDark)),
+            ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-            child: const Text('Approve'),
+            child: const Text('Approve & Process Payment'),
           ),
         ],
       ),
@@ -453,18 +510,20 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
       final success = await notifier.approveBooking(booking.id);
       
       if (mounted) {
+        final state = ref.read(bookingProvider);
         if (success) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('Booking approved successfully!'),
+              content: const Text('Booking approved and payment processed successfully!'),
               backgroundColor: Colors.green,
             ),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Failed to approve booking'),
+            SnackBar(
+              content: Text(state.error ?? 'Failed to approve booking'),
               backgroundColor: Colors.red,
+              duration: const Duration(seconds: 5),
             ),
           );
         }

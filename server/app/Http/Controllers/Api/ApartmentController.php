@@ -12,7 +12,6 @@ class ApartmentController extends Controller
     public function index(Request $request)
     {
         $query = Apartment::with(['user', 'reviews'])
-            ->where('is_available', true)
             ->where('is_approved', true) // MUST be approved by admin
             ->where('status', 'approved'); // MUST have approved status
 
@@ -192,9 +191,9 @@ class ApartmentController extends Controller
         ]);
 
         $data['user_id'] = $request->user()->id;
-        $data['is_available'] = false; // Should be false until admin approves
-        $data['is_approved'] = false; // Needs admin approval
-        $data['status'] = 'pending'; // Initial status
+        $data['is_available'] = true;
+        $data['is_approved'] = true;
+        $data['status'] = 'approved';
 
         // Handle image uploads
         if ($request->hasFile('images')) {
@@ -208,17 +207,9 @@ class ApartmentController extends Controller
 
         $apartment = Apartment::create($data);
 
-        // Notify admins
-        \App\Services\NotificationService::sendToAllAdmins(
-            'info',
-            'New Apartment Listing',
-            "New apartment '{$apartment->title}' needs approval",
-            ['apartment_id' => $apartment->id]
-        );
-
         return response()->json([
             'success' => true,
-            'message' => 'Apartment created successfully. Awaiting admin approval.',
+            'message' => 'Apartment created successfully.',
             'data' => $apartment
         ], 201);
     }

@@ -97,24 +97,9 @@
             </div>
             
             <div class="apartment-actions">
-                @if($apartment->status == 'pending')
-                <form method="POST" action="{{ route('admin.apartments.approve', $apartment->id) }}" style="flex: 1;">
-                    @csrf
-                    <button type="submit" class="btn-approve" style="width: 100%;">
-                        <i class="fas fa-check"></i> Approve
-                    </button>
-                </form>
-                @endif
-                
-                <a href="{{ route('admin.apartments.show', $apartment->id) }}" class="btn-view" style="text-decoration: none; text-align: center;">
+                <a href="{{ route('admin.apartments.show', $apartment->id) }}" class="btn-view" style="text-decoration: none; text-align: center; flex: 1;">
                     <i class="fas fa-eye"></i> View
                 </a>
-                
-                @if($apartment->status == 'pending')
-                <button class="btn-reject" onclick="showRejectModal({{ $apartment->id }}, '{{ $apartment->title }}')">
-                    <i class="fas fa-times"></i>
-                </button>
-                @endif
             </div>
         </div>
     </div>

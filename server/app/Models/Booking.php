@@ -45,6 +45,11 @@ class Booking extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
+    public function tenant()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
     public function apartment()
     {
         return $this->belongsTo(Apartment::class);

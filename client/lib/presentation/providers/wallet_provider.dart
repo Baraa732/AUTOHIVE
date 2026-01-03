@@ -100,6 +100,7 @@ class WalletNotifier extends StateNotifier<WalletState> {
       final response = await apiService.submitDepositRequest(amountUsd);
       if (response['success'] == true) {
         await loadWallet();
+        await loadMyRequests();
         state = state.copyWith(isLoading: false);
         return true;
       } else {
@@ -112,31 +113,6 @@ class WalletNotifier extends StateNotifier<WalletState> {
     } catch (e) {
       state = state.copyWith(
         error: 'Error submitting deposit: $e',
-        isLoading: false,
-      );
-      return false;
-    }
-  }
-
-  Future<bool> submitWithdrawalRequest(double amountUsd) async {
-    state = state.copyWith(isLoading: true, error: null);
-
-    try {
-      final response = await apiService.submitWithdrawalRequest(amountUsd);
-      if (response['success'] == true) {
-        await loadWallet();
-        state = state.copyWith(isLoading: false);
-        return true;
-      } else {
-        state = state.copyWith(
-          error: response['message'] ?? 'Failed to submit withdrawal request',
-          isLoading: false,
-        );
-        return false;
-      }
-    } catch (e) {
-      state = state.copyWith(
-        error: 'Error submitting withdrawal: $e',
         isLoading: false,
       );
       return false;

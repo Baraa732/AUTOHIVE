@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/core.dart';
 import '../../../data/models/wallet_transaction.dart';
 import '../../providers/wallet_provider.dart';
 
@@ -25,54 +26,111 @@ class _TransactionHistoryScreenState
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
+      backgroundColor: AppTheme.getBackgroundColor(isDark),
       appBar: AppBar(
-        title: const Text('Transaction History'),
+        title: Text(
+          'Transaction History',
+          style: AppTheme.getTitle(isDark),
+        ),
         elevation: 0,
-        backgroundColor: const Color(0xFF1e5631),
+        backgroundColor: Colors.transparent,
+        iconTheme: IconThemeData(color: AppTheme.getTextColor(isDark)),
       ),
       body: Consumer(
         builder: (context, ref, _) {
           final walletState = ref.watch(walletProvider);
           if (walletState.isLoading && walletState.transactions.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(
+              child: CircularProgressIndicator(
+                color: AppTheme.primaryOrange,
+              ),
+            );
           }
 
           if (walletState.error != null && walletState.transactions.isEmpty) {
             return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.error_outline_rounded,
+                      size: 64,
+                      color: AppTheme.getSubtextColor(isDark),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      walletState.error ?? 'Error loading transactions',
+                      style: TextStyle(
+                        color: AppTheme.getTextColor(isDark),
+                        fontSize: 16,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        ref
+                            .read(walletProvider.notifier)
+                            .loadTransactions(page: _currentPage);
+                      },
+                      icon: const Icon(Icons.refresh_rounded),
+                      label: const Text('Retry'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryOrange,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          if (walletState.transactions.isEmpty) {
+            return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(walletState.error ?? 'Error loading transactions'),
+                  Icon(
+                    Icons.receipt_long_outlined,
+                    size: 64,
+                    color: AppTheme.getSubtextColor(isDark),
+                  ),
                   const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      ref
-                          .read(walletProvider.notifier)
-                          .loadTransactions(page: _currentPage);
-                    },
-                    child: const Text('Retry'),
+                  Text(
+                    'No transactions found',
+                    style: TextStyle(
+                      color: AppTheme.getTextColor(isDark),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ],
               ),
             );
           }
 
-          if (walletState.transactions.isEmpty) {
-            return const Center(child: Text('No transactions found'));
-          }
-
           return RefreshIndicator(
             onRefresh: () => ref
                 .read(walletProvider.notifier)
                 .loadTransactions(page: _currentPage),
+            color: AppTheme.primaryOrange,
             child: ListView.separated(
               padding: const EdgeInsets.all(16),
               itemCount: walletState.transactions.length,
-              separatorBuilder: (_, __) => const Divider(),
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final transaction = walletState.transactions[index];
-                return _buildTransactionTile(transaction);
+                return _buildTransactionTile(transaction, isDark);
               },
             ),
           );
@@ -81,7 +139,12 @@ class _TransactionHistoryScreenState
     );
   }
 
-  Widget _buildTransactionTile(WalletTransaction transaction) {
+  Widget _buildTransactionTile(WalletTransaction transaction, bool isDark) {
+    // Hide withdrawal transactions from user view
+    if (transaction.type == TransactionType.withdrawal) {
+      return const SizedBox.shrink();
+    }
+    
     final isOutgoing =
         transaction.type == TransactionType.rentalPayment ||
         transaction.type == TransactionType.withdrawal;
@@ -108,66 +171,97 @@ class _TransactionHistoryScreenState
     }
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(12),
+        color: AppTheme.getCardColor(isDark),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppTheme.getBorderColor(isDark),
+          width: 1,
+        ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: color, size: 26),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  transaction.type.displayName,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                    color: AppTheme.getTextColor(isDark),
+                  ),
                 ),
-                padding: const EdgeInsets.all(8),
-                child: Icon(icon, color: color, size: 24),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      transaction.type.displayName,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
+                const SizedBox(height: 6),
+                if (transaction.description != null && transaction.description!.isNotEmpty)
+                  Text(
+                    transaction.description!,
+                    style: TextStyle(
+                      color: AppTheme.getSubtextColor(isDark),
+                      fontSize: 13,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.access_time_rounded,
+                      size: 14,
+                      color: AppTheme.getSubtextColor(isDark),
+                    ),
+                    const SizedBox(width: 4),
                     Text(
-                      transaction.description ?? '',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      transaction.createdAt.toString().split('.')[0],
+                      style: TextStyle(
+                        color: AppTheme.getSubtextColor(isDark),
+                        fontSize: 12,
+                      ),
                     ),
                   ],
                 ),
-              ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
               Text(
                 '${isOutgoing ? '-' : '+'}\$${transaction.amountUsd.toStringAsFixed(2)}',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: isOutgoing ? Colors.red : Colors.green,
+                  fontSize: 17,
+                  color: isOutgoing ? AppTheme.primaryOrange : AppTheme.primaryGreen,
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                transaction.createdAt.toString().split('.')[0],
-                style: TextStyle(color: Colors.grey[500], fontSize: 12),
-              ),
-              Text(
-                '${transaction.amountSpy} SPY',
-                style: TextStyle(color: Colors.grey[500], fontSize: 12),
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '${transaction.amountSpy} SPY',
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
             ],
           ),

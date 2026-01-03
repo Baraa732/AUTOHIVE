@@ -164,21 +164,28 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
       builder: (context) => AlertDialog(
         backgroundColor: AppTheme.getCardColor(isDark),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(Icons.check_circle, color: Colors.green),
-            const SizedBox(width: 8),
-            Text(
-              'Registration Successful',
-              style: TextStyle(
-                color: AppTheme.getTextColor(isDark),
-                fontWeight: FontWeight.bold,
-              ),
+            Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.green),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Success!',
+                    style: TextStyle(
+                      color: AppTheme.getTextColor(isDark),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
         content: Text(
-          'Your account has been created successfully! Please wait for admin approval before you can login.',
+          'Your account has been created! Please wait for admin approval before you can login.',
           style: TextStyle(
             color: AppTheme.getSubtextColor(isDark),
             height: 1.5,

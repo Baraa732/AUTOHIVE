@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ApartmentController;
+use App\Http\Controllers\Api\ApartmentAvailabilityController;
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\BookingRequestController;
 use App\Http\Controllers\Api\RentalApplicationController;
@@ -44,6 +45,7 @@ Route::get('/search/suggestions', [SearchController::class, 'suggestions']);
 Route::get('/search/nearby', [SearchController::class, 'nearby']);
 Route::get('/apartments/public', [ApartmentController::class, 'index']);
 Route::get('/apartments/{id}/public', [ApartmentController::class, 'show']);
+Route::get('/apartments/{id}/booked-dates', [ApartmentAvailabilityController::class, 'getBookedDates']);
 
 
 // TODO:  Broadcasting authentication

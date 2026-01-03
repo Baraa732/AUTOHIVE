@@ -107,7 +107,6 @@ class Apartment extends Model
 
     //     return $query->exists();
     // }
-    // In Apartment model
     public function isBookedForDates($checkIn, $checkOut, $excludeBookingId = null)
     {
         $query = Booking::where('apartment_id', $this->id)

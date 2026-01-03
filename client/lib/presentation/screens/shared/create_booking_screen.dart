@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../core/core.dart';
+import '../../providers/wallet_provider.dart';
 
 class CreateBookingScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> apartment;
@@ -20,6 +21,7 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
   DateTime? _checkInDate;
   DateTime? _checkOutDate;
   bool _isLoading = false;
+  List<DateTimeRange> _bookedRanges = [];
 
   @override
   void dispose() {
@@ -28,12 +30,57 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
     super.dispose();
   }
 
+  @override
+  void initState() {
+    super.initState();
+    _loadBookedDates();
+    // Load wallet balance
+    Future.microtask(() {
+      ref.read(walletProvider.notifier).loadWallet();
+    });
+  }
+
+  Future<void> _loadBookedDates() async {
+    try {
+      final apiService = ApiService();
+      final result = await apiService.getBookedDates(widget.apartment['id'].toString());
+      
+      if (result['success'] == true && result['data'] != null) {
+        final List<dynamic> bookedDates = result['data'];
+        setState(() {
+          _bookedRanges = bookedDates.map((booking) {
+            return DateTimeRange(
+              start: DateTime.parse(booking['check_in']),
+              end: DateTime.parse(booking['check_out']),
+            );
+          }).toList();
+        });
+      }
+    } catch (e) {
+      print('Error loading booked dates: $e');
+    }
+  }
+
+  bool _isDateBooked(DateTime date) {
+    for (var range in _bookedRanges) {
+      if ((date.isAfter(range.start.subtract(const Duration(days: 1))) && 
+           date.isBefore(range.end)) ||
+          date.isAtSameMomentAs(range.start)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   Future<void> _selectCheckInDate() async {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now().add(const Duration(days: 1)),
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365)),
+      selectableDayPredicate: (DateTime date) {
+        return !_isDateBooked(date);
+      },
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
@@ -77,6 +124,9 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
       initialDate: _checkInDate!.add(const Duration(days: 1)),
       firstDate: _checkInDate!.add(const Duration(days: 1)),
       lastDate: DateTime.now().add(const Duration(days: 365)),
+      selectableDayPredicate: (DateTime date) {
+        return !_isDateBooked(date);
+      },
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
@@ -151,14 +201,57 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
           } else {
             String errorMessage =
                 result['message'] ?? 'Failed to create booking request';
+            
+            // Check if it's an insufficient balance error
+            if (result['data'] != null && result['data']['shortage_usd'] != null) {
+              final shortage = result['data']['shortage_usd'];
+              final required = result['data']['required_amount_usd'];
+              final current = result['data']['current_balance_usd'];
+              
+              // Show dialog with option to add funds
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Insufficient Balance'),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('You need \$${required.toStringAsFixed(2)} to book this apartment.'),
+                      const SizedBox(height: 8),
+                      Text('Current balance: \$${current.toStringAsFixed(2)}'),
+                      Text('Required: \$${shortage.toStringAsFixed(2)} more'),
+                      const SizedBox(height: 16),
+                      const Text('Please add funds to your wallet to continue.'),
+                    ],
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cancel'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Navigator.pop(context);
+                        // Navigate to wallet screen
+                        Navigator.pushNamed(context, '/wallet');
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryOrange,
+                      ),
+                      child: const Text('Add Funds'),
+                    ),
+                  ],
+                ),
+              );
+              return;
+            }
+            
             String? errorDetails = result['details'];
-
-            // Combine message and details if details exist
             if (errorDetails != null && errorDetails.isNotEmpty) {
               errorMessage = '$errorMessage\n\n$errorDetails';
             }
-
-            print('❌ Booking creation failed: $errorMessage');
 
             ErrorHandler.showError(context, null, customMessage: errorMessage);
           }
@@ -166,7 +259,6 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
       } catch (e) {
         if (mounted) {
           setState(() => _isLoading = false);
-          print('❌ Exception caught in _submitBooking: $e');
           ErrorHandler.showError(context, e);
         }
       }
@@ -180,6 +272,10 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
     final nights = _checkInDate != null && _checkOutDate != null
         ? _checkOutDate!.difference(_checkInDate!).inDays
         : 0;
+    
+    final walletState = ref.watch(walletProvider);
+    final walletBalance = walletState.wallet?.balanceUsd ?? 0.0;
+    final hasSufficientFunds = totalPrice > 0 && walletBalance >= totalPrice;
 
     return Scaffold(
       backgroundColor: AppTheme.getBackgroundColor(isDark),
@@ -443,7 +539,7 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                if (nights > 0)
+                if (nights > 0) ...[
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -498,6 +594,78 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: hasSufficientFunds
+                          ? AppTheme.primaryGreen.withValues(alpha: 0.1)
+                          : Colors.red.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: hasSufficientFunds
+                            ? AppTheme.primaryGreen.withValues(alpha: 0.3)
+                            : Colors.red.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          hasSufficientFunds
+                              ? Icons.check_circle_outline
+                              : Icons.warning_amber_rounded,
+                          color: hasSufficientFunds
+                              ? AppTheme.primaryGreen
+                              : Colors.red,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Wallet Balance',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppTheme.getSubtextColor(isDark),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '\$${walletBalance.toStringAsFixed(2)}',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: hasSufficientFunds
+                                      ? AppTheme.primaryGreen
+                                      : Colors.red,
+                                ),
+                              ),
+                              if (!hasSufficientFunds && totalPrice > 0) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Need \$${(totalPrice - walletBalance).toStringAsFixed(2)} more',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.red,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        if (!hasSufficientFunds && totalPrice > 0)
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pushNamed(context, '/wallet');
+                            },
+                            child: const Text('Add Funds'),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,

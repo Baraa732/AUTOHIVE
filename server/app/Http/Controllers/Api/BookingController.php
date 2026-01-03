@@ -51,21 +51,13 @@ class BookingController extends Controller
 
         $apartment = Apartment::findOrFail($request->apartment_id);
 
-        // CRITICAL: Check if apartment is approved and available
+        // CRITICAL: Check if apartment is approved
         if (!$apartment->is_approved || $apartment->status !== 'approved') {
             return response()->json([
                 'success' => false,
                 'message' => 'This apartment is not available for booking.',
                 'errors' => ['apartment_id' => ['Apartment not approved yet']]
             ], 403);
-        }
-
-        if (!$apartment->is_available) {
-            return response()->json([
-                'success' => false,
-                'message' => 'This apartment is currently unavailable.',
-                'errors' => ['apartment_id' => ['Apartment unavailable']]
-            ], 422);
         }
 
         // Allow users to book any apartment except their own
@@ -291,11 +283,6 @@ class BookingController extends Controller
                 ])
             ]);
 
-            // Make apartment available again if it was confirmed booking
-            if ($oldStatus === Booking::STATUS_CONFIRMED) {
-                $booking->apartment()->update(['is_available' => true]);
-            }
-
             // Fire event for notification
             event(new \App\Events\BookingStatusChanged($booking->load('apartment'), $oldStatus, Booking::STATUS_CANCELLED));
 
@@ -431,14 +418,6 @@ class BookingController extends Controller
 
             Log::info('Booking status updated and payment processed', ['new_status' => Booking::STATUS_CONFIRMED]);
 
-            // Make apartment unavailable
-            $booking->apartment->update(['is_available' => false]);
-
-            Log::info('Apartment availability updated', [
-                'apartment_id' => $booking->apartment_id,
-                'new_availability' => false
-            ]);
-
             // AUTO-REJECT OTHER PENDING BOOKINGS FOR OVERLAPPING DATES
             $rejectedCount = Booking::where('apartment_id', $booking->apartment_id)
                 ->where('id', '!=', $booking->id)
@@ -495,9 +474,6 @@ class BookingController extends Controller
         try {
             $oldStatus = $booking->status;
             $booking->update(['status' => Booking::STATUS_REJECTED]);
-
-            // Make apartment available again since booking was rejected
-            $booking->apartment->update(['is_available' => true]);
 
             DB::commit();
 
@@ -730,6 +706,27 @@ class BookingController extends Controller
                 'success' => false,
                 'message' => 'You cannot request to rent your own property.',
                 'errors' => ['apartment_id' => ['Cannot request to rent own property']]
+            ], 422);
+        }
+
+        // Calculate price first
+        $nights = \Carbon\Carbon::parse($request->check_in)->diffInDays($request->check_out);
+        $totalPrice = $nights * $apartment->price_per_night;
+        $requiredAmountSpy = intval($totalPrice * 110);
+
+        // Check if user has sufficient wallet balance
+        $userWallet = $request->user()->wallet;
+        if (!$userWallet || intval($userWallet->balance_spy) < $requiredAmountSpy) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Insufficient wallet balance to book this apartment.',
+                'data' => [
+                    'required_amount_usd' => $totalPrice,
+                    'required_amount_spy' => $requiredAmountSpy,
+                    'current_balance_usd' => $userWallet ? $userWallet->balance_usd : 0,
+                    'current_balance_spy' => $userWallet ? intval($userWallet->balance_spy) : 0,
+                    'shortage_usd' => $totalPrice - ($userWallet ? $userWallet->balance_usd : 0),
+                ]
             ], 422);
         }
 

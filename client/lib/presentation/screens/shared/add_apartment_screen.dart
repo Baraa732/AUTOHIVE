@@ -263,7 +263,7 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
         content: Text(
           isEdit
               ? 'Your apartment has been updated successfully!'
-              : 'Your apartment has been submitted successfully! It will be reviewed by admin before being published.',
+              : 'Your apartment has been created successfully and is now live!',
           style: TextStyle(
             color: AppTheme.getSubtextColor(isDark),
             height: 1.5,

@@ -1032,4 +1032,18 @@ class ApiService {
       return ErrorHandler.handleApiError(e, operation: 'Rejecting request');
     }
   }
+
+  Future<Map<String, dynamic>> getBookedDates(String apartmentId) async {
+    try {
+      final apiUrl = await AppConfig.baseUrl;
+      final response = await http.get(
+        Uri.parse('$apiUrl/apartments/$apartmentId/booked-dates'),
+      ).timeout(const Duration(seconds: 30));
+      
+      return json.decode(response.body);
+    } catch (e, stackTrace) {
+      ErrorHandler.logError('getBookedDates', e, stackTrace);
+      return ErrorHandler.handleApiError(e, operation: 'Loading booked dates');
+    }
+  }
 }

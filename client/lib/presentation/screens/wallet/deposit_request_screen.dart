@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/core.dart';
 import '../../providers/wallet_provider.dart';
 
 class DepositRequestScreen extends ConsumerStatefulWidget {
@@ -44,7 +45,7 @@ class _DepositRequestScreenState extends ConsumerState<DepositRequestScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.pop(context);
+        Navigator.pop(context, true);
       } else {
         final error = ref.read(walletProvider).error;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -59,11 +60,18 @@ class _DepositRequestScreenState extends ConsumerState<DepositRequestScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
+      backgroundColor: AppTheme.getBackgroundColor(isDark),
       appBar: AppBar(
-        title: const Text('Deposit Money'),
+        title: Text(
+          'Deposit Money',
+          style: AppTheme.getTitle(isDark),
+        ),
         elevation: 0,
-        backgroundColor: const Color(0xFF1e5631),
+        backgroundColor: Colors.transparent,
+        iconTheme: IconThemeData(color: AppTheme.getTextColor(isDark)),
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -77,22 +85,37 @@ class _DepositRequestScreenState extends ConsumerState<DepositRequestScreen> {
 
                 // Info Card
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                    color: AppTheme.primaryBlue.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: AppTheme.primaryBlue.withOpacity(0.3),
+                      width: 1.5,
+                    ),
                   ),
-                  child: const Row(
+                  child: Row(
                     children: [
-                      Icon(Icons.info_outline, color: Colors.blue),
-                      SizedBox(width: 12),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryBlue.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          Icons.info_outline_rounded,
+                          color: AppTheme.primaryBlue,
+                          size: 22,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
                       Expanded(
                         child: Text(
                           'Enter the amount you want to deposit. Your request will be reviewed by admin.',
                           style: TextStyle(
-                            color: Colors.blue,
+                            color: AppTheme.primaryBlue,
                             fontSize: 14,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ),
@@ -103,27 +126,40 @@ class _DepositRequestScreenState extends ConsumerState<DepositRequestScreen> {
                 const SizedBox(height: 32),
 
                 // Amount Input
-                const Text(
+                Text(
                   'Amount (USD)',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
+                    color: AppTheme.getTextColor(isDark),
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
                 TextFormField(
                   controller: _amountController,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  style: TextStyle(color: AppTheme.getTextColor(isDark)),
                   decoration: InputDecoration(
                     hintText: 'Enter amount in USD',
-                    prefixText: '\$ ',
+                    hintStyle: TextStyle(color: AppTheme.getSubtextColor(isDark)),
+                    prefixIcon: Icon(
+                      Icons.attach_money_rounded,
+                      color: AppTheme.primaryGreen,
+                    ),
+                    filled: true,
+                    fillColor: AppTheme.getCardColor(isDark),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(color: AppTheme.getBorderColor(isDark)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(color: AppTheme.getBorderColor(isDark)),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF1e5631),
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(
+                        color: AppTheme.primaryGreen,
                         width: 2,
                       ),
                     ),
@@ -151,23 +187,49 @@ class _DepositRequestScreenState extends ConsumerState<DepositRequestScreen> {
                     final amount = double.tryParse(_amountController.text) ?? 0;
                     final spy = (amount * 110).toInt();
                     return Container(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.grey[100],
-                        borderRadius: BorderRadius.circular(8),
+                        gradient: LinearGradient(
+                          colors: isDark
+                              ? [AppTheme.darkCard, AppTheme.darkSecondary]
+                              : [AppTheme.lightCard, AppTheme.lightSecondary],
+                        ),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: AppTheme.primaryGreen.withOpacity(0.3),
+                          width: 1.5,
+                        ),
                       ),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            'Equivalent in SPY:',
-                            style: TextStyle(fontWeight: FontWeight.w500),
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryGreen.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(
+                              Icons.monetization_on_rounded,
+                              color: AppTheme.primaryGreen,
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Equivalent in SPY',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w500,
+                                color: AppTheme.getSubtextColor(isDark),
+                              ),
+                            ),
                           ),
                           Text(
                             '$spy SPY',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF1e5631),
+                              fontSize: 16,
+                              color: AppTheme.primaryGreen,
                             ),
                           ),
                         ],
@@ -182,34 +244,56 @@ class _DepositRequestScreenState extends ConsumerState<DepositRequestScreen> {
                 Builder(
                   builder: (context) {
                     final walletState = ref.watch(walletProvider);
-                    return SizedBox(
+                    return Container(
                       width: double.infinity,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF10B981), Color(0xFF059669)],
+                        ),
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppTheme.primaryGreen.withOpacity(0.4),
+                            blurRadius: 12,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
                       child: ElevatedButton(
                         onPressed: _isSubmitting || walletState.isLoading
                             ? null
                             : _submitDeposit,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF1e5631),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(14),
                           ),
                         ),
                         child: _isSubmitting || walletState.isLoading
                             ? const SizedBox(
-                                height: 20,
-                                width: 20,
+                                height: 24,
+                                width: 24,
                                 child: CircularProgressIndicator(
                                   valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                  strokeWidth: 2,
+                                  strokeWidth: 2.5,
                                 ),
                               )
-                            : const Text(
-                                'Submit Deposit Request',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                            : const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.check_circle_outline_rounded, size: 22),
+                                  SizedBox(width: 10),
+                                  Text(
+                                    'Submit Deposit Request',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 0.3,
+                                    ),
+                                  ),
+                                ],
                               ),
                       ),
                     );
@@ -221,17 +305,28 @@ class _DepositRequestScreenState extends ConsumerState<DepositRequestScreen> {
                 // Cancel Button
                 SizedBox(
                   width: double.infinity,
+                  height: 56,
                   child: OutlinedButton(
                     onPressed: () {
                       Navigator.pop(context);
                     },
                     style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      side: BorderSide(
+                        color: AppTheme.getBorderColor(isDark),
+                        width: 1.5,
+                      ),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(14),
                       ),
                     ),
-                    child: const Text('Cancel'),
+                    child: Text(
+                      'Cancel',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.getTextColor(isDark),
+                      ),
+                    ),
                   ),
                 ),
               ],
