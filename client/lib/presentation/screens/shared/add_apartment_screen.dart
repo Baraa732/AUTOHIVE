@@ -98,19 +98,23 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
       final apiService = ApiService();
       final result = await apiService.getApartmentFeatures();
       if (result['success'] == true && result['data'] != null) {
-        setState(() {
-          _availableFeatures = List<Map<String, String>>.from(
-            (result['data'] as List).map(
-              (feature) => {
-                'value': feature['value']?.toString() ?? '',
-                'label': feature['label']?.toString() ?? '',
-              },
-            ),
-          );
-        });
+        if (mounted) {
+          setState(() {
+            _availableFeatures = List<Map<String, String>>.from(
+              (result['data'] as List).map(
+                (feature) => {
+                  'value': feature['value']?.toString() ?? '',
+                  'label': feature['label']?.toString() ?? '',
+                },
+              ),
+            );
+          });
+        }
       }
     } catch (e) {
-      _showError('Failed to load available features');
+      if (mounted) {
+        _showError('Failed to load available features');
+      }
     }
   }
 
@@ -384,8 +388,9 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
         maxLines: 4,
         validator: (value) {
           if (value?.isEmpty ?? true) return 'Description is required';
-          if (value!.length < 10)
+          if (value!.length < 10) {
             return 'Description must be at least 10 characters';
+          }
           return null;
         },
       ),
@@ -417,7 +422,7 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
                   value == null ? 'Please select governorate' : null,
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 8),
           Expanded(
             child: DropdownButtonFormField<String>(
               initialValue: _selectedCity,

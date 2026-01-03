@@ -101,6 +101,31 @@ class _IncomingRentalApplicationsScreenState extends ConsumerState<IncomingRenta
                 ),
               ],
             ),
+            const SizedBox(height: 8),
+            if (app.user?['average_rating'] != null && app.user!['average_rating'] > 0)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.amber[50],
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: Colors.amber[200]!),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.star, size: 14, color: Colors.amber[700]),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${app.user!['average_rating']} (${app.user!['review_count']} reviews)',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.amber[700],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             const SizedBox(height: 12),
             TenantProfileCard(
               user: app.user,

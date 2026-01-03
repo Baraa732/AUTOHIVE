@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'error_handler.dart';
 import '../constants/app_config.dart';
+import 'connection_manager.dart';
 
 class AuthService {
   Future<Map<String, dynamic>> register(
@@ -143,6 +144,13 @@ class AuthService {
           final token = data['data']['token'];
           final user = data['data']['user'];
           print('✅ Login successful, token received');
+          
+          // Cache the working URL after successful login
+          if (ConnectionManager.currentUrl != null) {
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setString('cached_working_url', ConnectionManager.currentUrl!);
+            print('💾 Cached working URL: ${ConnectionManager.currentUrl}');
+          }
 
           return {
             'success': true,

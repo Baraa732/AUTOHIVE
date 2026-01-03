@@ -46,6 +46,12 @@ Route::prefix('admin')->group(function () {
         Route::put('/profile', [\App\Http\Controllers\Admin\ProfileController::class, 'update'])->name('admin.profile.update');
         Route::delete('/profile/image', [\App\Http\Controllers\Admin\ImageController::class, 'deleteProfileImage'])->name('admin.profile.image.delete');
         
+        // Wallet Management
+        Route::get('/wallet-requests', [\App\Http\Controllers\Admin\WalletController::class, 'requests'])->name('admin.wallet.requests');
+        Route::post('/wallet-requests/{id}/approve', [\App\Http\Controllers\Admin\WalletController::class, 'approve'])->name('admin.wallet.approve');
+        Route::post('/wallet-requests/{id}/reject', [\App\Http\Controllers\Admin\WalletController::class, 'reject'])->name('admin.wallet.reject');
+        Route::get('/wallet-users', [\App\Http\Controllers\Admin\WalletController::class, 'users'])->name('admin.wallet.users');
+        
         // Notification routes
         Route::get('/notifications/check', [\App\Http\Controllers\Admin\NotificationController::class, 'check'])->name('admin.notifications.check');
         Route::get('/notifications/pending', [\App\Http\Controllers\Admin\NotificationController::class, 'getPendingUsers'])->name('admin.notifications.pending');

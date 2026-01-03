@@ -3,6 +3,8 @@ import '../../../core/network/api_service.dart';
 import '../../../data/models/rental_application.dart';
 import '../../../presentation/widgets/application_status_badge.dart';
 import '../../../presentation/widgets/tenant_profile_card.dart';
+import '../../../presentation/widgets/tenant_rating_summary.dart';
+import '../../../presentation/widgets/tenant_review_card.dart';
 import '../shared/modification_review_screen.dart';
 
 class RentalApplicationDetailScreen extends StatefulWidget {
@@ -338,6 +340,55 @@ class _RentalApplicationDetailScreenState extends State<RentalApplicationDetailS
                       user: _application.user,
                       horizontal: true,
                     ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Tenant Review History',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TenantRatingSummary(
+                      averageRating: _application.user?['average_rating'] as double?,
+                      reviewCount: _application.user?['review_count'] as int? ?? 0,
+                    ),
+                    if (_application.user?['reviews'] != null && (_application.user!['reviews'] as List).isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      const Divider(),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Recent Reviews',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      ...((_application.user!['reviews'] as List)
+                          .cast<Map<String, dynamic>>()
+                          .take(5)
+                          .map((review) => TenantReviewCard(
+                                rating: (review['rating'] as num?)?.toInt() ?? 0,
+                                comment: review['comment'] as String?,
+                                apartmentTitle: review['apartment']?['title'] as String?,
+                                createdAt: review['created_at'] != null
+                                    ? DateTime.parse(review['created_at'] as String)
+                                    : null,
+                              ))
+                          .toList()),
+                    ],
                   ],
                 ),
               ),

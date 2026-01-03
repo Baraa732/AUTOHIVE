@@ -399,10 +399,37 @@ class BookingController extends Controller
 
             DB::beginTransaction();
 
+            // Process wallet payment
+            $walletService = app(\App\Services\WalletService::class);
+            $tenantId = $booking->user_id;
+            $landlordId = $booking->apartment->user_id;
+            $rentalAmountUsd = floatval($booking->total_price);
+            $rentalAmountSpy = intval($rentalAmountUsd * 110);
+
+            // Check if tenant has sufficient funds
+            if (!$walletService->validateSufficientBalance($tenantId, $rentalAmountSpy)) {
+                DB::rollBack();
+                
+                $tenantWallet = \App\Models\User::find($tenantId)->wallet;
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Insufficient funds in tenant\'s wallet',
+                    'data' => [
+                        'required_amount_usd' => $rentalAmountUsd,
+                        'required_amount_spy' => $rentalAmountSpy,
+                        'tenant_balance_usd' => $tenantWallet ? $tenantWallet->balance_usd : 0,
+                        'tenant_balance_spy' => $tenantWallet ? intval($tenantWallet->balance_spy) : 0,
+                    ]
+                ], 422);
+            }
+
+            // Process the payment from tenant to landlord
+            $walletService->deductAndTransfer($tenantId, $landlordId, $rentalAmountSpy, $booking->id);
+
             $oldStatus = $booking->status;
             $booking->update(['status' => Booking::STATUS_CONFIRMED]);
 
-            Log::info('Booking status updated', ['new_status' => Booking::STATUS_CONFIRMED]);
+            Log::info('Booking status updated and payment processed', ['new_status' => Booking::STATUS_CONFIRMED]);
 
             // Make apartment unavailable
             $booking->apartment->update(['is_available' => false]);
@@ -436,7 +463,7 @@ class BookingController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Booking approved successfully',
+                'message' => 'Booking approved successfully and payment processed',
                 'data' => $booking
             ]);
         } catch (\Exception $e) {

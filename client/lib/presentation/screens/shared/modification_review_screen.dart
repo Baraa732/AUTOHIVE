@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../../../core/network/api_service.dart';
 import '../../../data/models/rental_application.dart';
 import '../../widgets/modification_diff_viewer.dart';
+import '../../widgets/tenant_profile_card.dart';
+import '../../widgets/tenant_rating_summary.dart';
+import '../../widgets/tenant_review_card.dart';
 
 class ModificationReviewScreen extends StatefulWidget {
   final RentalApplication application;
@@ -202,6 +205,78 @@ class _ModificationReviewScreenState extends State<ModificationReviewScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Tenant Information',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TenantProfileCard(
+                      user: widget.application.user,
+                      horizontal: true,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Tenant Review History',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TenantRatingSummary(
+                      averageRating: widget.application.user?['average_rating'] as double?,
+                      reviewCount: widget.application.user?['review_count'] as int? ?? 0,
+                    ),
+                    if (widget.application.user?['reviews'] != null && (widget.application.user!['reviews'] as List).isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      const Divider(),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Recent Reviews',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      ...(((widget.application.user!['reviews'] as List)
+                          .cast<Map<String, dynamic>>()
+                          .take(5)
+                          .map((review) => TenantReviewCard(
+                                rating: (review['rating'] as num?)?.toInt() ?? 0,
+                                comment: review['comment'] as String?,
+                                apartmentTitle: review['apartment']?['title'] as String?,
+                                createdAt: review['created_at'] != null
+                                    ? DateTime.parse(review['created_at'] as String)
+                                    : null,
+                              ))
+                          .toList())),
+                    ],
                   ],
                 ),
               ),

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\WalletService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
@@ -100,6 +101,10 @@ class AuthController extends Controller
             ]);
         }
 
+        // Create wallet for the user
+        $walletService = app(WalletService::class);
+        $walletService->createWalletForUser($user);
+
         // Send notification to admins only once
         \Log::info('Sending admin notification for new user registration', [
             'user_id' => $user->id,
@@ -110,13 +115,20 @@ class AuthController extends Controller
         
         $this->notifyAdminsOfNewRegistration($user);
 
+        $wallet = $user->wallet;
+        
         return response()->json([
             'success' => true,
             'message' => 'Registration successful. Awaiting admin approval.',
             'data' => [
                 'user' => $user->makeHidden(['password']),
                 'profile_image_url' => $user->profile_image_url,
-                'id_image_url' => $user->id_image_url
+                'id_image_url' => $user->id_image_url,
+                'wallet' => [
+                    'balance_spy' => intval($wallet->balance_spy),
+                    'balance_usd' => $wallet->balance_usd,
+                    'currency' => $wallet->currency,
+                ]
             ]
         ], 201);
     }
@@ -163,13 +175,19 @@ class AuthController extends Controller
         }
 
         $token = $user->createToken('api-token')->plainTextToken;
+        $wallet = $user->wallet;
 
         return response()->json([
             'success' => true,
             'message' => 'Login successful',
             'data' => [
                 'user' => $user->makeHidden(['password']),
-                'token' => $token
+                'token' => $token,
+                'wallet' => [
+                    'balance_spy' => intval($wallet->balance_spy),
+                    'balance_usd' => $wallet->balance_usd,
+                    'currency' => $wallet->currency,
+                ]
             ]
         ]);
     }

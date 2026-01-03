@@ -4,12 +4,14 @@ class TenantProfileCard extends StatelessWidget {
   final Map<String, dynamic>? user;
   final bool horizontal;
   final VoidCallback? onTap;
+  final bool showRating;
 
   const TenantProfileCard({
     Key? key,
     required this.user,
     this.horizontal = true,
     this.onTap,
+    this.showRating = true,
   }) : super(key: key);
 
   @override
@@ -53,13 +55,43 @@ class TenantProfileCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      tenantName,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                      overflow: TextOverflow.ellipsis,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            tenantName,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (showRating && user!['average_rating'] != null && user!['average_rating'] > 0)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.amber[50],
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: Colors.amber[200]!),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.star, size: 12, color: Colors.amber[700]),
+                                const SizedBox(width: 2),
+                                Text(
+                                  user!['average_rating'].toString(),
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.amber[700],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
                     ),
                     const SizedBox(height: 4),
                     if (email.isNotEmpty)

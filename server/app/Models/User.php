@@ -124,10 +124,43 @@ class User extends Authenticatable
         return $this->hasMany(Notification::class);
     }
 
+    public function rentalApplications()
+    {
+        return $this->hasMany(RentalApplication::class, 'user_id');
+    }
+
+    public function wallet()
+    {
+        return $this->hasOne(Wallet::class);
+    }
+
+    public function walletTransactions()
+    {
+        return $this->hasMany(WalletTransaction::class);
+    }
+
+    public function depositWithdrawalRequests()
+    {
+        return $this->hasMany(DepositWithdrawalRequest::class);
+    }
+
     // Admin check
     public function isAdmin()
     {
         return $this->role === 'admin';
+    }
+
+    // Get average rating from reviews written by this user
+    public function getAverageRatingAttribute()
+    {
+        $average = $this->reviews()->avg('rating');
+        return $average ? round($average, 1) : null;
+    }
+
+    // Get review count
+    public function getReviewCountAttribute()
+    {
+        return $this->reviews()->count();
     }
 
     // Scopes

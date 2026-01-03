@@ -357,6 +357,111 @@ class BookingNotifier extends StateNotifier<BookingState> {
       return false;
     }
   }
+
+  Future<bool> approveBooking(String bookingId) async {
+    try {
+      final result = await _apiService.approveBooking(bookingId);
+      
+      if (result['success'] == true) {
+        state = state.copyWith(
+          successMessage: result['message'] ?? 'Booking approved successfully',
+        );
+        await loadMyApartmentBookings();
+        return true;
+      } else {
+        state = state.copyWith(
+          error: result['message'] ?? 'Failed to approve booking',
+        );
+        return false;
+      }
+    } catch (e) {
+      state = state.copyWith(
+        error: e.toString(),
+      );
+      return false;
+    }
+  }
+
+  Future<bool> rejectBooking(String bookingId) async {
+    try {
+      final result = await _apiService.rejectBooking(bookingId);
+      
+      if (result['success'] == true) {
+        state = state.copyWith(
+          successMessage: result['message'] ?? 'Booking rejected successfully',
+        );
+        await loadMyApartmentBookings();
+        return true;
+      } else {
+        state = state.copyWith(
+          error: result['message'] ?? 'Failed to reject booking',
+        );
+        return false;
+      }
+    } catch (e) {
+      state = state.copyWith(
+        error: e.toString(),
+      );
+      return false;
+    }
+  }
+
+  Future<bool> updateBooking(String bookingId, {
+    String? checkIn,
+    String? checkOut,
+    Map<String, dynamic>? paymentDetails,
+  }) async {
+    try {
+      final result = await _apiService.updateBooking(
+        bookingId,
+        checkIn: checkIn,
+        checkOut: checkOut,
+        paymentDetails: paymentDetails,
+      );
+      
+      if (result['success'] == true) {
+        state = state.copyWith(
+          successMessage: result['message'] ?? 'Booking updated successfully',
+        );
+        await loadMyBookings();
+        return true;
+      } else {
+        state = state.copyWith(
+          error: result['message'] ?? 'Failed to update booking',
+        );
+        return false;
+      }
+    } catch (e) {
+      state = state.copyWith(
+        error: e.toString(),
+      );
+      return false;
+    }
+  }
+
+  Future<bool> deleteBooking(String bookingId) async {
+    try {
+      final result = await _apiService.cancelBooking(bookingId);
+      
+      if (result['success'] == true) {
+        state = state.copyWith(
+          successMessage: result['message'] ?? 'Booking deleted successfully',
+        );
+        await loadMyBookings();
+        return true;
+      } else {
+        state = state.copyWith(
+          error: result['message'] ?? 'Failed to delete booking',
+        );
+        return false;
+      }
+    } catch (e) {
+      state = state.copyWith(
+        error: e.toString(),
+      );
+      return false;
+    }
+  }
 }
 
 final bookingProvider = StateNotifierProvider<BookingNotifier, BookingState>((ref) {

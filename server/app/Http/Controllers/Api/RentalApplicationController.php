@@ -7,6 +7,7 @@ use App\Models\RentalApplication;
 use App\Models\RentalApplicationModification;
 use App\Models\Booking;
 use App\Services\RentalApplicationService;
+use App\Services\WalletService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -121,8 +122,12 @@ class RentalApplicationController extends Controller
 
     public function show(Request $request, $id)
     {
-        $application = RentalApplication::with(['user', 'apartment', 'apartment.user'])
-            ->findOrFail($id);
+        $application = RentalApplication::with([
+            'user',
+            'user.reviews.apartment',
+            'apartment',
+            'apartment.user'
+        ])->findOrFail($id);
 
         $userId = $request->user()->id;
         $isTenant = $application->user_id === $userId;
@@ -135,9 +140,15 @@ class RentalApplicationController extends Controller
             ], 403);
         }
 
+        $applicationArray = $application->toArray();
+        if ($application->user) {
+            $applicationArray['user']['average_rating'] = $application->user->average_rating;
+            $applicationArray['user']['review_count'] = $application->user->review_count;
+        }
+
         return response()->json([
             'success' => true,
-            'data' => $application,
+            'data' => $applicationArray,
             'message' => 'Application retrieved successfully'
         ]);
     }
@@ -150,7 +161,11 @@ class RentalApplicationController extends Controller
             'landlord_id' => $userId,
         ]);
 
-        $applications = RentalApplication::with(['user', 'apartment'])
+        $applications = RentalApplication::with([
+            'user',
+            'user.reviews.apartment',
+            'apartment'
+        ])
             ->whereHas('apartment', function ($query) use ($userId) {
                 $query->where('user_id', $userId);
             })
@@ -163,9 +178,18 @@ class RentalApplicationController extends Controller
             'count' => count($applications),
         ]);
 
+        $applicationsArray = $applications->map(function ($app) {
+            $appArray = $app->toArray();
+            if ($app->user) {
+                $appArray['user']['average_rating'] = $app->user->average_rating;
+                $appArray['user']['review_count'] = $app->user->review_count;
+            }
+            return $appArray;
+        });
+
         return response()->json([
             'success' => true,
-            'data' => $applications,
+            'data' => $applicationsArray,
             'message' => 'Incoming rental applications retrieved successfully'
         ]);
     }
@@ -192,14 +216,45 @@ class RentalApplicationController extends Controller
                 'responded_at' => now(),
             ]);
 
+            $totalPrice = $this->calculateTotalPrice($application);
+            
             $booking = Booking::create([
                 'user_id' => $application->user_id,
                 'apartment_id' => $application->apartment_id,
                 'check_in' => $checkIn,
                 'check_out' => $checkOut,
-                'total_price' => $this->calculateTotalPrice($application),
+                'total_price' => $totalPrice,
                 'status' => 'confirmed',
             ]);
+
+            // Process wallet payment
+            $walletService = app(WalletService::class);
+            $tenantId = $application->user_id;
+            $landlordId = $application->apartment->user_id;
+            $rentalAmountUsd = floatval($totalPrice);
+            $rentalAmountSpy = intval($rentalAmountUsd * 110);
+
+            // Check if tenant has sufficient funds
+            if (!$walletService->validateSufficientBalance($tenantId, $rentalAmountSpy)) {
+                // Rollback and return error
+                $booking->delete();
+                DB::rollBack();
+                
+                $tenantWallet = $application->user->wallet;
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Insufficient funds in tenant\'s wallet',
+                    'data' => [
+                        'required_amount_usd' => $rentalAmountUsd,
+                        'required_amount_spy' => $rentalAmountSpy,
+                        'tenant_balance_usd' => $tenantWallet ? $tenantWallet->balance_usd : 0,
+                        'tenant_balance_spy' => $tenantWallet ? intval($tenantWallet->balance_spy) : 0,
+                    ]
+                ], 422);
+            }
+
+            // Process the payment from tenant to landlord
+            $walletService->deductAndTransfer($tenantId, $landlordId, $rentalAmountSpy, $booking->id);
 
             $application->apartment->update(['is_available' => false]);
 
@@ -214,7 +269,7 @@ class RentalApplicationController extends Controller
                 'user_id' => $application->user_id,
                 'type' => 'rental_application_approved',
                 'title' => 'Application Approved',
-                'message' => "Your rental application for {$application->apartment->title} has been approved!",
+                'message' => "Your rental application for {$application->apartment->title} has been approved and payment has been processed!",
                 'data' => ['application_id' => $application->id, 'booking_id' => $booking->id]
             ]);
 
@@ -224,7 +279,7 @@ class RentalApplicationController extends Controller
                     'application' => $application,
                     'booking' => $booking
                 ],
-                'message' => 'Application approved successfully'
+                'message' => 'Application approved successfully and payment processed'
             ]);
         } catch (\Exception $e) {
             DB::rollBack();

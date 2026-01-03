@@ -1373,6 +1373,16 @@
                 <div class="nav-section">
                     <div class="nav-label">Management</div>
                     <ul class="nav-items">
+                        <li><a href="{{ route('admin.wallet.requests') }}"
+                                class="nav-link {{ request()->routeIs('admin.wallet.*') ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-wallet"></i>
+                                <span class="nav-text">Wallet Requests</span>
+                            </a></li>
+                        <li><a href="{{ route('admin.wallet.users') }}"
+                                class="nav-link {{ request()->routeIs('admin.wallet.users') ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-users"></i>
+                                <span class="nav-text">User Wallets</span>
+                            </a></li>
                         <li><a href="{{ route('admin.admins') }}"
                                 class="nav-link {{ request()->routeIs('admin.admins*') ? 'active' : '' }}">
                                 <i class="nav-icon fas fa-users-cog"></i>

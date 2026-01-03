@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../../core/core.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/wallet_provider.dart';
 import '../../widgets/common/profile_avatar.dart';
+import '../../widgets/wallet_balance_widget.dart';
 import '../auth/welcome_screen.dart';
+import '../wallet/wallet_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -12,6 +15,14 @@ class ProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      ref.read(walletProvider.notifier).loadWallet();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDarkMode = ref.watch(themeProvider);
@@ -176,6 +187,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
           ],
           const SizedBox(height: 32),
+          _buildWalletSection(),
           _buildThemeToggle(),
           _buildMenuItem(Icons.help, 'Help & Support', () {}),
           const SizedBox(height: 12),
@@ -218,6 +230,29 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildWalletSection() {
+    final wallet = ref.watch(walletProvider);
+    if (wallet.wallet != null) {
+      return Column(
+        children: [
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const WalletScreen(),
+                ),
+              );
+            },
+            child: WalletBalanceWidget(compact: true),
+          ),
+          const SizedBox(height: 16),
+        ],
+      );
+    }
+    return const SizedBox.shrink();
   }
 
   Widget _buildThemeToggle() {

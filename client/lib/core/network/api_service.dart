@@ -496,6 +496,75 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>> approveBooking(String bookingId) async {
+    try {
+      final headers = await _getHeaders();
+      final apiUrl = await AppConfig.baseUrl;
+      final response = await http.post(
+        Uri.parse('$apiUrl/bookings/$bookingId/approve'),
+        headers: headers,
+      ).timeout(const Duration(seconds: 30));
+      
+      final data = json.decode(response.body);
+      return {
+        'success': response.statusCode == 200,
+        'message': data['message'] ?? 'Booking approved',
+        'data': data['data']
+      };
+    } catch (e, stackTrace) {
+      ErrorHandler.logError('approveBooking', e, stackTrace);
+      return ErrorHandler.handleApiError(e, operation: 'Approving booking');
+    }
+  }
+
+  Future<Map<String, dynamic>> rejectBooking(String bookingId) async {
+    try {
+      final headers = await _getHeaders();
+      final apiUrl = await AppConfig.baseUrl;
+      final response = await http.post(
+        Uri.parse('$apiUrl/bookings/$bookingId/reject'),
+        headers: headers,
+      ).timeout(const Duration(seconds: 30));
+      
+      final data = json.decode(response.body);
+      return {
+        'success': response.statusCode == 200,
+        'message': data['message'] ?? 'Booking rejected',
+        'data': data['data']
+      };
+    } catch (e, stackTrace) {
+      ErrorHandler.logError('rejectBooking', e, stackTrace);
+      return ErrorHandler.handleApiError(e, operation: 'Rejecting booking');
+    }
+  }
+
+  Future<Map<String, dynamic>> updateBooking(String bookingId, {
+    String? checkIn,
+    String? checkOut,
+    Map<String, dynamic>? paymentDetails,
+  }) async {
+    try {
+      final headers = await _getHeaders();
+      final apiUrl = await AppConfig.baseUrl;
+      final body = <String, dynamic>{};
+      
+      if (checkIn != null) body['check_in'] = checkIn;
+      if (checkOut != null) body['check_out'] = checkOut;
+      if (paymentDetails != null) body['payment_details'] = paymentDetails;
+      
+      final response = await http.put(
+        Uri.parse('$apiUrl/bookings/$bookingId'),
+        headers: headers,
+        body: json.encode(body),
+      ).timeout(const Duration(seconds: 30));
+      
+      return json.decode(response.body);
+    } catch (e, stackTrace) {
+      ErrorHandler.logError('updateBooking', e, stackTrace);
+      return ErrorHandler.handleApiError(e, operation: 'Updating booking');
+    }
+  }
+
   Future<Map<String, dynamic>> approveBookingRequest(String requestId) async {
     try {
       final headers = await _getHeaders();
@@ -814,6 +883,153 @@ class ApiService {
     } catch (e, stackTrace) {
       ErrorHandler.logError('rejectModification', e, stackTrace);
       return ErrorHandler.handleApiError(e, operation: 'Rejecting modification');
+    }
+  }
+
+  Future<Map<String, dynamic>> getWallet() async {
+    try {
+      final headers = await _getHeaders();
+      final apiUrl = await AppConfig.baseUrl;
+      
+      final response = await http.get(
+        Uri.parse('$apiUrl/wallet'),
+        headers: headers,
+      ).timeout(const Duration(seconds: 30));
+      
+      return json.decode(response.body);
+    } catch (e, stackTrace) {
+      ErrorHandler.logError('getWallet', e, stackTrace);
+      return ErrorHandler.handleApiError(e, operation: 'Loading wallet');
+    }
+  }
+
+  Future<Map<String, dynamic>> getWalletTransactions({int page = 1}) async {
+    try {
+      final headers = await _getHeaders();
+      final apiUrl = await AppConfig.baseUrl;
+      
+      final response = await http.get(
+        Uri.parse('$apiUrl/wallet/transactions?page=$page'),
+        headers: headers,
+      ).timeout(const Duration(seconds: 30));
+      
+      return json.decode(response.body);
+    } catch (e, stackTrace) {
+      ErrorHandler.logError('getWalletTransactions', e, stackTrace);
+      return ErrorHandler.handleApiError(e, operation: 'Loading wallet transactions');
+    }
+  }
+
+  Future<Map<String, dynamic>> submitDepositRequest(double amountUsd) async {
+    try {
+      final headers = await _getHeaders();
+      final apiUrl = await AppConfig.baseUrl;
+      final body = {'amount_usd': amountUsd};
+      
+      final response = await http.post(
+        Uri.parse('$apiUrl/wallet/deposit-request'),
+        headers: headers,
+        body: json.encode(body),
+      ).timeout(const Duration(seconds: 30));
+      
+      return json.decode(response.body);
+    } catch (e, stackTrace) {
+      ErrorHandler.logError('submitDepositRequest', e, stackTrace);
+      return ErrorHandler.handleApiError(e, operation: 'Submitting deposit request');
+    }
+  }
+
+  Future<Map<String, dynamic>> submitWithdrawalRequest(double amountUsd) async {
+    try {
+      final headers = await _getHeaders();
+      final apiUrl = await AppConfig.baseUrl;
+      final body = {'amount_usd': amountUsd};
+      
+      final response = await http.post(
+        Uri.parse('$apiUrl/wallet/withdrawal-request'),
+        headers: headers,
+        body: json.encode(body),
+      ).timeout(const Duration(seconds: 30));
+      
+      return json.decode(response.body);
+    } catch (e, stackTrace) {
+      ErrorHandler.logError('submitWithdrawalRequest', e, stackTrace);
+      return ErrorHandler.handleApiError(e, operation: 'Submitting withdrawal request');
+    }
+  }
+
+  Future<Map<String, dynamic>> getMyWalletRequests({int page = 1}) async {
+    try {
+      final headers = await _getHeaders();
+      final apiUrl = await AppConfig.baseUrl;
+      
+      final response = await http.get(
+        Uri.parse('$apiUrl/wallet/my-requests?page=$page'),
+        headers: headers,
+      ).timeout(const Duration(seconds: 30));
+      
+      return json.decode(response.body);
+    } catch (e, stackTrace) {
+      ErrorHandler.logError('getMyWalletRequests', e, stackTrace);
+      return ErrorHandler.handleApiError(e, operation: 'Loading wallet requests');
+    }
+  }
+
+  Future<Map<String, dynamic>> getAdminWalletRequests({int page = 1, String? status}) async {
+    try {
+      final headers = await _getHeaders();
+      final apiUrl = await AppConfig.baseUrl;
+      String url = '$apiUrl/admin/deposit-requests?page=$page';
+      if (status != null) {
+        url += '&status=$status';
+      }
+      
+      final response = await http.get(
+        Uri.parse(url),
+        headers: headers,
+      ).timeout(const Duration(seconds: 30));
+      
+      return json.decode(response.body);
+    } catch (e, stackTrace) {
+      ErrorHandler.logError('getAdminWalletRequests', e, stackTrace);
+      return ErrorHandler.handleApiError(e, operation: 'Loading deposit/withdrawal requests');
+    }
+  }
+
+  Future<Map<String, dynamic>> approveWalletRequest(int requestId) async {
+    try {
+      final headers = await _getHeaders();
+      final apiUrl = await AppConfig.baseUrl;
+      
+      final response = await http.post(
+        Uri.parse('$apiUrl/admin/deposit-requests/$requestId/approve'),
+        headers: headers,
+        body: json.encode({}),
+      ).timeout(const Duration(seconds: 30));
+      
+      return json.decode(response.body);
+    } catch (e, stackTrace) {
+      ErrorHandler.logError('approveWalletRequest', e, stackTrace);
+      return ErrorHandler.handleApiError(e, operation: 'Approving request');
+    }
+  }
+
+  Future<Map<String, dynamic>> rejectWalletRequest(int requestId, String reason) async {
+    try {
+      final headers = await _getHeaders();
+      final apiUrl = await AppConfig.baseUrl;
+      final body = {'reason': reason};
+      
+      final response = await http.post(
+        Uri.parse('$apiUrl/admin/deposit-requests/$requestId/reject'),
+        headers: headers,
+        body: json.encode(body),
+      ).timeout(const Duration(seconds: 30));
+      
+      return json.decode(response.body);
+    } catch (e, stackTrace) {
+      ErrorHandler.logError('rejectWalletRequest', e, stackTrace);
+      return ErrorHandler.handleApiError(e, operation: 'Rejecting request');
     }
   }
 }

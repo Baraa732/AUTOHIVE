@@ -14,6 +14,8 @@ use App\Http\Controllers\Api\LocationController;
 use App\Http\Controllers\Api\StatisticsController;
 use App\Http\Controllers\Api\FileController;
 use App\Http\Controllers\Api\SearchController;
+use App\Http\Controllers\Api\WalletController;
+use App\Http\Controllers\Api\DepositWithdrawalController;
 use Illuminate\Support\Facades\Route;
 
 // Connection test route
@@ -217,7 +219,20 @@ Route::middleware(['auth:sanctum', 'approved'])->group(function () {
         Route::get('/admin/apartment-details/{id}', [\App\Http\Controllers\Api\ApartmentApprovalController::class, 'getApartmentDetails']);
         Route::post('/admin/approve-apartment/{id}', [\App\Http\Controllers\Api\ApartmentApprovalController::class, 'approveApartment']);
         Route::post('/admin/reject-apartment/{id}', [\App\Http\Controllers\Api\ApartmentApprovalController::class, 'rejectApartment']);
+
+        //20 Wallet Deposit/Withdrawal Management
+        Route::get('/admin/deposit-requests', [DepositWithdrawalController::class, 'getAllRequests']);
+        Route::post('/admin/deposit-requests/{id}/approve', [DepositWithdrawalController::class, 'approveRequest']);
+        Route::post('/admin/deposit-requests/{id}/reject', [DepositWithdrawalController::class, 'rejectRequest']);
     });
+
+
+    //20 Wallet Management
+    Route::get('/wallet', [WalletController::class, 'getWallet']);
+    Route::get('/wallet/transactions', [WalletController::class, 'getTransactions']);
+    Route::post('/wallet/deposit-request', [DepositWithdrawalController::class, 'submitDepositRequest']);
+    Route::post('/wallet/withdrawal-request', [DepositWithdrawalController::class, 'submitWithdrawalRequest']);
+    Route::get('/wallet/my-requests', [DepositWithdrawalController::class, 'getMyRequests']);
 
 
     //20 Settings

@@ -26,20 +26,19 @@ class ConnectionManager {
     final cachedUrl = prefs.getString(_urlCacheKey);
     
     if (cachedUrl != null) {
+      print('📌 Using cached URL: $cachedUrl');
       _workingUrl = cachedUrl;
-      // Test in background without blocking
+      // Verify in background without blocking
       _testUrlInBackground(cachedUrl);
       return cachedUrl;
     }
 
-    // Use default URL immediately for Android emulator
-    const defaultUrl = 'http://10.0.2.2:8000/api';
-    _workingUrl = defaultUrl;
+    // No cached URL, need to find working one
+    print('🔍 No cached URL, searching for working backend...');
+    await _findWorkingUrl();
     
-    // Test URLs in background
-    _testUrlsInBackground();
-    
-    return defaultUrl;
+    // Return found URL or default
+    return _workingUrl ?? 'http://10.0.2.2:8000/api';
   }
 
   static void _testUrlInBackground(String url) async {
