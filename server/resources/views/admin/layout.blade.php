@@ -1374,7 +1374,7 @@
                     <div class="nav-label">Management</div>
                     <ul class="nav-items">
                         <li><a href="{{ route('admin.wallet.requests') }}"
-                                class="nav-link {{ request()->routeIs('admin.wallet.*') ? 'active' : '' }}">
+                                class="nav-link {{ request()->routeIs('admin.wallet.requests') ? 'active' : '' }}">
                                 <i class="nav-icon fas fa-wallet"></i>
                                 <span class="nav-text">Wallet Requests</span>
                             </a></li>
