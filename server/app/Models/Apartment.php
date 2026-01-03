@@ -55,6 +55,11 @@ class Apartment extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
+    public function landlord()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
     public function bookings()
     {
         return $this->hasMany(Booking::class);

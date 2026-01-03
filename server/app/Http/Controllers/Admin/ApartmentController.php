@@ -14,20 +14,14 @@ class ApartmentController extends Controller
     {
         $query = Apartment::with(['landlord']);
 
-        // Debug: Check what status parameter is coming
-        // \Log::info('Status filter request:', ['status' => $request->status, 'all_params' => $request->all()]);
-
-        // Filter by status parameter
         if ($request->has('status') && $request->status != 'all') {
             if (in_array($request->status, ['pending', 'approved', 'rejected'])) {
                 $query->where('status', $request->status);
             }
         }
 
-        // Get paginated results
-        $apartments = $query->orderBy('created_at', 'desc')->paginate(10);
+        $apartments = $query->orderBy('created_at', 'desc')->paginate(12);
 
-        // Add status counts for stats (FOR ALL APARTMENTS, not filtered)
         $stats = [
             'total' => Apartment::count(),
             'pending' => Apartment::where('status', 'pending')->count(),
@@ -35,10 +29,9 @@ class ApartmentController extends Controller
             'rejected' => Apartment::where('status', 'rejected')->count(),
         ];
 
-        // Pass the current filter to view
         $currentStatus = $request->status ?? 'all';
 
-        return view('admin.apartments.index', compact('apartments', 'stats', 'currentStatus'));
+        return view('admin.apartments.index-advanced', compact('apartments', 'stats', 'currentStatus'));
     }
 
     public function bookingDetails($id)

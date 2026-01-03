@@ -25,13 +25,13 @@ Route::prefix('admin')->group(function () {
         Route::delete('/users/{id}', [\App\Http\Controllers\Admin\UserController::class, 'destroy'])->name('admin.users.destroy');
         Route::post('/users/{id}/approve', [AdminController::class, 'approveUser'])->name('admin.users.approve');
         Route::delete('/users/{id}/reject', [AdminController::class, 'rejectUser'])->name('admin.users.reject');
-        Route::get('/apartments', [AdminController::class, 'apartments'])->name('admin.apartments');
+        Route::get('/apartments', [\App\Http\Controllers\Admin\ApartmentController::class, 'index'])->name('admin.apartments');
         Route::get('/apartments/pending', function() { return view('admin.apartments.pending'); })->name('admin.apartments.pending');
         Route::get('/apartments/{id}', [\App\Http\Controllers\Admin\ApartmentController::class, 'show'])->name('admin.apartments.show');
         Route::get('/apartments/{id}/edit', [\App\Http\Controllers\Admin\ApartmentController::class, 'edit'])->name('admin.apartments.edit');
         Route::put('/apartments/{id}', [\App\Http\Controllers\Admin\ApartmentController::class, 'update'])->name('admin.apartments.update');
-        Route::post('/apartments/{id}/approve', [AdminController::class, 'approveApartment'])->name('admin.apartments.approve');
-        Route::post('/apartments/{id}/reject', [AdminController::class, 'rejectApartment'])->name('admin.apartments.reject');
+        Route::post('/apartments/{id}/approve', [\App\Http\Controllers\Admin\ApartmentController::class, 'approve'])->name('admin.apartments.approve');
+        Route::post('/apartments/{id}/reject', [\App\Http\Controllers\Admin\ApartmentController::class, 'reject'])->name('admin.apartments.reject');
         Route::delete('/apartments/{id}', [AdminController::class, 'deleteApartment'])->name('admin.apartments.delete');
         Route::get('/bookings', [AdminController::class, 'bookings'])->name('admin.bookings');
         Route::get('/bookings/{id}/details', [AdminController::class, 'getBookingDetails'])->name('admin.bookings.details');

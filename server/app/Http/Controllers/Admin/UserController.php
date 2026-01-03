@@ -79,8 +79,8 @@ class UserController extends Controller
 
     public function show($id)
     {
-        $user = User::findOrFail($id);
-        return view('admin.users.show', compact('user'));
+        $user = User::with(['wallet', 'apartments', 'bookings', 'reviews', 'favorites'])->findOrFail($id);
+        return view('admin.users.show-advanced', compact('user'));
     }
 
     public function destroy(Request $request, $id)
