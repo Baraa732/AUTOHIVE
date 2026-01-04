@@ -133,11 +133,9 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
   }
 
   Future<void> _pickImages() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      setState(() {
-        _selectedImages.add(File(image.path));
-      });
+    final images = await _picker.pickMultiImage();
+    if (images.isNotEmpty) {
+      setState(() => _selectedImages.addAll(images.map((e) => File(e.path))));
     }
   }
 
@@ -187,15 +185,16 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
               _selectedImages,
             );
         if (mounted) {
-          _showSuccessDialog(isEdit: true);
           Navigator.pop(context, true);
+          _showSuccessDialog(isEdit: true);
         }
       } else {
         await ref
             .read(apartmentProvider.notifier)
             .addApartment(apartmentData, _selectedImages);
         if (mounted) {
-          _clearForm();
+          await ref.read(apartmentProvider.notifier).loadApartments();
+          Navigator.of(context).popUntil((route) => route.isFirst);
           _showSuccessDialog();
         }
       }
@@ -271,18 +270,7 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
         ),
         actions: [
           TextButton(
-            onPressed: () {
-              Navigator.of(dialogContext).pop();
-              if (!isEdit) {
-                if (mounted) {
-                  _clearForm();
-                }
-              } else {
-                if (mounted && Navigator.canPop(context)) {
-                  Navigator.of(context).pop(true);
-                }
-              }
-            },
+            onPressed: () => Navigator.of(dialogContext).pop(),
             child: Text('OK', style: TextStyle(color: AppTheme.primaryOrange)),
           ),
         ],
@@ -399,53 +387,45 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
 
   Widget _buildLocationSection(bool isDark) {
     return _buildSection('Location', isDark, [
-      Row(
-        children: [
-          Expanded(
-            child: DropdownButtonFormField<String>(
-              initialValue: _selectedGovernorate,
-              decoration: _getInputDecoration(
-                'Governorate',
-                Icons.location_city,
-                isDark,
-              ),
-              items: _governorates
-                  .map((gov) => DropdownMenuItem(value: gov, child: Text(gov)))
-                  .toList(),
-              onChanged: (value) {
-                setState(() {
-                  _selectedGovernorate = value;
-                  _selectedCity = null;
-                });
-              },
-              validator: (value) =>
-                  value == null ? 'Please select governorate' : null,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: DropdownButtonFormField<String>(
-              initialValue: _selectedCity,
-              decoration: _getInputDecoration(
-                'City',
-                Icons.location_on,
-                isDark,
-              ),
-              items: _selectedGovernorate != null
-                  ? _cities[_selectedGovernorate]!
-                        .map(
-                          (city) =>
-                              DropdownMenuItem(value: city, child: Text(city)),
-                        )
-                        .toList()
-                  : [],
-              onChanged: _selectedGovernorate != null
-                  ? (value) => setState(() => _selectedCity = value)
-                  : null,
-              validator: (value) => value == null ? 'Please select city' : null,
-            ),
-          ),
-        ],
+      DropdownButtonFormField<String>(
+        initialValue: _selectedGovernorate,
+        decoration: _getInputDecoration(
+          'Governorate',
+          Icons.location_city,
+          isDark,
+        ),
+        items: _governorates
+            .map((gov) => DropdownMenuItem(value: gov, child: Text(gov)))
+            .toList(),
+        onChanged: (value) {
+          setState(() {
+            _selectedGovernorate = value;
+            _selectedCity = null;
+          });
+        },
+        validator: (value) =>
+            value == null ? 'Please select governorate' : null,
+      ),
+      const SizedBox(height: 20),
+      DropdownButtonFormField<String>(
+        initialValue: _selectedCity,
+        decoration: _getInputDecoration(
+          'City',
+          Icons.location_on,
+          isDark,
+        ),
+        items: _selectedGovernorate != null
+            ? _cities[_selectedGovernorate]!
+                  .map(
+                    (city) =>
+                        DropdownMenuItem(value: city, child: Text(city)),
+                  )
+                  .toList()
+            : [],
+        onChanged: _selectedGovernorate != null
+            ? (value) => setState(() => _selectedCity = value)
+            : null,
+        validator: (value) => value == null ? 'Please select city' : null,
       ),
     ]);
   }
@@ -617,87 +597,181 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
 
   Widget _buildImageSection(bool isDark) {
     return _buildSection('Images', isDark, [
-      GestureDetector(
-        onTap: _pickImages,
-        child: Container(
-          height: 120,
-          decoration: BoxDecoration(
-            border: Border.all(color: AppTheme.getBorderColor(isDark)),
-            borderRadius: BorderRadius.circular(12),
-            color: AppTheme.getCardColor(isDark),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.add_photo_alternate,
-                size: 40,
-                color: AppTheme.getSubtextColor(isDark),
+      if (_selectedImages.isEmpty)
+        Center(
+          child: InkWell(
+            onTap: _pickImages,
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              width: double.infinity,
+              height: 200,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppTheme.primaryOrange.withValues(alpha: 0.1),
+                    AppTheme.primaryBlue.withValues(alpha: 0.1),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: AppTheme.primaryOrange.withValues(alpha: 0.3),
+                  width: 2,
+                  strokeAlign: BorderSide.strokeAlignInside,
+                ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Tap to add images',
-                style: TextStyle(color: AppTheme.getSubtextColor(isDark)),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryOrange.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.add_photo_alternate_outlined,
+                      size: 56,
+                      color: AppTheme.primaryOrange,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Add Photos',
+                    style: TextStyle(
+                      color: AppTheme.getTextColor(isDark),
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Select multiple images at once',
+                    style: TextStyle(
+                      color: AppTheme.getSubtextColor(isDark),
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
-      if (_selectedImages.isNotEmpty) ...[
-        const SizedBox(height: 16),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            crossAxisSpacing: 8,
-            mainAxisSpacing: 8,
-          ),
-          itemCount: _selectedImages.length,
-          itemBuilder: (context, index) {
-            return Stack(
+        )
+      else
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.file(
-                    _selectedImages[index],
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    height: double.infinity,
+                Text(
+                  '${_selectedImages.length} Photo${_selectedImages.length > 1 ? 's' : ''}',
+                  style: TextStyle(
+                    color: AppTheme.getTextColor(isDark),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                Positioned(
-                  top: 4,
-                  right: 4,
-                  child: GestureDetector(
-                    onTap: () => _removeImage(index),
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
-                        color: Colors.red,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.close,
-                        color: Colors.white,
-                        size: 16,
-                      ),
-                    ),
+                TextButton.icon(
+                  onPressed: _pickImages,
+                  icon: Icon(Icons.add_circle_outline, size: 20),
+                  label: const Text('Add More'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppTheme.primaryOrange,
                   ),
                 ),
               ],
-            );
-          },
+            ),
+            const SizedBox(height: 12),
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: 1,
+              ),
+              itemCount: _selectedImages.length,
+              itemBuilder: (context, index) {
+                return Stack(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.1),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.file(
+                          _selectedImages[index],
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          height: double.infinity,
+                        ),
+                      ),
+                    ),
+                    if (index == 0)
+                      Positioned(
+                        bottom: 6,
+                        left: 6,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryOrange,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Text(
+                            'Cover',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    Positioned(
+                      top: 6,
+                      right: 6,
+                      child: GestureDetector(
+                        onTap: () => _removeImage(index),
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.3),
+                                blurRadius: 4,
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.close,
+                            color: Colors.white,
+                            size: 16,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
         ),
-        const SizedBox(height: 8),
-        Text(
-          '${_selectedImages.length} image(s) selected',
-          style: TextStyle(
-            color: AppTheme.getSubtextColor(isDark),
-            fontSize: 12,
-          ),
-        ),
-      ],
     ]);
   }
 
