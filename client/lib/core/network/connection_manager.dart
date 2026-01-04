@@ -4,11 +4,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ConnectionManager {
   // URLs for different connection types
   static const List<String> _urls = [
-    'http://10.0.2.2:8000/api',       // Android Emulator (Laravel default)
-    'http://10.65.2.42:8000/api',     // Your current Ethernet IP for physical devices
-    'http://192.168.137.1:8000/api',  // Your hotspot IP for physical devices
-    'http://127.0.0.1:8000/api',      // Localhost
-    'http://localhost:8000/api',      // Alternative localhost
+    'http://192.168.102.107:8000/api', // Current Laptop IP (Wi-Fi)
+    'http://192.168.137.1:8000/api', // Windows Hotspot IP
+    'http://10.0.2.2:8000/api', // Android Emulator
+    'http://10.65.2.42:8000/api', // Ethernet IP
+    'http://192.168.1.1:8000/api', // Common router gateway
+    'http://192.168.1.100:8000/api', // Common local IP
+    'http://127.0.0.1:8000/api', // Localhost
+    'http://localhost:8000/api', // Alternative localhost
   ];
 
   static String? _workingUrl;
@@ -24,7 +27,7 @@ class ConnectionManager {
     // Try to get cached URL from storage
     final prefs = await SharedPreferences.getInstance();
     final cachedUrl = prefs.getString(_urlCacheKey);
-    
+
     if (cachedUrl != null) {
       print('📌 Using cached URL: $cachedUrl');
       _workingUrl = cachedUrl;
@@ -36,7 +39,7 @@ class ConnectionManager {
     // No cached URL, need to find working one
     print('🔍 No cached URL, searching for working backend...');
     await _findWorkingUrl();
-    
+
     // Return found URL or default
     return _workingUrl ?? 'http://10.0.2.2:8000/api';
   }
@@ -44,7 +47,7 @@ class ConnectionManager {
   static void _testUrlInBackground(String url) async {
     if (_isTestingUrls) return;
     _isTestingUrls = true;
-    
+
     try {
       final isWorking = await _testUrl(url);
       if (!isWorking) {
@@ -59,7 +62,7 @@ class ConnectionManager {
   static void _testUrlsInBackground() async {
     if (_isTestingUrls) return;
     _isTestingUrls = true;
-    
+
     try {
       await _findWorkingUrl();
     } finally {
@@ -70,7 +73,7 @@ class ConnectionManager {
   static Future<void> _findWorkingUrl() async {
     final prefs = await SharedPreferences.getInstance();
     print('🔍 Searching for working backend URL...');
-    
+
     for (String url in _urls) {
       if (await _testUrl(url)) {
         _workingUrl = url;
@@ -85,13 +88,14 @@ class ConnectionManager {
   static Future<bool> _testUrl(String url) async {
     try {
       print('🔍 Testing URL: $url');
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {'Accept': 'application/json'},
-      ).timeout(const Duration(seconds: 3));
-      
+      final response = await http
+          .get(Uri.parse(url), headers: {'Accept': 'application/json'})
+          .timeout(const Duration(seconds: 5));
+
       final isWorking = response.statusCode == 200;
-      print('${isWorking ? '✅' : '❌'} URL $url - Status: ${response.statusCode}');
+      print(
+        '${isWorking ? '✅' : '❌'} URL $url - Status: ${response.statusCode}',
+      );
       return isWorking;
     } catch (e) {
       print('❌ URL $url - Error: $e');

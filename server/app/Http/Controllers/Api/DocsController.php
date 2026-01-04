@@ -142,6 +142,12 @@ class DocsController extends Controller
                     ],
                     [
                         'method' => 'GET',
+                        'endpoint' => '/apartments/{id}/booked-dates',
+                        'description' => 'Get apartment booked dates',
+                        'auth_required' => false
+                    ],
+                    [
+                        'method' => 'GET',
                         'endpoint' => '/apartments/features/available',
                         'description' => 'Get available apartment features',
                         'auth_required' => true
@@ -269,6 +275,18 @@ class DocsController extends Controller
                         'auth_required' => true
                     ],
                     [
+                        'method' => 'POST',
+                        'endpoint' => '/bookings/{id}/approve',
+                        'description' => 'Approve confirmed booking (landlord/admin)',
+                        'auth_required' => true
+                    ],
+                    [
+                        'method' => 'POST',
+                        'endpoint' => '/bookings/{id}/reject',
+                        'description' => 'Reject confirmed booking (landlord/admin)',
+                        'auth_required' => true
+                    ],
+                    [
                         'method' => 'DELETE',
                         'endpoint' => '/bookings/{id}',
                         'description' => 'Cancel booking',
@@ -389,6 +407,115 @@ class DocsController extends Controller
                         'endpoint' => '/favorites/{id}',
                         'description' => 'Remove from favorites',
                         'auth_required' => true
+                    ]
+                ],
+
+                // Wallet
+                'wallet' => [
+                    [
+                        'method' => 'GET',
+                        'endpoint' => '/wallet',
+                        'description' => 'Get user wallet balance',
+                        'auth_required' => true
+                    ],
+                    [
+                        'method' => 'GET',
+                        'endpoint' => '/wallet/transactions',
+                        'description' => 'Get wallet transaction history',
+                        'auth_required' => true,
+                        'query_params' => [
+                            'page' => 'integer (optional)'
+                        ]
+                    ],
+                    [
+                        'method' => 'POST',
+                        'endpoint' => '/wallet/deposit-request',
+                        'description' => 'Submit a deposit request',
+                        'auth_required' => true,
+                        'body' => [
+                            'amount_usd' => 'numeric (required)'
+                        ]
+                    ],
+                    [
+                        'method' => 'POST',
+                        'endpoint' => '/wallet/withdrawal-request',
+                        'description' => 'Submit a withdrawal request',
+                        'auth_required' => true,
+                        'body' => [
+                            'amount_usd' => 'numeric (required)'
+                        ]
+                    ],
+                    [
+                        'method' => 'GET',
+                        'endpoint' => '/wallet/my-requests',
+                        'description' => 'Get user deposit/withdrawal requests',
+                        'auth_required' => true,
+                        'query_params' => [
+                            'page' => 'integer (optional)'
+                        ]
+                    ]
+                ],
+
+                // Admin Wallet Management
+                'admin_wallet' => [
+                    [
+                        'method' => 'GET',
+                        'endpoint' => '/admin/deposit-requests',
+                        'description' => 'Get all deposit/withdrawal requests (Admin)',
+                        'auth_required' => true,
+                        'is_admin' => true,
+                        'query_params' => [
+                            'page' => 'integer (optional)',
+                            'status' => 'string (optional, pending/approved/rejected)'
+                        ]
+                    ],
+                    [
+                        'method' => 'POST',
+                        'endpoint' => '/admin/deposit-requests/{id}/approve',
+                        'description' => 'Approve deposit/withdrawal request (Admin)',
+                        'auth_required' => true,
+                        'is_admin' => true
+                    ],
+                    [
+                        'method' => 'POST',
+                        'endpoint' => '/admin/deposit-requests/{id}/reject',
+                        'description' => 'Reject deposit/withdrawal request (Admin)',
+                        'auth_required' => true,
+                        'is_admin' => true,
+                        'body' => [
+                            'reason' => 'string (required)'
+                        ]
+                    ]
+                ],
+
+                // Locations & Search
+                'locations_search' => [
+                    [
+                        'method' => 'GET',
+                        'endpoint' => '/locations/governorates',
+                        'description' => 'Get list of governorates',
+                        'auth_required' => false
+                    ],
+                    [
+                        'method' => 'GET',
+                        'endpoint' => '/locations/cities/{governorate?}',
+                        'description' => 'Get list of cities',
+                        'auth_required' => false
+                    ],
+                    [
+                        'method' => 'GET',
+                        'endpoint' => '/search/apartments',
+                        'description' => 'Search for apartments with filters',
+                        'auth_required' => false,
+                        'query_params' => [
+                            'query' => 'string (optional)',
+                            'governorate' => 'string (optional)',
+                            'city' => 'string (optional)',
+                            'min_price' => 'numeric (optional)',
+                            'max_price' => 'numeric (optional)',
+                            'bedrooms' => 'integer (optional)',
+                            'features' => 'array (optional)'
+                        ]
                     ]
                 ],
 
