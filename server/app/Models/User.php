@@ -41,7 +41,7 @@ class User extends Authenticatable
     {
         return 'USR-' . strtoupper(substr(md5($this->id . $this->phone), 0, 16));
     }
-
+    //! sha-256
     protected $fillable = [
         'phone',
         'password',

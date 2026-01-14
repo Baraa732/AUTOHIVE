@@ -114,6 +114,7 @@ Route::middleware(['auth:sanctum', 'approved'])->group(function () {
     //6 Apartment Management
     Route::post('/apartments', [ApartmentController::class, 'store']);
     Route::put('/apartments/{id}', [ApartmentController::class, 'update']);
+    Route::post('/apartments/{id}', [ApartmentController::class, 'update']); // For multipart with _method=PUT
     Route::delete('/apartments/{id}', [ApartmentController::class, 'destroy']);
     Route::get('/my-apartments', [ApartmentController::class, 'myApartments']);
     Route::post('/apartments/{id}/toggle-availability', [ApartmentController::class, 'toggleAvailability']);

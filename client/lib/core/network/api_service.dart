@@ -244,22 +244,38 @@ class ApiService {
   }) async {
     try {
       final apiUrl = await AppConfig.baseUrl;
-      var request = http.MultipartRequest('PUT', Uri.parse('$apiUrl/apartments/$apartmentId'));
-      final headers = await _getHeaders();
-      request.headers.addAll(headers);
+      var request = http.MultipartRequest('POST', Uri.parse('$apiUrl/apartments/$apartmentId'));
+      
+      final token = await _authService.getToken();
+      if (token != null) {
+        request.headers['Authorization'] = 'Bearer $token';
+      }
+      request.headers['Accept'] = 'application/json';
+      request.fields['_method'] = 'PUT'; // Laravel method spoofing
       
       apartmentData.forEach((key, value) {
-        if (value is List) {
-          request.fields[key] = json.encode(value);
-        } else {
-          request.fields[key] = value.toString();
+        if (value != null) {
+          if (key == 'existing_images' && value is List) {
+            // Send existing images as array
+            for (int i = 0; i < value.length; i++) {
+              request.fields['existing_images[$i]'] = value[i].toString();
+            }
+          } else if (value is List) {
+            // Send other arrays
+            for (int i = 0; i < value.length; i++) {
+              request.fields['$key[$i]'] = value[i].toString();
+            }
+          } else {
+            request.fields[key] = value.toString();
+          }
         }
       });
       
+      // Add new images
       for (int i = 0; i < images.length; i++) {
         request.files.add(
           await http.MultipartFile.fromPath(
-            'images[]',
+            'images[$i]',
             images[i].path,
             filename: 'apartment_${DateTime.now().millisecondsSinceEpoch}_$i.jpg',
           )

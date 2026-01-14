@@ -228,30 +228,49 @@ class ApartmentController extends Controller
             'price_per_night' => 'numeric|min:0',
             'max_guests' => 'integer|min:1',
             'rooms' => 'integer|min:1',
+            'bedrooms' => 'integer|min:1',
+            'bathrooms' => 'integer|min:1',
+            'area' => 'numeric|min:10',
             'features' => 'array',
             'is_available' => 'boolean',
+            'existing_images' => 'array',
+            'images' => 'array',
+            'images.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120'
         ]);
 
         $data = $request->only([
             'title', 'description', 'governorate', 'city', 'address',
-            'price_per_night', 'max_guests', 'rooms', 'features', 'is_available'
+            'price_per_night', 'max_guests', 'rooms', 'bedrooms', 'bathrooms', 
+            'area', 'features', 'is_available'
         ]);
 
-        // Handle new image uploads
+        // Handle images: combine existing images with new uploads
+        $finalImages = [];
+        
+        // Add existing images that weren't removed
+        if ($request->has('existing_images')) {
+            $finalImages = $request->existing_images;
+        }
+        
+        // Add new uploaded images
         if ($request->hasFile('images')) {
-            $images = [];
             foreach ($request->file('images') as $image) {
                 $path = $image->store('apartments', 'public');
-                $images[] = $path;
+                $finalImages[] = $path;
             }
-            $data['images'] = $request->has('replace_images') ? $images : array_merge($apartment->images ?? [], $images);
+        }
+        
+        // Update images only if there are changes
+        if (!empty($finalImages) || $request->has('existing_images')) {
+            $data['images'] = $finalImages;
         }
 
         $apartment->update($data);
 
         return response()->json([
+            'success' => true,
             'message' => 'Apartment updated successfully',
-            'apartment' => $apartment->fresh()
+            'data' => $apartment->fresh()
         ]);
     }
 

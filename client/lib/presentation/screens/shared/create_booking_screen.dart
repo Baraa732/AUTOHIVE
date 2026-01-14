@@ -62,20 +62,45 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
   }
 
   bool _isDateBooked(DateTime date) {
+    // Normalize the date to midnight for accurate comparison
+    final normalizedDate = DateTime(date.year, date.month, date.day);
+    
     for (var range in _bookedRanges) {
-      if ((date.isAfter(range.start.subtract(const Duration(days: 1))) && 
-           date.isBefore(range.end)) ||
-          date.isAtSameMomentAs(range.start)) {
+      final rangeStart = DateTime(range.start.year, range.start.month, range.start.day);
+      final rangeEnd = DateTime(range.end.year, range.end.month, range.end.day);
+      
+      // Check if the date falls within any booked range (inclusive of start, exclusive of end)
+      if ((normalizedDate.isAfter(rangeStart.subtract(const Duration(days: 1))) && 
+           normalizedDate.isBefore(rangeEnd)) ||
+          normalizedDate.isAtSameMomentAs(rangeStart)) {
         return true;
       }
     }
     return false;
   }
 
+  bool _isRangeAvailable(DateTime checkIn, DateTime checkOut) {
+    // Check if any date in the range is booked
+    DateTime currentDate = checkIn;
+    while (currentDate.isBefore(checkOut)) {
+      if (_isDateBooked(currentDate)) {
+        return false;
+      }
+      currentDate = currentDate.add(const Duration(days: 1));
+    }
+    return true;
+  }
+
   Future<void> _selectCheckInDate() async {
+    // Find the first available date starting from tomorrow
+    DateTime initialDate = DateTime.now().add(const Duration(days: 1));
+    while (_isDateBooked(initialDate) && initialDate.isBefore(DateTime.now().add(const Duration(days: 365)))) {
+      initialDate = initialDate.add(const Duration(days: 1));
+    }
+
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now().add(const Duration(days: 1)),
+      initialDate: initialDate,
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365)),
       selectableDayPredicate: (DateTime date) {
@@ -119,9 +144,15 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
       return;
     }
 
+    // Find the first available date after check-in
+    DateTime initialDate = _checkInDate!.add(const Duration(days: 1));
+    while (_isDateBooked(initialDate) && initialDate.isBefore(DateTime.now().add(const Duration(days: 365)))) {
+      initialDate = initialDate.add(const Duration(days: 1));
+    }
+
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: _checkInDate!.add(const Duration(days: 1)),
+      initialDate: initialDate,
       firstDate: _checkInDate!.add(const Duration(days: 1)),
       lastDate: DateTime.now().add(const Duration(days: 365)),
       selectableDayPredicate: (DateTime date) {
@@ -173,6 +204,26 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
               backgroundColor: Colors.red,
             ),
           );
+        }
+        return;
+      }
+
+      // Validate that the selected range is still available
+      if (!_isRangeAvailable(_checkInDate!, _checkOutDate!)) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Selected dates are no longer available. Please choose different dates.'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+          // Reload booked dates
+          await _loadBookedDates();
+          setState(() {
+            _checkInDate = null;
+            _checkOutDate = null;
+          });
         }
         return;
       }
@@ -339,6 +390,38 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
                     color: AppTheme.getTextColor(isDark),
                   ),
                 ),
+                if (_bookedRanges.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Colors.blue.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          size: 20,
+                          color: Colors.blue,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Some dates are already booked and cannot be selected',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.blue.shade700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 16),
                 InkWell(
                   onTap: _selectCheckInDate,

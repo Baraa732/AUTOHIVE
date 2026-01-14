@@ -13,6 +13,8 @@ class ApartmentAvailabilityController extends Controller
     {
         $apartment = Apartment::findOrFail($apartmentId);
         
+        // Only return CONFIRMED bookings as blocked dates
+        // PENDING bookings should not block the calendar since multiple users can request the same dates
         $bookedDates = Booking::where('apartment_id', $apartmentId)
             ->where('status', Booking::STATUS_CONFIRMED)
             ->select(['check_in', 'check_out'])

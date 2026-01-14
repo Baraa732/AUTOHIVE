@@ -29,6 +29,7 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
   String? _selectedGovernorate;
   String? _selectedCity;
   List<File> _selectedImages = [];
+  List<String> _existingImageUrls = []; // Track existing images from server
   List<String> _selectedFeatures = [];
   final ImagePicker _picker = ImagePicker();
   bool _isLoading = false;
@@ -90,6 +91,15 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
       if (apt['features'] != null) {
         _selectedFeatures = List<String>.from(apt['features'] ?? []);
       }
+      // Load existing images and convert to full URLs
+      if (apt['images'] != null) {
+        _existingImageUrls = List<String>.from(apt['images'] ?? []).map((img) {
+          // If already a full URL, return as is
+          if (img.toString().startsWith('http')) return img.toString();
+          // Otherwise, construct full URL
+          return 'http://192.168.137.1:8000/storage/$img';
+        }).toList();
+      }
     });
   }
 
@@ -145,6 +155,12 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
     });
   }
 
+  void _removeExistingImage(int index) {
+    setState(() {
+      _existingImageUrls.removeAt(index);
+    });
+  }
+
   Future<void> _submitApartment() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -153,8 +169,15 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
       return;
     }
 
+    // Check images: for new apartments, require at least one new image
+    // For editing, allow if there are existing images or new images
     if (widget.apartment == null && _selectedImages.isEmpty) {
       _showError('Please select at least one image');
+      return;
+    }
+
+    if (widget.apartment != null && _existingImageUrls.isEmpty && _selectedImages.isEmpty) {
+      _showError('Please keep at least one image or add new images');
       return;
     }
 
@@ -173,6 +196,13 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
       'bathrooms': int.tryParse(_bathroomsController.text) ?? 1,
       'area': double.tryParse(_areaController.text) ?? 0.0,
       'features': _selectedFeatures,
+      if (widget.apartment != null) 'existing_images': _existingImageUrls.map((url) {
+        // Convert full URLs back to relative paths
+        if (url.contains('/storage/')) {
+          return url.split('/storage/').last;
+        }
+        return url;
+      }).toList(),
     };
 
     try {
@@ -596,8 +626,10 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
   }
 
   Widget _buildImageSection(bool isDark) {
+    final totalImages = _existingImageUrls.length + _selectedImages.length;
+    
     return _buildSection('Images', isDark, [
-      if (_selectedImages.isEmpty)
+      if (totalImages == 0)
         Center(
           child: InkWell(
             onTap: _pickImages,
@@ -666,7 +698,7 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  '${_selectedImages.length} Photo${_selectedImages.length > 1 ? 's' : ''}',
+                  '$totalImages Photo${totalImages > 1 ? 's' : ''}',
                   style: TextStyle(
                     color: AppTheme.getTextColor(isDark),
                     fontSize: 15,
@@ -693,8 +725,10 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
                 mainAxisSpacing: 12,
                 childAspectRatio: 1,
               ),
-              itemCount: _selectedImages.length,
+              itemCount: totalImages,
               itemBuilder: (context, index) {
+                final isExisting = index < _existingImageUrls.length;
+                
                 return Stack(
                   children: [
                     Container(
@@ -710,12 +744,39 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(12),
-                        child: Image.file(
-                          _selectedImages[index],
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                          height: double.infinity,
-                        ),
+                        child: isExisting
+                            ? Image.network(
+                                _existingImageUrls[index],
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                height: double.infinity,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    color: Colors.grey[300],
+                                    child: Icon(Icons.error, color: Colors.red),
+                                  );
+                                },
+                                loadingBuilder: (context, child, loadingProgress) {
+                                  if (loadingProgress == null) return child;
+                                  return Container(
+                                    color: Colors.grey[300],
+                                    child: Center(
+                                      child: CircularProgressIndicator(
+                                        value: loadingProgress.expectedTotalBytes != null
+                                            ? loadingProgress.cumulativeBytesLoaded /
+                                                loadingProgress.expectedTotalBytes!
+                                            : null,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              )
+                            : Image.file(
+                                _selectedImages[index - _existingImageUrls.length],
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                height: double.infinity,
+                              ),
                       ),
                     ),
                     if (index == 0)
@@ -745,7 +806,13 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
                       top: 6,
                       right: 6,
                       child: GestureDetector(
-                        onTap: () => _removeImage(index),
+                        onTap: () {
+                          if (isExisting) {
+                            _removeExistingImage(index);
+                          } else {
+                            _removeImage(index - _existingImageUrls.length);
+                          }
+                        },
                         child: Container(
                           padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
