@@ -110,20 +110,12 @@ class Apartment extends Model
     public function isBookedForDates($checkIn, $checkOut, $excludeBookingId = null)
     {
         $query = Booking::where('apartment_id', $this->id)
-            ->where('status', 'confirmed') // Only check CONFIRMED bookings
+            ->where('status', 'confirmed')
             ->where(function ($q) use ($checkIn, $checkOut) {
                 $q->where(function ($inner) use ($checkIn, $checkOut) {
-                    $inner->where('check_in', '<=', $checkIn)
+                    $inner->where('check_in', '<', $checkOut)
                         ->where('check_out', '>', $checkIn);
-                })
-                    ->orWhere(function ($inner) use ($checkIn, $checkOut) {
-                        $inner->where('check_in', '<', $checkOut)
-                            ->where('check_out', '>=', $checkOut);
-                    })
-                    ->orWhere(function ($inner) use ($checkIn, $checkOut) {
-                        $inner->where('check_in', '>=', $checkIn)
-                            ->where('check_out', '<=', $checkOut);
-                    });
+                });
             });
 
         if ($excludeBookingId) {

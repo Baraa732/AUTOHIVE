@@ -28,7 +28,7 @@ class _EnhancedAnimatedNavbarState extends State<EnhancedAnimatedNavbar>
   void initState() {
     super.initState();
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 550),
+      duration: const Duration(milliseconds: 400),
       vsync: this,
     );
 
@@ -41,6 +41,8 @@ class _EnhancedAnimatedNavbarState extends State<EnhancedAnimatedNavbar>
         curve: Curves.easeInOutCubic,
       ),
     );
+    
+    _animationController.value = 1.0;
   }
 
   @override
@@ -56,7 +58,8 @@ class _EnhancedAnimatedNavbarState extends State<EnhancedAnimatedNavbar>
           curve: Curves.easeInOutCubic,
         ),
       );
-      _animationController.forward(from: 0);
+      _animationController.reset();
+      _animationController.forward();
     }
   }
 
@@ -74,14 +77,12 @@ class _EnhancedAnimatedNavbarState extends State<EnhancedAnimatedNavbar>
     final itemWidth = screenWidth / widget.items.length;
     final isRTL = Directionality.of(context) == TextDirection.rtl;
     
-    // Calculate indicator position based on text direction
-    final indicatorPosition = isRTL 
-        ? screenWidth - (itemWidth * _indicatorAnimation.value + (itemWidth / 2) + (theme.indicatorSize / 2))
-        : itemWidth * _indicatorAnimation.value + (itemWidth / 2) - (theme.indicatorSize / 2);
-
     return AnimatedBuilder(
       animation: _indicatorAnimation,
       builder: (context, child) {
+        final indicatorPosition = isRTL 
+            ? screenWidth - (itemWidth * (_indicatorAnimation.value + 0.5)) - (theme.indicatorSize / 2)
+            : (itemWidth * (_indicatorAnimation.value + 0.5)) - (theme.indicatorSize / 2);
         return Container(
           height: theme.navHeight,
           decoration: BoxDecoration(
