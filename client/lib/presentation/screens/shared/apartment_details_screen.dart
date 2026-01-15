@@ -657,6 +657,27 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
     final features = List<String>.from(_apartment!['features'] ?? []);
     final l10n = AppLocalizations.of(context);
 
+    final featureTranslations = {
+      'wifi': l10n.translate('wifi'),
+      'air_conditioning': l10n.translate('air_conditioning'),
+      'heating': l10n.translate('heating'),
+      'kitchen': l10n.translate('kitchen'),
+      'washer': l10n.translate('washer'),
+      'tv': l10n.translate('tv'),
+      'parking': l10n.translate('parking'),
+      'elevator': l10n.translate('elevator'),
+      'balcony': l10n.translate('balcony'),
+      'gym': l10n.translate('gym'),
+      'pool': l10n.translate('pool'),
+      'security': l10n.translate('security'),
+      'garden': l10n.translate('garden'),
+      'furnished': l10n.translate('furnished'),
+      'pet_friendly': l10n.translate('pet_friendly'),
+      'washing_machine': l10n.translate('washing_machine'),
+      'swimming_pool': l10n.translate('swimming_pool'),
+      'terrace': l10n.translate('terrace'),
+    };
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -692,7 +713,7 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
                     ),
                   ),
                   child: Text(
-                    feature,
+                    featureTranslations[feature] ?? feature,
                     style: TextStyle(
                       color: AppTheme.primaryOrange,
                       fontSize: 12,
@@ -710,6 +731,37 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
   Widget _buildLocationSection() {
     final isDarkMode = ref.watch(themeProvider);
     final l10n = AppLocalizations.of(context);
+
+    final locationTranslations = {
+      'Damascus': l10n.translate('damascus'),
+      'Aleppo': l10n.translate('aleppo'),
+      'Homs': l10n.translate('homs'),
+      'Hama': l10n.translate('hama'),
+      'Latakia': l10n.translate('latakia'),
+      'Tartus': l10n.translate('tartus'),
+      'Idlib': l10n.translate('idlib'),
+      'Daraa': l10n.translate('daraa'),
+      'Deir ez-Zor': l10n.translate('deir_ez_zor'),
+      'Raqqa': l10n.translate('raqqa'),
+      'Al-Hasakah': l10n.translate('al_hasakah'),
+      'Quneitra': l10n.translate('quneitra'),
+      'As-Suwayda': l10n.translate('as_suwayda'),
+      'Jaramana': l10n.translate('jaramana'),
+      'Sahnaya': l10n.translate('sahnaya'),
+      'Afrin': l10n.translate('afrin'),
+      'Al-Bab': l10n.translate('al_bab'),
+      'Palmyra': l10n.translate('palmyra'),
+      'Qusayr': l10n.translate('qusayr'),
+      'Salamiyah': l10n.translate('salamiyah'),
+      'Suqaylabiyah': l10n.translate('suqaylabiyah'),
+      'Jableh': l10n.translate('jableh'),
+      'Qardaha': l10n.translate('qardaha'),
+      'Banias': l10n.translate('banias'),
+      'Safita': l10n.translate('safita'),
+    };
+
+    final city = _apartment!['city'] ?? 'N/A';
+    final governorate = _apartment!['governorate'] ?? 'N/A';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -753,7 +805,7 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    '${l10n.translate('city')}: ${_apartment!['city'] ?? 'N/A'}',
+                    '${l10n.translate('city')}: ${locationTranslations[city] ?? city}',
                     style: TextStyle(color: AppTheme.getTextColor(isDarkMode)),
                   ),
                 ],
@@ -764,7 +816,7 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
                   Icon(Icons.map, color: AppTheme.primaryOrange, size: 20),
                   const SizedBox(width: 8),
                   Text(
-                    '${l10n.translate('governorate')}: ${_apartment!['governorate'] ?? 'N/A'}',
+                    '${l10n.translate('governorate')}: ${locationTranslations[governorate] ?? governorate}',
                     style: TextStyle(color: AppTheme.getTextColor(isDarkMode)),
                   ),
                 ],

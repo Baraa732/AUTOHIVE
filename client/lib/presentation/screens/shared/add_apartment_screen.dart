@@ -111,6 +111,9 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
       'garden': l10n.translate('garden'),
       'furnished': l10n.translate('furnished'),
       'pet_friendly': l10n.translate('pet_friendly'),
+      'washing_machine': l10n.translate('washing_machine'),
+      'swimming_pool': l10n.translate('swimming_pool'),
+      'terrace': l10n.translate('terrace'),
     };
     
     return featureMap[featureValue] ?? featureValue;

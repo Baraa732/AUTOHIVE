@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/core.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../../data/models/wallet_transaction.dart';
 import '../../providers/wallet_provider.dart';
 
@@ -27,12 +28,13 @@ class _TransactionHistoryScreenState
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
     
     return Scaffold(
       backgroundColor: AppTheme.getBackgroundColor(isDark),
       appBar: AppBar(
         title: Text(
-          'Transaction History',
+          l10n.translate('transaction_history'),
           style: AppTheme.getTitle(isDark),
         ),
         elevation: 0,
@@ -64,7 +66,7 @@ class _TransactionHistoryScreenState
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      walletState.error ?? 'Error loading transactions',
+                      walletState.error ?? l10n.translate('error_loading_transactions'),
                       style: TextStyle(
                         color: AppTheme.getTextColor(isDark),
                         fontSize: 16,
@@ -79,7 +81,7 @@ class _TransactionHistoryScreenState
                             .loadTransactions(page: _currentPage);
                       },
                       icon: const Icon(Icons.refresh_rounded),
-                      label: const Text('Retry'),
+                      label: Text(l10n.translate('retry')),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryOrange,
                         foregroundColor: Colors.white,
@@ -107,7 +109,7 @@ class _TransactionHistoryScreenState
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'No transactions found',
+                    l10n.translate('no_transactions_found'),
                     style: TextStyle(
                       color: AppTheme.getTextColor(isDark),
                       fontSize: 16,

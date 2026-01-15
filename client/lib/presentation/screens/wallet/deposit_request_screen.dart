@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/core.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../providers/wallet_provider.dart';
 
 class DepositRequestScreen extends ConsumerStatefulWidget {
@@ -38,10 +39,11 @@ class _DepositRequestScreenState extends ConsumerState<DepositRequestScreen> {
     });
 
     if (mounted) {
+      final l10n = AppLocalizations.of(context);
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Deposit request submitted successfully!'),
+          SnackBar(
+            content: Text(l10n.translate('deposit_request_success')),
             backgroundColor: Colors.green,
           ),
         );
@@ -50,7 +52,7 @@ class _DepositRequestScreenState extends ConsumerState<DepositRequestScreen> {
         final error = ref.read(walletProvider).error;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(error ?? 'Failed to submit deposit request'),
+            content: Text(error ?? l10n.translate('failed_submit_deposit')),
             backgroundColor: Colors.red,
           ),
         );
@@ -61,12 +63,13 @@ class _DepositRequestScreenState extends ConsumerState<DepositRequestScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
     
     return Scaffold(
       backgroundColor: AppTheme.getBackgroundColor(isDark),
       appBar: AppBar(
         title: Text(
-          'Deposit Money',
+          l10n.translate('deposit_money'),
           style: AppTheme.getTitle(isDark),
         ),
         elevation: 0,
@@ -111,7 +114,7 @@ class _DepositRequestScreenState extends ConsumerState<DepositRequestScreen> {
                       const SizedBox(width: 14),
                       Expanded(
                         child: Text(
-                          'Enter the amount you want to deposit. Your request will be reviewed by admin.',
+                          l10n.translate('enter_deposit_info'),
                           style: TextStyle(
                             color: AppTheme.primaryBlue,
                             fontSize: 14,
@@ -127,7 +130,7 @@ class _DepositRequestScreenState extends ConsumerState<DepositRequestScreen> {
 
                 // Amount Input
                 Text(
-                  'Amount (USD)',
+                  l10n.translate('amount_usd'),
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
@@ -140,7 +143,7 @@ class _DepositRequestScreenState extends ConsumerState<DepositRequestScreen> {
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   style: TextStyle(color: AppTheme.getTextColor(isDark)),
                   decoration: InputDecoration(
-                    hintText: 'Enter amount in USD',
+                    hintText: l10n.translate('enter_amount_usd'),
                     hintStyle: TextStyle(color: AppTheme.getSubtextColor(isDark)),
                     prefixIcon: Icon(
                       Icons.attach_money_rounded,
@@ -166,11 +169,11 @@ class _DepositRequestScreenState extends ConsumerState<DepositRequestScreen> {
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter an amount';
+                      return l10n.translate('please_enter_amount');
                     }
                     final amount = double.tryParse(value);
                     if (amount == null || amount <= 0) {
-                      return 'Please enter a valid amount greater than 0';
+                      return l10n.translate('enter_valid_amount');
                     }
                     return null;
                   },
@@ -217,7 +220,7 @@ class _DepositRequestScreenState extends ConsumerState<DepositRequestScreen> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              'Equivalent in SPY',
+                              l10n.translate('equivalent_in_spy'),
                               style: TextStyle(
                                 fontWeight: FontWeight.w500,
                                 color: AppTheme.getSubtextColor(isDark),
@@ -280,14 +283,14 @@ class _DepositRequestScreenState extends ConsumerState<DepositRequestScreen> {
                                   strokeWidth: 2.5,
                                 ),
                               )
-                            : const Row(
+                            : Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(Icons.check_circle_outline_rounded, size: 22),
                                   SizedBox(width: 10),
                                   Text(
-                                    'Submit Deposit Request',
-                                    style: TextStyle(
+                                    l10n.translate('submit_deposit_request'),
+                                    style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
                                       letterSpacing: 0.3,
@@ -320,7 +323,7 @@ class _DepositRequestScreenState extends ConsumerState<DepositRequestScreen> {
                       ),
                     ),
                     child: Text(
-                      'Cancel',
+                      l10n.translate('cancel'),
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/core.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../providers/favorite_provider.dart';
 import '../../widgets/common/cached_network_image.dart';
 import '../../widgets/common/theme_toggle_button.dart';
@@ -60,6 +61,50 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
   String _getTranslatedGovernorate(String key) {
     final locale = Localizations.localeOf(context).languageCode;
     return _governoratesTranslations[key]?[locale] ?? key;
+  }
+
+  String _translateLocation(BuildContext context, String location) {
+    final l10n = AppLocalizations.of(context);
+    final locationMap = {
+      'Damascus': l10n.translate('damascus'),
+      'Aleppo': l10n.translate('aleppo'),
+      'Homs': l10n.translate('homs'),
+      'Hama': l10n.translate('hama'),
+      'Latakia': l10n.translate('latakia'),
+      'Tartus': l10n.translate('tartus'),
+      'Idlib': l10n.translate('idlib'),
+      'Daraa': l10n.translate('daraa'),
+      'Deir ez-Zor': l10n.translate('deir_ez_zor'),
+      'Raqqa': l10n.translate('raqqa'),
+      'Al-Hasakah': l10n.translate('al_hasakah'),
+      'Quneitra': l10n.translate('quneitra'),
+      'As-Suwayda': l10n.translate('as_suwayda'),
+      'Jaramana': l10n.translate('jaramana'),
+      'Sahnaya': l10n.translate('sahnaya'),
+      'Afrin': l10n.translate('afrin'),
+      'Al-Bab': l10n.translate('al_bab'),
+      'Palmyra': l10n.translate('palmyra'),
+      'Qusayr': l10n.translate('qusayr'),
+      'Salamiyah': l10n.translate('salamiyah'),
+      'Suqaylabiyah': l10n.translate('suqaylabiyah'),
+      'Jableh': l10n.translate('jableh'),
+      'Qardaha': l10n.translate('qardaha'),
+      'Banias': l10n.translate('banias'),
+      'Safita': l10n.translate('safita'),
+    };
+    
+    // Try exact match first
+    if (locationMap.containsKey(location)) {
+      return locationMap[location]!;
+    }
+    
+    // Try case-insensitive match
+    final key = locationMap.keys.firstWhere(
+      (k) => k.toLowerCase() == location.toLowerCase(),
+      orElse: () => '',
+    );
+    
+    return key.isNotEmpty ? locationMap[key]! : location;
   }
   final List<String> _priceRanges = [
     'All',
@@ -556,6 +601,7 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
   }
 
   Widget _buildFilterGrid() {
+    final l10n = AppLocalizations.of(context);
     return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -564,26 +610,26 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
       crossAxisSpacing: 12,
       mainAxisSpacing: 12,
       children: [
-        _buildDropdownFilter('Location', _selectedGovernorate, ['All', ..._governoratesTranslations.keys], (
+        _buildDropdownFilter(l10n.translate('location'), _selectedGovernorate, ['All', ..._governoratesTranslations.keys], (
           v,
         ) {
           setState(() => _selectedGovernorate = v!);
           _applyFilters();
-        }, translateValue: (v) => v == 'All' ? 'All' : _getTranslatedGovernorate(v)),
-        _buildDropdownFilter('Price Range', _selectedPriceRange, _priceRanges, (
+        }, translateValue: (v) => v == 'All' ? l10n.translate('all') : _getTranslatedGovernorate(v)),
+        _buildDropdownFilter(l10n.translate('price_range'), _selectedPriceRange, _priceRanges, (
           v,
         ) {
           setState(() => _selectedPriceRange = v!);
           _applyFilters();
         }),
-        _buildDropdownFilter('Bedrooms', _selectedBedrooms, _bedroomOptions, (
+        _buildDropdownFilter(l10n.translate('bedrooms'), _selectedBedrooms, _bedroomOptions, (
           v,
         ) {
           setState(() => _selectedBedrooms = v!);
           _applyFilters();
         }),
         _buildDropdownFilter(
-          'Bathrooms',
+          l10n.translate('bathrooms'),
           _selectedBathrooms,
           _bathroomOptions,
           (v) {
@@ -699,12 +745,16 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
         ),
         Expanded(
           child: _buildDropdownFilter(
-            'Sort By',
+            AppLocalizations.of(context).translate('sort_by'),
             _selectedSortBy,
             _sortOptions,
             (v) {
               setState(() => _selectedSortBy = v!);
               _applyFilters();
+            },
+            translateValue: (v) {
+              final l10n = AppLocalizations.of(context);
+              return l10n.translate(v);
             },
           ),
         ),
@@ -749,19 +799,20 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
   }
 
   String _getSortLabel() {
+    final l10n = AppLocalizations.of(context);
     switch (_selectedSortBy) {
       case 'newest':
-        return 'Newest first';
+        return l10n.translate('newest');
       case 'oldest':
-        return 'Oldest first';
+        return l10n.translate('oldest');
       case 'price_low':
-        return 'Price: Low to High';
+        return l10n.translate('price_low');
       case 'price_high':
-        return 'Price: High to Low';
+        return l10n.translate('price_high');
       case 'area_small':
-        return 'Area: Small to Large';
+        return l10n.translate('area_small');
       case 'area_large':
-        return 'Area: Large to Small';
+        return l10n.translate('area_large');
       default:
         return '';
     }
@@ -880,7 +931,7 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        '${apartment.city}, ${apartment.governorate}',
+                        '${_translateLocation(context, apartment.city)}, ${_translateLocation(context, apartment.governorate)}',
                         style: TextStyle(
                           color: AppTheme.getSubtextColor(isDarkMode),
                         ),
@@ -931,7 +982,7 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
                   Row(
                     children: [
                       Text(
-                        '\$${apartment.price}/night',
+                        '\$${apartment.price}/${AppLocalizations.of(context).translate('night')}',
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -966,8 +1017,8 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
                                     .removeFromFavorites(favId);
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Removed from favorites'),
+                                    SnackBar(
+                                      content: Text(AppLocalizations.of(context).translate('removed_from_favorites')),
                                     ),
                                   );
                                 }
@@ -977,8 +1028,8 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
                                     .addToFavorites(apartment.id.toString());
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Added to favorites'),
+                                    SnackBar(
+                                      content: Text(AppLocalizations.of(context).translate('added_to_favorites')),
                                     ),
                                   );
                                 }
@@ -1027,6 +1078,7 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
   }
 
   Widget _buildStatusBadge(bool isAvailable) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -1034,7 +1086,7 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
-        isAvailable ? 'Available' : 'Booked',
+        isAvailable ? l10n.translate('available') : l10n.translate('booked'),
         style: const TextStyle(
           color: Colors.white,
           fontSize: 12,

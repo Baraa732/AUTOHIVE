@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/core.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../../data/models/deposit_withdrawal_request.dart';
 import '../../../data/models/wallet_transaction.dart';
 import '../../providers/wallet_provider.dart';
@@ -30,12 +31,13 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
   Widget build(BuildContext context) {
     final walletState = ref.watch(walletProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
     
     return Scaffold(
       backgroundColor: AppTheme.getBackgroundColor(isDark),
       appBar: AppBar(
         title: Text(
-          'My Wallet',
+          l10n.translate('my_wallet'),
           style: AppTheme.getTitle(isDark),
         ),
         elevation: 0,
@@ -66,7 +68,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      walletState.error ?? 'Error loading wallet',
+                      walletState.error ?? l10n.translate('error_loading_wallet'),
                       style: TextStyle(
                         color: AppTheme.getTextColor(isDark),
                         fontSize: 16,
@@ -79,7 +81,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                         ref.read(walletProvider.notifier).loadWallet();
                       },
                       icon: const Icon(Icons.refresh),
-                      label: const Text('Retry'),
+                      label: Text(l10n.translate('retry')),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryOrange,
                         foregroundColor: Colors.white,
@@ -99,7 +101,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
           if (wallet == null) {
             return Center(
               child: Text(
-                'No wallet found',
+                l10n.translate('no_wallet_found'),
                 style: TextStyle(color: AppTheme.getTextColor(isDark)),
               ),
             );
@@ -151,7 +153,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                               ),
                               const SizedBox(width: 16),
                               Text(
-                                'Total Balance',
+                                l10n.translate('total_balance'),
                                 style: TextStyle(
                                   color: Colors.white.withOpacity(0.9),
                                   fontSize: 17,
@@ -214,7 +216,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                       children: [
                         Expanded(
                           child: _ActionButton(
-                            label: 'Deposit',
+                            label: l10n.translate('deposit'),
                             icon: Icons.add_circle_outline_rounded,
                             gradient: const LinearGradient(
                               colors: [Color(0xFF10B981), Color(0xFF059669)],
@@ -242,9 +244,9 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                     // Transaction History Section
                     _SectionHeader(
                       icon: Icons.history_rounded,
-                      title: 'Recent Transactions',
+                      title: l10n.translate('recent_transactions'),
                       isDark: isDark,
-                      actionLabel: 'View All',
+                      actionLabel: l10n.translate('view_all'),
                       onAction: () async {
                         await Navigator.push(
                           context,
@@ -265,7 +267,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                         if (walletState.transactions.isEmpty) {
                           return _EmptyState(
                             icon: Icons.receipt_long_outlined,
-                            message: 'No transactions yet',
+                            message: l10n.translate('no_transactions_yet'),
                             isDark: isDark,
                           );
                         }
@@ -295,9 +297,9 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                     // My Requests Section
                     _SectionHeader(
                       icon: Icons.pending_actions_rounded,
-                      title: 'My Requests',
+                      title: l10n.translate('my_requests'),
                       isDark: isDark,
-                      actionLabel: 'Refresh',
+                      actionLabel: l10n.translate('refresh'),
                       actionIcon: Icons.refresh_rounded,
                       onAction: () {
                         ref.read(walletProvider.notifier).loadMyRequests();
@@ -311,7 +313,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                         if (walletState.requests.isEmpty) {
                           return _EmptyState(
                             icon: Icons.inbox_outlined,
-                            message: 'No requests yet',
+                            message: l10n.translate('no_requests_yet'),
                             isDark: isDark,
                           );
                         }

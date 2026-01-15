@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/favorite_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/constants/app_config.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../widgets/common/cached_network_image.dart';
 import 'apartment_details_screen.dart';
 import 'filter_bottom_sheet.dart';
@@ -36,13 +37,14 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
   Widget build(BuildContext context) {
     final favoriteState = ref.watch(favoriteProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
     final filteredFavorites = favoriteState.getFilteredAndSortedFavorites();
     final hasActiveFilters = !favoriteState.filters.isEmpty();
 
     return Scaffold(
       backgroundColor: AppTheme.getBackgroundColor(isDark),
       appBar: AppBar(
-        title: const Text('Favorites'),
+        title: Text(l10n.translate('favorites')),
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
@@ -102,7 +104,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFff6f2d),
                     ),
-                    child: const Text('Retry'),
+                    child: Text(l10n.translate('retry')),
                   ),
                 ],
               ),
@@ -119,7 +121,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'No favorites yet',
+                    l10n.translate('no_favorites'),
                     style: TextStyle(
                       fontSize: 18,
                       color: isDark ? Colors.white70 : Colors.black54,
@@ -127,7 +129,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Start adding apartments to your favorites',
+                    l10n.translate('start_adding_favorites'),
                     style: TextStyle(
                       fontSize: 14,
                       color: isDark ? Colors.white54 : Colors.black45,
@@ -147,15 +149,15 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                     color: isDark ? Colors.white24 : Colors.black12,
                   ),
                   const SizedBox(height: 16),
-                  const Text(
-                    'No apartments match your filters',
+                  Text(
+                    l10n.translate('no_match_filters'),
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 8),
                   TextButton(
                     onPressed: () =>
                         ref.read(favoriteProvider.notifier).resetFilters(),
-                    child: const Text('Clear Filters'),
+                    child: Text(l10n.translate('clear_filters')),
                   ),
                 ],
               ),
@@ -174,7 +176,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                         children: [
                           Expanded(
                             child: Text(
-                              '${filteredFavorites.length} apartments found',
+                              '${filteredFavorites.length} ${l10n.translate('apartments_found')}',
                               style: TextStyle(
                                 color: isDark ? Colors.white70 : Colors.black54,
                                 fontSize: 14,
@@ -186,7 +188,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                                 .read(favoriteProvider.notifier)
                                 .resetFilters(),
                             icon: const Icon(Icons.close, size: 16),
-                            label: const Text('Clear'),
+                            label: Text(l10n.translate('clear_filters')),
                           ),
                         ],
                       ),
@@ -214,6 +216,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
     dynamic apartment,
     bool isDark,
   ) {
+    final l10n = AppLocalizations.of(context);
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -279,8 +282,8 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                           .removeFromFavorites(favorite.id);
                       if (success && mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Removed from favorites'),
+                          SnackBar(
+                            content: Text(l10n.translate('removed_from_favorites')),
                             duration: Duration(seconds: 2),
                           ),
                         );
@@ -344,7 +347,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
-                          '${apartment.city}, ${apartment.governorate}',
+                          '${_translateLocation(apartment.city)}, ${_translateLocation(apartment.governorate)}',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
@@ -380,7 +383,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        '/night',
+                        '/${l10n.translate('night')}',
                         style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       ),
                     ],
@@ -410,5 +413,37 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
         ],
       ),
     );
+  }
+
+  String _translateLocation(String location) {
+    final l10n = AppLocalizations.of(context);
+    final locationMap = {
+      'Damascus': l10n.translate('damascus'),
+      'Aleppo': l10n.translate('aleppo'),
+      'Homs': l10n.translate('homs'),
+      'Hama': l10n.translate('hama'),
+      'Latakia': l10n.translate('latakia'),
+      'Tartus': l10n.translate('tartus'),
+      'Idlib': l10n.translate('idlib'),
+      'Daraa': l10n.translate('daraa'),
+      'Deir ez-Zor': l10n.translate('deir_ez_zor'),
+      'Raqqa': l10n.translate('raqqa'),
+      'Al-Hasakah': l10n.translate('al_hasakah'),
+      'Quneitra': l10n.translate('quneitra'),
+      'As-Suwayda': l10n.translate('as_suwayda'),
+      'Jaramana': l10n.translate('jaramana'),
+      'Sahnaya': l10n.translate('sahnaya'),
+      'Afrin': l10n.translate('afrin'),
+      'Al-Bab': l10n.translate('al_bab'),
+      'Palmyra': l10n.translate('palmyra'),
+      'Qusayr': l10n.translate('qusayr'),
+      'Salamiyah': l10n.translate('salamiyah'),
+      'Suqaylabiyah': l10n.translate('suqaylabiyah'),
+      'Jableh': l10n.translate('jableh'),
+      'Qardaha': l10n.translate('qardaha'),
+      'Banias': l10n.translate('banias'),
+      'Safita': l10n.translate('safita'),
+    };
+    return locationMap[location] ?? location;
   }
 }

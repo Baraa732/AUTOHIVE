@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../core/core.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../providers/booking_provider.dart';
 import '../../widgets/tenant_profile_preview.dart';
 
@@ -37,6 +38,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bookingState = ref.watch(bookingProvider);
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       backgroundColor: AppTheme.getBackgroundColor(isDark),
@@ -44,7 +46,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
         backgroundColor: AppTheme.getCardColor(isDark),
         elevation: 0,
         title: Text(
-          'My Bookings',
+          l10n.translate('my_bookings'),
           style: TextStyle(
             color: AppTheme.getTextColor(isDark),
             fontWeight: FontWeight.bold,
@@ -55,9 +57,9 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
           labelColor: AppTheme.primaryOrange,
           unselectedLabelColor: AppTheme.getSubtextColor(isDark),
           indicatorColor: AppTheme.primaryOrange,
-          tabs: const [
-            Tab(text: 'My Requests'),
-            Tab(text: 'Received'),
+          tabs: [
+            Tab(text: l10n.translate('my_requests')),
+            Tab(text: l10n.translate('received')),
           ],
         ),
       ),
@@ -67,7 +69,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'Error loading bookings',
+                    l10n.translate('error_loading_bookings'),
                     style: TextStyle(
                       color: AppTheme.getTextColor(isDark),
                       fontSize: 16,
@@ -76,7 +78,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    bookingState.error ?? 'Unknown error',
+                    bookingState.error ?? l10n.translate('unknown_error'),
                     style: TextStyle(
                       color: AppTheme.getSubtextColor(isDark),
                       fontSize: 14,
@@ -86,7 +88,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: _loadData,
-                    child: const Text('Retry'),
+                    child: Text(l10n.translate('retry')),
                   ),
                 ],
               ),
@@ -94,10 +96,10 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
           : TabBarView(
               controller: _tabController,
               children: [
-                _buildBookingsList(bookingState.bookings, 'No bookings yet'),
+                _buildBookingsList(bookingState.bookings, l10n.translate('no_bookings_yet')),
                 _buildBookingsList(
                   bookingState.apartmentBookings,
-                  'No received bookings',
+                  l10n.translate('no_received_bookings'),
                 ),
               ],
             ),
@@ -136,6 +138,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
 
   Widget _buildBookingCard(Booking booking, {required bool isReceivedBooking}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
     final nights = booking.checkOut.difference(booking.checkIn).inDays;
     final pricePerNight = nights > 0
         ? (booking.totalPrice / nights).toStringAsFixed(2)
@@ -173,7 +176,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Apartment',
+                        l10n.translate('apartment'),
                         style: TextStyle(
                           fontSize: 12,
                           color: AppTheme.getSubtextColor(isDark),
@@ -182,7 +185,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        booking.apartment?['title']?.toString() ?? 'Apartment',
+                        booking.apartment?['title']?.toString() ?? l10n.translate('apartment'),
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -217,7 +220,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Check-in',
+                        l10n.translate('check_in'),
                         style: TextStyle(
                           fontSize: 11,
                           color: AppTheme.getSubtextColor(isDark),
@@ -241,7 +244,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Check-out',
+                        l10n.translate('check_out'),
                         style: TextStyle(
                           fontSize: 11,
                           color: AppTheme.getSubtextColor(isDark),
@@ -265,7 +268,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Duration',
+                        l10n.translate('duration'),
                         style: TextStyle(
                           fontSize: 11,
                           color: AppTheme.getSubtextColor(isDark),
@@ -274,7 +277,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '$nights nights',
+                        '$nights ${l10n.translate('nights')}',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
@@ -303,7 +306,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Price per night',
+                        l10n.translate('price_per_night'),
                         style: TextStyle(
                           fontSize: 11,
                           color: AppTheme.getSubtextColor(isDark),
@@ -330,7 +333,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        'Total amount',
+                        l10n.translate('total_amount'),
                         style: TextStyle(
                           fontSize: 11,
                           color: AppTheme.getSubtextColor(isDark),
@@ -359,7 +362,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
                     child: ElevatedButton.icon(
                       onPressed: () => _handleApproveBooking(booking),
                       icon: const Icon(Icons.check_circle, size: 18),
-                      label: const Text('Approve'),
+                      label: Text(l10n.translate('approve')),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green,
                         foregroundColor: Colors.white,
@@ -374,7 +377,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
                     child: OutlinedButton.icon(
                       onPressed: () => _handleRejectBooking(booking),
                       icon: const Icon(Icons.cancel, size: 18),
-                      label: const Text('Reject'),
+                      label: Text(l10n.translate('reject')),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.red,
                         side: const BorderSide(color: Colors.red),
@@ -394,7 +397,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
                     child: OutlinedButton.icon(
                       onPressed: () => _handleEditBooking(booking),
                       icon: const Icon(Icons.edit, size: 18),
-                      label: const Text('Edit'),
+                      label: Text(l10n.translate('edit')),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppTheme.primaryOrange,
                         side: BorderSide(color: AppTheme.primaryOrange),
@@ -409,7 +412,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
                     child: OutlinedButton.icon(
                       onPressed: () => _handleDeleteBooking(booking),
                       icon: const Icon(Icons.delete, size: 18),
-                      label: const Text('Delete'),
+                      label: Text(l10n.translate('delete')),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.red,
                         side: const BorderSide(color: Colors.red),
@@ -430,12 +433,13 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
 
   Future<void> _handleApproveBooking(Booking booking) async {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppTheme.getCardColor(isDark),
         title: Text(
-          'Approve Booking',
+          l10n.translate('approve_booking'),
           style: TextStyle(color: AppTheme.getTextColor(isDark)),
         ),
         content: Column(
@@ -443,7 +447,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Are you sure you want to approve this booking?',
+              l10n.translate('are_you_sure_approve'),
               style: TextStyle(color: AppTheme.getTextColor(isDark)),
             ),
             const SizedBox(height: 16),
@@ -460,7 +464,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Apartment: ${booking.apartment?['title']}',
+                    '${l10n.translate('apartment')}: ${booking.apartment?['title']}',
                     style: TextStyle(
                       color: AppTheme.getTextColor(isDark),
                       fontWeight: FontWeight.bold,
@@ -468,7 +472,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Amount: \$${booking.totalPrice.toStringAsFixed(2)}',
+                    '${l10n.translate('amount')}: \$${booking.totalPrice.toStringAsFixed(2)}',
                     style: TextStyle(
                       color: AppTheme.primaryOrange,
                       fontWeight: FontWeight.bold,
@@ -477,7 +481,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'The payment will be automatically transferred from the tenant\'s wallet to your wallet.',
+                    l10n.translate('payment_transfer_message'),
                     style: TextStyle(
                       color: AppTheme.getSubtextColor(isDark),
                       fontSize: 12,
@@ -492,14 +496,14 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
           TextButton(
             onPressed: () => Navigator.pop(context, false),
             child: Text(
-              'Cancel',
+              l10n.translate('cancel'),
               style: TextStyle(color: AppTheme.getSubtextColor(isDark)),
             ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-            child: const Text('Approve & Process Payment'),
+            child: Text(l10n.translate('approve_process_payment')),
           ),
         ],
       ),
@@ -514,14 +518,14 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
         if (success) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('Booking approved and payment processed successfully!'),
+              content: Text(l10n.translate('booking_approved_success')),
               backgroundColor: Colors.green,
             ),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(state.error ?? 'Failed to approve booking'),
+              content: Text(state.error ?? l10n.translate('failed_approve_booking')),
               backgroundColor: Colors.red,
               duration: const Duration(seconds: 5),
             ),
@@ -532,20 +536,21 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
   }
 
   Future<void> _handleRejectBooking(Booking booking) async {
+    final l10n = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Reject Booking'),
-        content: Text('Are you sure you want to reject this booking for ${booking.apartment?['title']}?'),
+        title: Text(l10n.translate('reject_booking')),
+        content: Text('${l10n.translate('are_you_sure_reject')} ${booking.apartment?['title']}?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.translate('cancel')),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Reject'),
+            child: Text(l10n.translate('reject')),
           ),
         ],
       ),
@@ -559,14 +564,14 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
         if (success) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('Booking rejected successfully!'),
+              content: Text(l10n.translate('booking_rejected_success')),
               backgroundColor: Colors.green,
             ),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Failed to reject booking'),
+            SnackBar(
+              content: Text(l10n.translate('failed_reject_booking')),
               backgroundColor: Colors.red,
             ),
           );
@@ -576,6 +581,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
   }
 
   Future<void> _handleEditBooking(Booking booking) async {
+    final l10n = AppLocalizations.of(context);
     DateTime? selectedCheckIn = booking.checkIn;
     DateTime? selectedCheckOut = booking.checkOut;
 
@@ -583,12 +589,12 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: const Text('Edit Booking Dates'),
+          title: Text(l10n.translate('edit_booking_dates')),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                title: const Text('Check-in Date'),
+                title: Text(l10n.translate('check_in_date')),
                 subtitle: Text(DateFormat('MMM d, yyyy').format(selectedCheckIn!)),
                 onTap: () async {
                   final date = await showDatePicker(
@@ -603,7 +609,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
                 },
               ),
               ListTile(
-                title: const Text('Check-out Date'),
+                title: Text(l10n.translate('check_out_date')),
                 subtitle: Text(DateFormat('MMM d, yyyy').format(selectedCheckOut!)),
                 onTap: () async {
                   final date = await showDatePicker(
@@ -622,12 +628,12 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel'),
+              child: Text(l10n.translate('cancel')),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
               style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryOrange),
-              child: const Text('Save'),
+              child: Text(l10n.translate('save')),
             ),
           ],
         ),
@@ -646,14 +652,14 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
         if (success) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('Booking updated successfully!'),
+              content: Text(l10n.translate('booking_updated_success')),
               backgroundColor: Colors.green,
             ),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Failed to update booking'),
+            SnackBar(
+              content: Text(l10n.translate('failed_update_booking')),
               backgroundColor: Colors.red,
             ),
           );
@@ -663,20 +669,21 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
   }
 
   Future<void> _handleDeleteBooking(Booking booking) async {
+    final l10n = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Booking'),
-        content: Text('Are you sure you want to delete this booking for ${booking.apartment?['title']}?'),
+        title: Text(l10n.translate('delete_booking')),
+        content: Text('${l10n.translate('are_you_sure_delete')} ${booking.apartment?['title']}?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.translate('cancel')),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Delete'),
+            child: Text(l10n.translate('delete')),
           ),
         ],
       ),
@@ -690,14 +697,14 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
         if (success) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('Booking deleted successfully!'),
+              content: Text(l10n.translate('booking_deleted_success')),
               backgroundColor: Colors.green,
             ),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Failed to delete booking'),
+            SnackBar(
+              content: Text(l10n.translate('failed_delete_booking')),
               backgroundColor: Colors.red,
             ),
           );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/core.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../widgets/common/theme_toggle_button.dart';
 import '../../providers/locale_provider.dart';
 import 'login_screen.dart';
@@ -60,6 +61,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with TickerProvid
   @override
   Widget build(BuildContext context) {
     final isDarkMode = ref.watch(themeProvider);
+    final l10n = AppLocalizations.of(context);
     
     return Scaffold(
       resizeToAvoidBottomInset: false,
@@ -280,10 +282,11 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with TickerProvid
   }
 
   Widget _buildSubtitle(bool isDark) {
+    final l10n = AppLocalizations.of(context);
     return ScaleTransition(
       scale: _scaleAnimation,
       child: Text(
-        'Find Your Perfect Home',
+        l10n.translate('your_home_awaits'),
         style: TextStyle(
           fontSize: 16,
           color: AppTheme.getSubtextColor(isDark),
@@ -293,6 +296,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with TickerProvid
   }
 
   Widget _buildLoginButton(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return ScaleTransition(
       scale: _scaleAnimation,
       child: Container(
@@ -318,13 +322,14 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with TickerProvid
             shadowColor: Colors.transparent,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           ),
-          child: const Text('Login', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.white)),
+          child: Text(l10n.translate('login'), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.white)),
         ),
       ),
     );
   }
 
   Widget _buildRegisterButton(BuildContext context, bool isDark) {
+    final l10n = AppLocalizations.of(context);
     return ScaleTransition(
       scale: _scaleAnimation,
       child: Container(
@@ -345,7 +350,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with TickerProvid
             side: BorderSide.none,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           ),
-          child: Text('Register', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppTheme.getTextColor(isDark))),
+          child: Text(l10n.translate('register'), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppTheme.getTextColor(isDark))),
         ),
       ),
     );
