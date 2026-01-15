@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/core.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../widgets/common/cached_network_image.dart';
 import '../../providers/favorite_provider.dart';
 import 'create_booking_screen.dart';
@@ -116,6 +117,7 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
   @override
   Widget build(BuildContext context) {
     final isDarkMode = ref.watch(themeProvider);
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       body: _isLoading
           ? Container(
@@ -133,7 +135,7 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
               ),
               child: const Center(
                 child: Text(
-                  'Apartment not found',
+                  'apartment_not_found',
                   style: TextStyle(color: Colors.white),
                 ),
               ),
@@ -168,8 +170,8 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
                                   .removeFromFavorites(favId);
                               if (mounted)
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Removed from favorites'),
+                                  SnackBar(
+                                    content: Text(l10n.translate('removed_from_favorites')),
                                   ),
                                 );
                             } else {
@@ -178,8 +180,8 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
                                   .addToFavorites(widget.apartmentId);
                               if (mounted)
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Added to favorites'),
+                                  SnackBar(
+                                    content: Text(l10n.translate('added_to_favorites')),
                                   ),
                                 );
                             }
@@ -245,7 +247,7 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
                               ScaleTransition(
                                 scale: _scaleAnimation,
                                 child: Text(
-                                  '\$${_apartment!['price_per_night'] ?? _apartment!['price'] ?? 0}/night',
+                                  '\$${_apartment!['price_per_night'] ?? _apartment!['price'] ?? 0}/${l10n.translate('night')}',
                                   style: const TextStyle(
                                     fontSize: 28,
                                     fontWeight: FontWeight.bold,
@@ -260,12 +262,12 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
                                   children: [
                                     _buildInfoCard(
                                       Icons.bed,
-                                      '${_apartment!['bedrooms'] ?? 0} Beds',
+                                      '${_apartment!['bedrooms'] ?? 0} ${l10n.translate('beds')}',
                                     ),
                                     const SizedBox(width: 12),
                                     _buildInfoCard(
                                       Icons.bathtub,
-                                      '${_apartment!['bathrooms'] ?? 0} Baths',
+                                      '${_apartment!['bathrooms'] ?? 0} ${l10n.translate('baths')}',
                                     ),
                                     const SizedBox(width: 12),
                                     _buildInfoCard(
@@ -282,7 +284,7 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'Description',
+                                      l10n.translate('description'),
                                       style: TextStyle(
                                         fontSize: 18,
                                         fontWeight: FontWeight.bold,
@@ -294,7 +296,7 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
                                     const SizedBox(height: 8),
                                     Text(
                                       _apartment!['description'] ??
-                                          'No description available',
+                                          l10n.translate('no_description'),
                                       style: TextStyle(
                                         color: AppTheme.getSubtextColor(
                                           isDarkMode,
@@ -391,6 +393,7 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
   }
 
   Widget _buildBookingButton() {
+    final l10n = AppLocalizations.of(context);
     final isOwner =
         _currentUser != null &&
         _apartment != null &&
@@ -428,8 +431,8 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
           );
           if (result == true && mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Booking request sent successfully!'),
+              SnackBar(
+                content: Text(l10n.translate('booking_sent_success')),
                 backgroundColor: Color(0xFF10B981),
               ),
             );
@@ -442,8 +445,8 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
             borderRadius: BorderRadius.circular(16),
           ),
         ),
-        child: const Text(
-          'Book Now',
+        child: Text(
+          l10n.translate('book_now'),
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -455,6 +458,7 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
   }
 
   Widget _buildOwnerActionButton() {
+    final l10n = AppLocalizations.of(context);
     return Container(
       width: double.infinity,
       height: 56,
@@ -481,8 +485,8 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
           );
           if (result == true && mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Apartment updated successfully!'),
+              SnackBar(
+                content: Text(l10n.translate('apartment_updated_success')),
                 backgroundColor: Color(0xFF10B981),
               ),
             );
@@ -496,8 +500,8 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
             borderRadius: BorderRadius.circular(16),
           ),
         ),
-        child: const Text(
-          'Edit Apartment',
+        child: Text(
+          l10n.translate('edit_apartment'),
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -510,6 +514,7 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
 
   Widget _buildLoginPrompt() {
     final isDarkMode = ref.watch(themeProvider);
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -543,7 +548,7 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
           Icon(Icons.login, color: AppTheme.primaryOrange, size: 48),
           const SizedBox(height: 8),
           Text(
-            'Login Required',
+            l10n.translate('login_required'),
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -552,7 +557,7 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
           ),
           const SizedBox(height: 4),
           Text(
-            'Please login to book this apartment',
+            l10n.translate('please_login_to_book'),
             style: TextStyle(color: AppTheme.getSubtextColor(isDarkMode)),
             textAlign: TextAlign.center,
           ),
@@ -650,12 +655,13 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
   Widget _buildFeaturesSection() {
     final isDarkMode = ref.watch(themeProvider);
     final features = List<String>.from(_apartment!['features'] ?? []);
+    final l10n = AppLocalizations.of(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Features & Amenities',
+          l10n.translate('features_amenities'),
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -703,12 +709,13 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
 
   Widget _buildLocationSection() {
     final isDarkMode = ref.watch(themeProvider);
+    final l10n = AppLocalizations.of(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Location',
+          l10n.translate('location'),
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -746,7 +753,7 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'City: ${_apartment!['city'] ?? 'N/A'}',
+                    '${l10n.translate('city')}: ${_apartment!['city'] ?? 'N/A'}',
                     style: TextStyle(color: AppTheme.getTextColor(isDarkMode)),
                   ),
                 ],
@@ -757,7 +764,7 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
                   Icon(Icons.map, color: AppTheme.primaryOrange, size: 20),
                   const SizedBox(width: 8),
                   Text(
-                    'Governorate: ${_apartment!['governorate'] ?? 'N/A'}',
+                    '${l10n.translate('governorate')}: ${_apartment!['governorate'] ?? 'N/A'}',
                     style: TextStyle(color: AppTheme.getTextColor(isDarkMode)),
                   ),
                 ],
@@ -776,7 +783,7 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Address: ${_apartment!['address']}',
+                        '${l10n.translate('address')}: ${_apartment!['address']}',
                         style: TextStyle(
                           color: AppTheme.getTextColor(isDarkMode),
                         ),
@@ -795,6 +802,7 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
   Widget _buildOwnerSection() {
     final isDarkMode = ref.watch(themeProvider);
     final owner = _apartment!['user'] ?? _apartment!['owner'];
+    final l10n = AppLocalizations.of(context);
 
     if (owner == null) return const SizedBox.shrink();
 
@@ -802,7 +810,7 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Property Owner',
+          l10n.translate('property_owner'),
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,

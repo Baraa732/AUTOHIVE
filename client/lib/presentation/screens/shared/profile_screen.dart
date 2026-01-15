@@ -55,6 +55,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Widget _buildContent(bool isDark, User? user) {
+    final l10n = AppLocalizations.of(context);
     if (user == null) {
       return Center(
         child: SingleChildScrollView(
@@ -85,9 +86,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 shaderCallback: (bounds) => const LinearGradient(
                   colors: [Color(0xFFff6f2d), Color(0xFF4a90e2)],
                 ).createShader(bounds),
-                child: const Text(
-                  'Not Logged In',
-                  style: TextStyle(
+                child: Text(
+                  l10n.translate('not_logged_in'),
+                  style: const TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -96,7 +97,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                'Please login to view your profile',
+                l10n.translate('please_login'),
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.7),
                   fontSize: 16,
@@ -134,8 +135,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       borderRadius: BorderRadius.circular(20),
                     ),
                   ),
-                  child: const Text(
-                    'Go to Login',
+                  child: Text(
+                    l10n.translate('go_to_login'),
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 18,
@@ -192,7 +193,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           _buildWalletSection(),
           _buildLanguageToggle(),
           _buildThemeToggle(),
-          _buildMenuItem(Icons.help, 'Help & Support', () {}),
+          _buildMenuItem(Icons.help, l10n.translate('help_support'), () {}),
           const SizedBox(height: 12),
           Container(
             width: double.infinity,
@@ -219,8 +220,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   borderRadius: BorderRadius.circular(20),
                 ),
               ),
-              child: const Text(
-                'Logout',
+              child: Text(
+                l10n.translate('logout'),
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -262,6 +263,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final isDarkMode = ref.watch(themeProvider);
     final locale = ref.watch(localeProvider);
     final isArabic = locale.languageCode == 'ar';
+    final l10n = AppLocalizations.of(context);
     
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -290,7 +292,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           const SizedBox(width: 16),
           Expanded(
             child: Text(
-              'Language',
+              l10n.translate('language'),
               style: TextStyle(
                 fontSize: 16,
                 color: AppTheme.getTextColor(isDarkMode),
@@ -319,6 +321,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   Widget _buildThemeToggle() {
     final isDarkMode = ref.watch(themeProvider);
+    final l10n = AppLocalizations.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
@@ -346,7 +349,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           const SizedBox(width: 16),
           Expanded(
             child: Text(
-              'Theme Mode',
+              l10n.translate('theme_mode'),
               style: TextStyle(
                 fontSize: 16,
                 color: AppTheme.getTextColor(isDarkMode),

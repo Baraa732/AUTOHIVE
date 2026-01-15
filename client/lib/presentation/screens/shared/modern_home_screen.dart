@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/core.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../widgets/common/cached_network_image.dart';
 import '../../widgets/common/theme_toggle_button.dart';
 import '../../providers/favorite_provider.dart';
@@ -671,7 +672,7 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
               ),
               const SizedBox(width: 8),
               Text(
-                'Available Only',
+                AppLocalizations.of(context).translate('available_only'),
                 style: TextStyle(
                   color: AppTheme.getTextColor(ref.watch(themeProvider)),
                 ),
@@ -708,7 +709,7 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
         child: Row(
           children: [
             Text(
-              '${_filteredApartments.length} apartments found',
+              '${_filteredApartments.length} ${AppLocalizations.of(context).translate('apartments_found')}',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -770,7 +771,7 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
               ),
               const SizedBox(height: 16),
               Text(
-                'No apartments found',
+                AppLocalizations.of(context).translate('no_apartments'),
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w500,
@@ -908,7 +909,7 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
                   Row(
                     children: [
                       Text(
-                        '\$${apartment.price}/night',
+                        '\$${apartment.price}/${AppLocalizations.of(context).translate('night')}',
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -992,6 +993,7 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
   }
 
   Widget _buildStatusBadge(bool isAvailable) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -999,7 +1001,7 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
-        isAvailable ? 'Available' : 'Booked',
+        isAvailable ? l10n.translate('available') : l10n.translate('booked'),
         style: const TextStyle(
           color: Colors.white,
           fontSize: 12,
