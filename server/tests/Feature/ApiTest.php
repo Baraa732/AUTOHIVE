@@ -67,7 +67,7 @@ class ApiTest extends TestCase
 
     public function test_apartment_filtering()
     {
-        $response = $this->getJson('/api/apartments?governorate=Cairo&city=Nasr City&min_price=100&max_price=500');
+        $response = $this->getJson('/api/apartments?governorate=Damascus&city=Mezzeh&min_price=100&max_price=500');
 
         $response->assertStatus(200)
                 ->assertJsonStructure([

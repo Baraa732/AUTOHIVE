@@ -43,11 +43,19 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
 
   final List<String> _governorates = [
     'All',
-    'Cairo',
-    'Giza',
-    'Alexandria',
-    'Luxor',
-    'Aswan',
+    'Damascus',
+    'Aleppo',
+    'Homs',
+    'Hama',
+    'Latakia',
+    'Tartus',
+    'Idlib',
+    'Daraa',
+    'Deir ez-Zor',
+    'Raqqa',
+    'Al-Hasakah',
+    'Quneitra',
+    'As-Suwayda',
   ];
   final List<String> _priceRanges = [
     'All',

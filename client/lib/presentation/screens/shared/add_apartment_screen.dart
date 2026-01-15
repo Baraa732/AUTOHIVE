@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/core.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../providers/apartment_provider.dart';
 import '../../widgets/common/animated_input_field.dart' show AnimatedInputField;
 
@@ -123,7 +124,8 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
       }
     } catch (e) {
       if (mounted) {
-        _showError('Failed to load available features');
+        final l10n = AppLocalizations.of(context);
+        _showError(l10n.translate('failed_load_features'));
       }
     }
   }
@@ -164,20 +166,20 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
   Future<void> _submitApartment() async {
     if (!_formKey.currentState!.validate()) return;
 
+    final l10n = AppLocalizations.of(context);
+
     if (_selectedGovernorate == null || _selectedCity == null) {
-      _showError('Please select governorate and city');
+      _showError(l10n.translate('select_governorate_city'));
       return;
     }
 
-    // Check images: for new apartments, require at least one new image
-    // For editing, allow if there are existing images or new images
     if (widget.apartment == null && _selectedImages.isEmpty) {
-      _showError('Please select at least one image');
+      _showError(l10n.translate('select_one_image'));
       return;
     }
 
     if (widget.apartment != null && _existingImageUrls.isEmpty && _selectedImages.isEmpty) {
-      _showError('Please keep at least one image or add new images');
+      _showError(l10n.translate('keep_one_image'));
       return;
     }
 
@@ -230,8 +232,8 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
       }
     } catch (e) {
       if (mounted) {
-        final action = widget.apartment != null ? 'update' : 'add';
-        _showError('Failed to $action apartment: ${e.toString()}');
+        final action = widget.apartment != null ? l10n.translate('failed_update') : l10n.translate('failed_add');
+        _showError('$action: ${e.toString()}');
       }
     } finally {
       if (mounted) {
@@ -269,6 +271,7 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
 
   void _showSuccessDialog({bool isEdit = false}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
 
     showDialog(
       context: context,
@@ -281,7 +284,7 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
             Icon(Icons.check_circle, color: Colors.green),
             const SizedBox(width: 8),
             Text(
-              'Success!',
+              l10n.translate('success'),
               style: TextStyle(
                 color: AppTheme.getTextColor(isDark),
                 fontWeight: FontWeight.bold,
@@ -291,8 +294,8 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
         ),
         content: Text(
           isEdit
-              ? 'Your apartment has been updated successfully!'
-              : 'Your apartment has been created successfully and is now live!',
+              ? l10n.translate('apartment_updated')
+              : l10n.translate('apartment_created'),
           style: TextStyle(
             color: AppTheme.getSubtextColor(isDark),
             height: 1.5,
@@ -357,13 +360,14 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
 
   Widget _buildHeader(bool isDark) {
     final isEdit = widget.apartment != null;
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            isEdit ? 'Edit Apartment' : 'Add Apartment',
+            isEdit ? l10n.translate('edit_apartment') : l10n.translate('add_apartment'),
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -372,8 +376,8 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
           ),
           Text(
             isEdit
-                ? 'Update your apartment details'
-                : 'Create your apartment listing',
+                ? l10n.translate('update_details')
+                : l10n.translate('create_listing'),
             style: TextStyle(
               fontSize: 16,
               color: AppTheme.getSubtextColor(isDark),
@@ -385,13 +389,14 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
   }
 
   Widget _buildBasicInfoSection(bool isDark) {
-    return _buildSection('Basic Information', isDark, [
+    final l10n = AppLocalizations.of(context);
+    return _buildSection(l10n.translate('basic_information'), isDark, [
       TextFormField(
         controller: _titleController,
-        decoration: _getInputDecoration('Title', Icons.home, isDark),
+        decoration: _getInputDecoration(l10n.translate('title'), Icons.home, isDark),
         validator: (value) {
-          if (value?.isEmpty ?? true) return 'Title is required';
-          if (value!.length < 3) return 'Title must be at least 3 characters';
+          if (value?.isEmpty ?? true) return l10n.translate('title_required');
+          if (value!.length < 3) return l10n.translate('title_min_length');
           return null;
         },
       ),
@@ -399,15 +404,15 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
       TextFormField(
         controller: _descriptionController,
         decoration: _getInputDecoration(
-          'Description',
+          l10n.translate('description'),
           Icons.description,
           isDark,
         ),
         maxLines: 4,
         validator: (value) {
-          if (value?.isEmpty ?? true) return 'Description is required';
+          if (value?.isEmpty ?? true) return l10n.translate('description_required');
           if (value!.length < 10) {
-            return 'Description must be at least 10 characters';
+            return l10n.translate('description_min_length');
           }
           return null;
         },
@@ -416,11 +421,12 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
   }
 
   Widget _buildLocationSection(bool isDark) {
-    return _buildSection('Location', isDark, [
+    final l10n = AppLocalizations.of(context);
+    return _buildSection(l10n.translate('location'), isDark, [
       DropdownButtonFormField<String>(
         initialValue: _selectedGovernorate,
         decoration: _getInputDecoration(
-          'Governorate',
+          l10n.translate('governorate'),
           Icons.location_city,
           isDark,
         ),
@@ -434,13 +440,13 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
           });
         },
         validator: (value) =>
-            value == null ? 'Please select governorate' : null,
+            value == null ? l10n.translate('select_governorate') : null,
       ),
       const SizedBox(height: 20),
       DropdownButtonFormField<String>(
         initialValue: _selectedCity,
         decoration: _getInputDecoration(
-          'City',
+          l10n.translate('city'),
           Icons.location_on,
           isDark,
         ),
@@ -455,26 +461,27 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
         onChanged: _selectedGovernorate != null
             ? (value) => setState(() => _selectedCity = value)
             : null,
-        validator: (value) => value == null ? 'Please select city' : null,
+        validator: (value) => value == null ? l10n.translate('select_city') : null,
       ),
     ]);
   }
 
   Widget _buildDetailsSection(bool isDark) {
-    return _buildSection('Details', isDark, [
+    final l10n = AppLocalizations.of(context);
+    return _buildSection(l10n.translate('details'), isDark, [
       AnimatedInputField(
         controller: _priceController,
-        label: 'Price per Night (\$)',
+        label: l10n.translate('price_per_night'),
         icon: Icons.attach_money,
         isDark: isDark,
-        hintText: 'Enter price per night',
+        hintText: l10n.translate('enter_price'),
         keyboardType: TextInputType.number,
         primaryColor: AppTheme.primaryOrange,
         secondaryColor: AppTheme.primaryBlue,
         validator: (value) {
-          if (value?.isEmpty ?? true) return 'Price is required';
+          if (value?.isEmpty ?? true) return l10n.translate('price_required');
           final price = double.tryParse(value!);
-          if (price == null || price <= 0) return 'Enter a valid price';
+          if (price == null || price <= 0) return l10n.translate('valid_price');
           return null;
         },
       ),
@@ -484,7 +491,7 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
           Expanded(
             child: AnimatedInputField(
               controller: _maxGuestsController,
-              label: 'Max Guests',
+              label: l10n.translate('max_guests'),
               icon: Icons.people,
               isDark: isDark,
               hintText: '1',
@@ -492,9 +499,9 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
               primaryColor: AppTheme.primaryOrange,
               secondaryColor: AppTheme.primaryBlue,
               validator: (value) {
-                if (value?.isEmpty ?? true) return 'Required';
+                if (value?.isEmpty ?? true) return l10n.translate('required');
                 final guests = int.tryParse(value!);
-                if (guests == null || guests <= 0) return 'Invalid';
+                if (guests == null || guests <= 0) return l10n.translate('invalid');
                 return null;
               },
             ),
@@ -503,7 +510,7 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
           Expanded(
             child: AnimatedInputField(
               controller: _roomsController,
-              label: 'Rooms',
+              label: l10n.translate('rooms'),
               icon: Icons.meeting_room,
               isDark: isDark,
               hintText: '1',
@@ -511,9 +518,9 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
               primaryColor: AppTheme.primaryOrange,
               secondaryColor: AppTheme.primaryBlue,
               validator: (value) {
-                if (value?.isEmpty ?? true) return 'Required';
+                if (value?.isEmpty ?? true) return l10n.translate('required');
                 final rooms = int.tryParse(value!);
-                if (rooms == null || rooms <= 0) return 'Invalid';
+                if (rooms == null || rooms <= 0) return l10n.translate('invalid');
                 return null;
               },
             ),
@@ -526,7 +533,7 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
           Expanded(
             child: AnimatedInputField(
               controller: _bedroomsController,
-              label: 'Bedrooms',
+              label: l10n.translate('bedrooms'),
               icon: Icons.bed,
               isDark: isDark,
               hintText: '1',
@@ -534,9 +541,9 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
               primaryColor: AppTheme.primaryOrange,
               secondaryColor: AppTheme.primaryBlue,
               validator: (value) {
-                if (value?.isEmpty ?? true) return 'Required';
+                if (value?.isEmpty ?? true) return l10n.translate('required');
                 final bedrooms = int.tryParse(value!);
-                if (bedrooms == null || bedrooms <= 0) return 'Invalid';
+                if (bedrooms == null || bedrooms <= 0) return l10n.translate('invalid');
                 return null;
               },
             ),
@@ -545,7 +552,7 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
           Expanded(
             child: AnimatedInputField(
               controller: _bathroomsController,
-              label: 'Bathrooms',
+              label: l10n.translate('bathrooms'),
               icon: Icons.bathtub,
               isDark: isDark,
               hintText: '1',
@@ -553,9 +560,9 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
               primaryColor: AppTheme.primaryOrange,
               secondaryColor: AppTheme.primaryBlue,
               validator: (value) {
-                if (value?.isEmpty ?? true) return 'Required';
+                if (value?.isEmpty ?? true) return l10n.translate('required');
                 final bathrooms = int.tryParse(value!);
-                if (bathrooms == null || bathrooms <= 0) return 'Invalid';
+                if (bathrooms == null || bathrooms <= 0) return l10n.translate('invalid');
                 return null;
               },
             ),
@@ -565,17 +572,17 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
       const SizedBox(height: 20),
       AnimatedInputField(
         controller: _areaController,
-        label: 'Area (m²)',
+        label: l10n.translate('area_m2'),
         icon: Icons.square_foot,
         isDark: isDark,
-        hintText: 'Enter area in square meters',
+        hintText: l10n.translate('enter_area'),
         keyboardType: TextInputType.number,
         primaryColor: AppTheme.primaryOrange,
         secondaryColor: AppTheme.primaryBlue,
         validator: (value) {
-          if (value?.isEmpty ?? true) return 'Area is required';
+          if (value?.isEmpty ?? true) return l10n.translate('area_required');
           final area = double.tryParse(value!);
-          if (area == null || area <= 0) return 'Enter a valid area';
+          if (area == null || area <= 0) return l10n.translate('valid_area');
           return null;
         },
       ),
@@ -583,11 +590,12 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
   }
 
   Widget _buildFeaturesSection(bool isDark) {
-    return _buildSection('Features & Amenities', isDark, [
+    final l10n = AppLocalizations.of(context);
+    return _buildSection(l10n.translate('features_amenities'), isDark, [
       if (_availableFeatures.isEmpty)
         Center(
           child: Text(
-            'Loading features...',
+            l10n.translate('loading_features'),
             style: TextStyle(color: AppTheme.getSubtextColor(isDark)),
           ),
         )
@@ -626,9 +634,10 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
   }
 
   Widget _buildImageSection(bool isDark) {
+    final l10n = AppLocalizations.of(context);
     final totalImages = _existingImageUrls.length + _selectedImages.length;
     
-    return _buildSection('Images', isDark, [
+    return _buildSection(l10n.translate('images'), isDark, [
       if (totalImages == 0)
         Center(
           child: InkWell(
@@ -670,7 +679,7 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    'Add Photos',
+                    l10n.translate('add_photos'),
                     style: TextStyle(
                       color: AppTheme.getTextColor(isDark),
                       fontSize: 20,
@@ -679,7 +688,7 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Select multiple images at once',
+                    l10n.translate('select_multiple'),
                     style: TextStyle(
                       color: AppTheme.getSubtextColor(isDark),
                       fontSize: 14,
@@ -698,7 +707,7 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  '$totalImages Photo${totalImages > 1 ? 's' : ''}',
+                  '$totalImages ${l10n.translate('photos')}${totalImages > 1 ? 's' : ''}',
                   style: TextStyle(
                     color: AppTheme.getTextColor(isDark),
                     fontSize: 15,
@@ -708,7 +717,7 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
                 TextButton.icon(
                   onPressed: _pickImages,
                   icon: Icon(Icons.add_circle_outline, size: 20),
-                  label: const Text('Add More'),
+                  label: Text(l10n.translate('add_more')),
                   style: TextButton.styleFrom(
                     foregroundColor: AppTheme.primaryOrange,
                   ),
@@ -792,8 +801,8 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
                             color: AppTheme.primaryOrange,
                             borderRadius: BorderRadius.circular(6),
                           ),
-                          child: const Text(
-                            'Cover',
+                          child: Text(
+                            l10n.translate('cover'),
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 10,
@@ -844,6 +853,7 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
 
   Widget _buildSubmitButton() {
     final isEdit = widget.apartment != null;
+    final l10n = AppLocalizations.of(context);
     return SizedBox(
       width: double.infinity,
       height: 56,
@@ -858,7 +868,7 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
         child: _isLoading
             ? const CircularProgressIndicator(color: Colors.white)
             : Text(
-                isEdit ? 'Update Apartment' : 'Submit Apartment',
+                isEdit ? l10n.translate('update_apartment') : l10n.translate('submit_apartment'),
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,

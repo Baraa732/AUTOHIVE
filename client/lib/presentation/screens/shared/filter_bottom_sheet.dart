@@ -20,23 +20,35 @@ class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet> {
   late SortOption _selectedSort;
 
   final List<String> _governorates = [
-    'Cairo',
-    'Giza',
-    'Alexandria',
-    'Luxor',
-    'Aswan',
-    'Helwan',
-    'Port Said',
+    'Damascus',
+    'Aleppo',
+    'Homs',
+    'Hama',
+    'Latakia',
+    'Tartus',
+    'Idlib',
+    'Daraa',
+    'Deir ez-Zor',
+    'Raqqa',
+    'Al-Hasakah',
+    'Quneitra',
+    'As-Suwayda',
   ];
 
   final Map<String, List<String>> _cities = {
-    'Cairo': ['Heliopolis', 'Maadi', 'Zamalek', 'Downtown', 'New Cairo', 'Sheikh Zayed'],
-    'Giza': ['6th of October', 'New Giza', 'Dokki', 'Embaba'],
-    'Alexandria': ['Downtown', 'Montaza', 'Sidi Bishr', 'El Anfushi'],
-    'Luxor': ['Downtown', 'West Bank'],
-    'Aswan': ['Downtown', 'Elephantine'],
-    'Helwan': ['Helwan City'],
-    'Port Said': ['Downtown'],
+    'Damascus': ['Mezzeh', 'Kafr Sousa', 'Malki', 'Bab Touma', 'Qassaa', 'Yarmouk'],
+    'Aleppo': ['Aziziyeh', 'Sulaymaniyah', 'Shahba', 'New Aleppo', 'Furqan'],
+    'Homs': ['Khalidiya', 'Waer', 'Inshaat', 'Zahra'],
+    'Hama': ['Mahatta', 'Kazo', 'Sabuniyeh'],
+    'Latakia': ['Raml al-Janoubi', 'Raml al-Shamali', 'Sleibeh', 'Ziraa'],
+    'Tartus': ['Corniche', 'Mina', 'Arwad'],
+    'Idlib': ['Downtown'],
+    'Daraa': ['Balad', 'Mahatta'],
+    'Deir ez-Zor': ['Joura', 'Qusour'],
+    'Raqqa': ['Downtown'],
+    'Al-Hasakah': ['Downtown'],
+    'Quneitra': ['Downtown'],
+    'As-Suwayda': ['Downtown'],
   };
 
   @override
