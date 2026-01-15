@@ -19,37 +19,94 @@ class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet> {
   late String? _selectedCity;
   late SortOption _selectedSort;
 
-  final List<String> _governorates = [
-    'Damascus',
-    'Aleppo',
-    'Homs',
-    'Hama',
-    'Latakia',
-    'Tartus',
-    'Idlib',
-    'Daraa',
-    'Deir ez-Zor',
-    'Raqqa',
-    'Al-Hasakah',
-    'Quneitra',
-    'As-Suwayda',
-  ];
-
-  final Map<String, List<String>> _cities = {
-    'Damascus': ['Mezzeh', 'Kafr Sousa', 'Malki', 'Bab Touma', 'Qassaa', 'Yarmouk'],
-    'Aleppo': ['Aziziyeh', 'Sulaymaniyah', 'Shahba', 'New Aleppo', 'Furqan'],
-    'Homs': ['Khalidiya', 'Waer', 'Inshaat', 'Zahra'],
-    'Hama': ['Mahatta', 'Kazo', 'Sabuniyeh'],
-    'Latakia': ['Raml al-Janoubi', 'Raml al-Shamali', 'Sleibeh', 'Ziraa'],
-    'Tartus': ['Corniche', 'Mina', 'Arwad'],
-    'Idlib': ['Downtown'],
-    'Daraa': ['Balad', 'Mahatta'],
-    'Deir ez-Zor': ['Joura', 'Qusour'],
-    'Raqqa': ['Downtown'],
-    'Al-Hasakah': ['Downtown'],
-    'Quneitra': ['Downtown'],
-    'As-Suwayda': ['Downtown'],
+  final Map<String, Map<String, String>> _governoratesTranslations = {
+    'Damascus': {'en': 'Damascus', 'ar': 'دمشق'},
+    'Aleppo': {'en': 'Aleppo', 'ar': 'حلب'},
+    'Homs': {'en': 'Homs', 'ar': 'حمص'},
+    'Hama': {'en': 'Hama', 'ar': 'حماة'},
+    'Latakia': {'en': 'Latakia', 'ar': 'اللاذقية'},
+    'Tartus': {'en': 'Tartus', 'ar': 'طرطوس'},
+    'Idlib': {'en': 'Idlib', 'ar': 'إدلب'},
+    'Daraa': {'en': 'Daraa', 'ar': 'درعا'},
+    'Deir ez-Zor': {'en': 'Deir ez-Zor', 'ar': 'دير الزور'},
+    'Raqqa': {'en': 'Raqqa', 'ar': 'الرقة'},
+    'Al-Hasakah': {'en': 'Al-Hasakah', 'ar': 'الحسكة'},
+    'Quneitra': {'en': 'Quneitra', 'ar': 'القنيطرة'},
+    'As-Suwayda': {'en': 'As-Suwayda', 'ar': 'السويداء'},
   };
+
+  final Map<String, Map<String, Map<String, String>>> _citiesTranslations = {
+    'Damascus': {
+      'Mezzeh': {'en': 'Mezzeh', 'ar': 'المزة'},
+      'Kafr Sousa': {'en': 'Kafr Sousa', 'ar': 'كفر سوسة'},
+      'Malki': {'en': 'Malki', 'ar': 'المالكي'},
+      'Bab Touma': {'en': 'Bab Touma', 'ar': 'باب توما'},
+      'Qassaa': {'en': 'Qassaa', 'ar': 'القصاع'},
+      'Yarmouk': {'en': 'Yarmouk', 'ar': 'اليرموك'},
+    },
+    'Aleppo': {
+      'Aziziyeh': {'en': 'Aziziyeh', 'ar': 'العزيزية'},
+      'Sulaymaniyah': {'en': 'Sulaymaniyah', 'ar': 'السليمانية'},
+      'Shahba': {'en': 'Shahba', 'ar': 'الشهباء'},
+      'New Aleppo': {'en': 'New Aleppo', 'ar': 'حلب الجديدة'},
+      'Furqan': {'en': 'Furqan', 'ar': 'الفرقان'},
+    },
+    'Homs': {
+      'Khalidiya': {'en': 'Khalidiya', 'ar': 'الخالدية'},
+      'Waer': {'en': 'Waer', 'ar': 'الوعر'},
+      'Inshaat': {'en': 'Inshaat', 'ar': 'الإنشاءات'},
+      'Zahra': {'en': 'Zahra', 'ar': 'الزهراء'},
+    },
+    'Hama': {
+      'Mahatta': {'en': 'Mahatta', 'ar': 'المحطة'},
+      'Kazo': {'en': 'Kazo', 'ar': 'كازو'},
+      'Sabuniyeh': {'en': 'Sabuniyeh', 'ar': 'الصابونية'},
+    },
+    'Latakia': {
+      'Raml al-Janoubi': {'en': 'Raml al-Janoubi', 'ar': 'الرمل الجنوبي'},
+      'Raml al-Shamali': {'en': 'Raml al-Shamali', 'ar': 'الرمل الشمالي'},
+      'Sleibeh': {'en': 'Sleibeh', 'ar': 'الصليبة'},
+      'Ziraa': {'en': 'Ziraa', 'ar': 'الزراعة'},
+    },
+    'Tartus': {
+      'Corniche': {'en': 'Corniche', 'ar': 'الكورنيش'},
+      'Mina': {'en': 'Mina', 'ar': 'الميناء'},
+      'Arwad': {'en': 'Arwad', 'ar': 'أرواد'},
+    },
+    'Idlib': {
+      'Downtown': {'en': 'Downtown', 'ar': 'وسط المدينة'},
+    },
+    'Daraa': {
+      'Balad': {'en': 'Balad', 'ar': 'البلد'},
+      'Mahatta': {'en': 'Mahatta', 'ar': 'المحطة'},
+    },
+    'Deir ez-Zor': {
+      'Joura': {'en': 'Joura', 'ar': 'الجورة'},
+      'Qusour': {'en': 'Qusour', 'ar': 'القصور'},
+    },
+    'Raqqa': {
+      'Downtown': {'en': 'Downtown', 'ar': 'وسط المدينة'},
+    },
+    'Al-Hasakah': {
+      'Downtown': {'en': 'Downtown', 'ar': 'وسط المدينة'},
+    },
+    'Quneitra': {
+      'Downtown': {'en': 'Downtown', 'ar': 'وسط المدينة'},
+    },
+    'As-Suwayda': {
+      'Downtown': {'en': 'Downtown', 'ar': 'وسط المدينة'},
+    },
+  };
+
+  String _getTranslatedGovernorate(String key) {
+    final locale = Localizations.localeOf(context).languageCode;
+    return _governoratesTranslations[key]?[locale] ?? key;
+  }
+
+  String _getTranslatedCity(String governorate, String city) {
+    final locale = Localizations.localeOf(context).languageCode;
+    return _citiesTranslations[governorate]?[city]?[locale] ?? city;
+  }
 
   @override
   void initState() {
@@ -347,9 +404,9 @@ class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet> {
                 value: null,
                 child: Text('All Governorates'),
               ),
-              ..._governorates.map((gov) => DropdownMenuItem(
+              ..._governoratesTranslations.keys.map((gov) => DropdownMenuItem(
                     value: gov,
-                    child: Text(gov),
+                    child: Text(_getTranslatedGovernorate(gov)),
                   )),
             ],
             onChanged: (value) {
@@ -365,7 +422,7 @@ class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet> {
   }
 
   Widget _buildCitySection(bool isDark) {
-    final cities = _selectedGovernorate != null ? _cities[_selectedGovernorate] ?? [] : [];
+    final cities = _selectedGovernorate != null ? _citiesTranslations[_selectedGovernorate] ?? {} : {};
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -393,9 +450,9 @@ class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet> {
                 value: null,
                 child: Text('All Cities'),
               ),
-              ...cities.map((city) => DropdownMenuItem(
+              ...cities.keys.map((city) => DropdownMenuItem(
                     value: city,
-                    child: Text(city),
+                    child: Text(_getTranslatedCity(_selectedGovernorate!, city)),
                   )),
             ],
             onChanged: (value) {

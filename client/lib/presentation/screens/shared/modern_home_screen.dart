@@ -42,22 +42,26 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
   late Animation<double> _searchAnimation;
   late Animation<double> _filterAnimation;
 
-  final List<String> _governorates = [
-    'All',
-    'Damascus',
-    'Aleppo',
-    'Homs',
-    'Hama',
-    'Latakia',
-    'Tartus',
-    'Idlib',
-    'Daraa',
-    'Deir ez-Zor',
-    'Raqqa',
-    'Al-Hasakah',
-    'Quneitra',
-    'As-Suwayda',
-  ];
+  final Map<String, Map<String, String>> _governoratesTranslations = {
+    'Damascus': {'en': 'Damascus', 'ar': 'دمشق'},
+    'Aleppo': {'en': 'Aleppo', 'ar': 'حلب'},
+    'Homs': {'en': 'Homs', 'ar': 'حمص'},
+    'Hama': {'en': 'Hama', 'ar': 'حماة'},
+    'Latakia': {'en': 'Latakia', 'ar': 'اللاذقية'},
+    'Tartus': {'en': 'Tartus', 'ar': 'طرطوس'},
+    'Idlib': {'en': 'Idlib', 'ar': 'إدلب'},
+    'Daraa': {'en': 'Daraa', 'ar': 'درعا'},
+    'Deir ez-Zor': {'en': 'Deir ez-Zor', 'ar': 'دير الزور'},
+    'Raqqa': {'en': 'Raqqa', 'ar': 'الرقة'},
+    'Al-Hasakah': {'en': 'Al-Hasakah', 'ar': 'الحسكة'},
+    'Quneitra': {'en': 'Quneitra', 'ar': 'القنيطرة'},
+    'As-Suwayda': {'en': 'As-Suwayda', 'ar': 'السويداء'},
+  };
+
+  String _getTranslatedGovernorate(String key) {
+    final locale = Localizations.localeOf(context).languageCode;
+    return _governoratesTranslations[key]?[locale] ?? key;
+  }
   final List<String> _priceRanges = [
     'All',
     '0-500',
@@ -560,12 +564,12 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
       crossAxisSpacing: 12,
       mainAxisSpacing: 12,
       children: [
-        _buildDropdownFilter('Location', _selectedGovernorate, _governorates, (
+        _buildDropdownFilter('Location', _selectedGovernorate, ['All', ..._governoratesTranslations.keys], (
           v,
         ) {
           setState(() => _selectedGovernorate = v!);
           _applyFilters();
-        }),
+        }, translateValue: (v) => v == 'All' ? 'All' : _getTranslatedGovernorate(v)),
         _buildDropdownFilter('Price Range', _selectedPriceRange, _priceRanges, (
           v,
         ) {
@@ -596,6 +600,7 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
     String value,
     List<String> options,
     Function(String?) onChanged,
+    {String Function(String)? translateValue}
   ) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -624,7 +629,11 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
               .map(
                 (option) => DropdownMenuItem(
                   value: option,
-                  child: Text(option == 'All' ? label : option),
+                  child: Text(
+                    translateValue != null 
+                        ? (option == 'All' ? label : translateValue(option))
+                        : (option == 'All' ? label : option)
+                  ),
                 ),
               )
               .toList(),

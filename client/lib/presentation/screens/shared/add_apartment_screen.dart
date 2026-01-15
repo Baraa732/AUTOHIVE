@@ -39,23 +39,82 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
-  final List<String> _governorates = [
-    'Damascus',
-    'Aleppo',
-    'Homs',
-    'Hama',
-    'Lattakia',
-    'Tartus',
-  ];
-
-  final Map<String, List<String>> _cities = {
-    'Damascus': ['Damascus', 'Jaramana', 'Sahnaya'],
-    'Aleppo': ['Aleppo', 'Afrin', 'Al-Bab'],
-    'Homs': ['Homs', 'Palmyra', 'Qusayr'],
-    'Hama': ['Hama', 'Salamiyah', 'Suqaylabiyah'],
-    'Lattakia': ['Lattakia', 'Jableh', 'Qardaha'],
-    'Tartus': ['Tartus', 'Banias', 'Safita'],
+  final Map<String, Map<String, String>> _governoratesTranslations = {
+    'Damascus': {'en': 'Damascus', 'ar': 'دمشق'},
+    'Aleppo': {'en': 'Aleppo', 'ar': 'حلب'},
+    'Homs': {'en': 'Homs', 'ar': 'حمص'},
+    'Hama': {'en': 'Hama', 'ar': 'حماة'},
+    'Latakia': {'en': 'Latakia', 'ar': 'اللاذقية'},
+    'Tartus': {'en': 'Tartus', 'ar': 'طرطوس'},
   };
+
+  final Map<String, Map<String, Map<String, String>>> _citiesTranslations = {
+    'Damascus': {
+      'Damascus': {'en': 'Damascus', 'ar': 'دمشق'},
+      'Jaramana': {'en': 'Jaramana', 'ar': 'جرمانا'},
+      'Sahnaya': {'en': 'Sahnaya', 'ar': 'صحنايا'},
+    },
+    'Aleppo': {
+      'Aleppo': {'en': 'Aleppo', 'ar': 'حلب'},
+      'Afrin': {'en': 'Afrin', 'ar': 'عفرين'},
+      'Al-Bab': {'en': 'Al-Bab', 'ar': 'الباب'},
+    },
+    'Homs': {
+      'Homs': {'en': 'Homs', 'ar': 'حمص'},
+      'Palmyra': {'en': 'Palmyra', 'ar': 'تدمر'},
+      'Qusayr': {'en': 'Qusayr', 'ar': 'القصير'},
+    },
+    'Hama': {
+      'Hama': {'en': 'Hama', 'ar': 'حماة'},
+      'Salamiyah': {'en': 'Salamiyah', 'ar': 'سلمية'},
+      'Suqaylabiyah': {'en': 'Suqaylabiyah', 'ar': 'السقيلبية'},
+    },
+    'Latakia': {
+      'Latakia': {'en': 'Latakia', 'ar': 'اللاذقية'},
+      'Jableh': {'en': 'Jableh', 'ar': 'جبلة'},
+      'Qardaha': {'en': 'Qardaha', 'ar': 'القرداحة'},
+    },
+    'Tartus': {
+      'Tartus': {'en': 'Tartus', 'ar': 'طرطوس'},
+      'Banias': {'en': 'Banias', 'ar': 'بانياس'},
+      'Safita': {'en': 'Safita', 'ar': 'صافيتا'},
+    },
+  };
+
+  String _getTranslatedGovernorate(String key) {
+    final locale = Localizations.localeOf(context).languageCode;
+    return _governoratesTranslations[key]?[locale] ?? key;
+  }
+
+  String _getTranslatedCity(String governorate, String city) {
+    final locale = Localizations.localeOf(context).languageCode;
+    return _citiesTranslations[governorate]?[city]?[locale] ?? city;
+  }
+
+  String _getTranslatedFeature(String featureValue) {
+    final locale = Localizations.localeOf(context).languageCode;
+    final l10n = AppLocalizations.of(context);
+    
+    final featureMap = {
+      'wifi': l10n.translate('wifi'),
+      'air_conditioning': l10n.translate('air_conditioning'),
+      'heating': l10n.translate('heating'),
+      'kitchen': l10n.translate('kitchen'),
+      'washer': l10n.translate('washer'),
+      'tv': l10n.translate('tv'),
+      'parking': l10n.translate('parking'),
+      'elevator': l10n.translate('elevator'),
+      'balcony': l10n.translate('balcony'),
+      'gym': l10n.translate('gym'),
+      'pool': l10n.translate('pool'),
+      'security': l10n.translate('security'),
+      'garden': l10n.translate('garden'),
+      'furnished': l10n.translate('furnished'),
+      'pet_friendly': l10n.translate('pet_friendly'),
+    };
+    
+    return featureMap[featureValue] ?? featureValue;
+  }
 
   @override
   void initState() {
@@ -422,16 +481,21 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
 
   Widget _buildLocationSection(bool isDark) {
     final l10n = AppLocalizations.of(context);
+    final governorateKeys = _governoratesTranslations.keys.toList();
+    
     return _buildSection(l10n.translate('location'), isDark, [
       DropdownButtonFormField<String>(
-        initialValue: _selectedGovernorate,
+        value: _selectedGovernorate,
         decoration: _getInputDecoration(
           l10n.translate('governorate'),
           Icons.location_city,
           isDark,
         ),
-        items: _governorates
-            .map((gov) => DropdownMenuItem(value: gov, child: Text(gov)))
+        items: governorateKeys
+            .map((key) => DropdownMenuItem(
+                  value: key,
+                  child: Text(_getTranslatedGovernorate(key)),
+                ))
             .toList(),
         onChanged: (value) {
           setState(() {
@@ -444,17 +508,19 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
       ),
       const SizedBox(height: 20),
       DropdownButtonFormField<String>(
-        initialValue: _selectedCity,
+        value: _selectedCity,
         decoration: _getInputDecoration(
           l10n.translate('city'),
           Icons.location_on,
           isDark,
         ),
         items: _selectedGovernorate != null
-            ? _cities[_selectedGovernorate]!
+            ? _citiesTranslations[_selectedGovernorate]!.keys
                   .map(
-                    (city) =>
-                        DropdownMenuItem(value: city, child: Text(city)),
+                    (cityKey) => DropdownMenuItem(
+                      value: cityKey,
+                      child: Text(_getTranslatedCity(_selectedGovernorate!, cityKey)),
+                    ),
                   )
                   .toList()
             : [],
@@ -605,10 +671,9 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
           runSpacing: 8,
           children: _availableFeatures.map((feature) {
             final featureValue = feature['value'] ?? '';
-            final featureLabel = feature['label'] ?? '';
             final isSelected = _selectedFeatures.contains(featureValue);
             return FilterChip(
-              label: Text(featureLabel),
+              label: Text(_getTranslatedFeature(featureValue)),
               selected: isSelected,
               onSelected: (selected) {
                 setState(() {
