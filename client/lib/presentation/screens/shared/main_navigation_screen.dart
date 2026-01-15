@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/core.dart';
+import '../../../core/localization/app_localizations.dart';
 import 'navigation_screen.dart';
 import '../../providers/auth_provider.dart';
 
@@ -11,6 +12,7 @@ class MainNavigationScreen extends ConsumerWidget {
     final authState = ref.watch(authProvider);
     final isConnected = ref.watch(isConnectedProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
 
     if (authState.isLoading) {
       return Scaffold(
@@ -34,10 +36,10 @@ class MainNavigationScreen extends ConsumerWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 color: Colors.red,
-                child: const Text(
-                  'No internet connection',
+                child: Text(
+                  l10n.translate('no_internet'),
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white, fontSize: 12),
+                  style: const TextStyle(color: Colors.white, fontSize: 12),
                 ),
               ),
             ),

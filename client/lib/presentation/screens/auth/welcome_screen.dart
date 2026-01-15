@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/core.dart';
 import '../../widgets/common/theme_toggle_button.dart';
+import '../../providers/locale_provider.dart';
 import 'login_screen.dart';
 import 'register_screen.dart';
 
@@ -72,7 +73,13 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with TickerProvid
             Positioned(
               top: 50,
               right: 20,
-              child: const ThemeToggleButton(),
+              child: Row(
+                children: [
+                  _buildLanguageToggle(),
+                  const SizedBox(width: 8),
+                  const ThemeToggleButton(),
+                ],
+              ),
             ),
             SafeArea(
               child: AnimatedBuilder(
@@ -107,6 +114,49 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with TickerProvid
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLanguageToggle() {
+    final isDarkMode = ref.watch(themeProvider);
+    final locale = ref.watch(localeProvider);
+    final isArabic = locale.languageCode == 'ar';
+    
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.getCardColor(isDarkMode).withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.getBorderColor(isDarkMode)),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => ref.read(localeProvider.notifier).toggleLocale(),
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.language,
+                  color: AppTheme.primaryOrange,
+                  size: 20,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  isArabic ? 'ع' : 'EN',
+                  style: TextStyle(
+                    color: AppTheme.getTextColor(isDarkMode),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

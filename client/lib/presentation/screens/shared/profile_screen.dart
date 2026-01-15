@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../core/core.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/locale_provider.dart';
 import '../../providers/wallet_provider.dart';
 import '../../widgets/common/profile_avatar.dart';
 import '../../widgets/wallet_balance_widget.dart';
@@ -188,6 +190,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ],
           const SizedBox(height: 32),
           _buildWalletSection(),
+          _buildLanguageToggle(),
           _buildThemeToggle(),
           _buildMenuItem(Icons.help, 'Help & Support', () {}),
           const SizedBox(height: 12),
@@ -253,6 +256,65 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       );
     }
     return const SizedBox.shrink();
+  }
+
+  Widget _buildLanguageToggle() {
+    final isDarkMode = ref.watch(themeProvider);
+    final locale = ref.watch(localeProvider);
+    final isArabic = locale.languageCode == 'ar';
+    
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.getCardColor(isDarkMode),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppTheme.getBorderColor(isDarkMode)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFff6f2d), Color(0xFF4a90e2)],
+              ),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.language,
+              color: Colors.white,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              'Language',
+              style: TextStyle(
+                fontSize: 16,
+                color: AppTheme.getTextColor(isDarkMode),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          Text(
+            isArabic ? 'العربية' : 'English',
+            style: TextStyle(
+              fontSize: 14,
+              color: AppTheme.getSubtextColor(isDarkMode),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Switch(
+            value: isArabic,
+            onChanged: (value) => ref.read(localeProvider.notifier).toggleLocale(),
+            activeThumbColor: const Color(0xFFff6f2d),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildThemeToggle() {

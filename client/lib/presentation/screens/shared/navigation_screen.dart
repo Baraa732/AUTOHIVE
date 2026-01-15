@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../providers/auth_provider.dart';
 import '../shared/modern_home_screen.dart';
 import '../shared/bookings_screen.dart';
@@ -23,6 +24,7 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
 
     if (!authState.isAuthenticated || authState.user == null) {
       return Scaffold(
@@ -40,30 +42,30 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
     ];
 
     final List<BottomNavItem> navItems = [
-      const BottomNavItem(
+      BottomNavItem(
         icon: Icons.home_outlined,
         activeIcon: Icons.home,
-        label: 'Home',
+        label: l10n.translate('home'),
       ),
-      const BottomNavItem(
+      BottomNavItem(
         icon: Icons.calendar_today_outlined,
         activeIcon: Icons.calendar_today,
-        label: 'Bookings',
+        label: l10n.translate('bookings'),
       ),
-      const BottomNavItem(
+      BottomNavItem(
         icon: Icons.favorite_outline,
         activeIcon: Icons.favorite,
-        label: 'Favorites',
+        label: l10n.translate('favorites'),
       ),
-      const BottomNavItem(
+      BottomNavItem(
         icon: Icons.add_circle_outline,
         activeIcon: Icons.add_circle,
-        label: 'Add',
+        label: l10n.translate('add'),
       ),
-      const BottomNavItem(
+      BottomNavItem(
         icon: Icons.person_outline,
         activeIcon: Icons.person,
-        label: 'Profile',
+        label: l10n.translate('profile'),
       ),
     ];
 

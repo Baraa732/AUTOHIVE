@@ -4,6 +4,7 @@ import '../../../core/core.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../widgets/common/animated_input_field.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/locale_provider.dart';
 import '../shared/main_navigation_screen.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -128,7 +129,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with TickerProviderSt
       builder: (context, ref, child) {
         final authState = ref.watch(authProvider);
         
-        // Auto-navigate on successful login
         if (authState.isAuthenticated && authState.user != null) {
           _lastShownError = null;
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -142,7 +142,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with TickerProviderSt
           });
         }
         
-        // Show error if login failed (only once per error)
         if (authState.error != null && !authState.isLoading && _lastShownError != authState.error) {
           _lastShownError = authState.error;
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -185,7 +184,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with TickerProviderSt
                                         _buildTitle(isDark, l10n),
                                         const SizedBox(height: 40),
                                         
-                                        // Phone Number Field
                                         AnimatedInputField(
                                           controller: _phoneController,
                                           label: l10n.translate('phone_number'),
@@ -208,7 +206,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with TickerProviderSt
 
                                         const SizedBox(height: 20),
 
-                                        // Password Field
                                         AnimatedInputField(
                                           controller: _passwordController,
                                           label: l10n.translate('password'),
@@ -353,6 +350,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with TickerProviderSt
                 ],
               ),
             ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.language),
+            onPressed: () => ref.read(localeProvider.notifier).toggleLocale(),
           ),
         ],
       ),

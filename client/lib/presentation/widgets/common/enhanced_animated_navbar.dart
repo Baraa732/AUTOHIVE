@@ -72,6 +72,12 @@ class _EnhancedAnimatedNavbarState extends State<EnhancedAnimatedNavbar>
     final theme = widget.theme ?? AppTheme.getNavbarTheme(isDark);
     final screenWidth = MediaQuery.of(context).size.width;
     final itemWidth = screenWidth / widget.items.length;
+    final isRTL = Directionality.of(context) == TextDirection.rtl;
+    
+    // Calculate indicator position based on text direction
+    final indicatorPosition = isRTL 
+        ? screenWidth - (itemWidth * _indicatorAnimation.value + (itemWidth / 2) + (theme.indicatorSize / 2))
+        : itemWidth * _indicatorAnimation.value + (itemWidth / 2) - (theme.indicatorSize / 2);
 
     return AnimatedBuilder(
       animation: _indicatorAnimation,
@@ -97,7 +103,7 @@ class _EnhancedAnimatedNavbarState extends State<EnhancedAnimatedNavbar>
               // Floating indicator (smaller circle, no cutout)
               Positioned(
                 top: -20,
-                left: itemWidth * _indicatorAnimation.value + (itemWidth / 2) - (theme.indicatorSize / 2),
+                left: indicatorPosition,
                 child: Container(
                   width: theme.indicatorSize,
                   height: theme.indicatorSize,

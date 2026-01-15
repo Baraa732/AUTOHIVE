@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'core/di/injection.dart';
 import 'core/core.dart';
+import 'core/localization/app_localizations.dart';
 import 'presentation/screens/auth/welcome_screen.dart';
 import 'presentation/screens/shared/main_navigation_screen.dart';
 import 'presentation/providers/auth_provider.dart';
+import 'presentation/providers/locale_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,17 +25,28 @@ class MyApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDarkMode = ref.watch(themeProvider);
+    final locale = ref.watch(localeProvider);
     
     return MaterialApp(
       title: 'AUTOHIVE',
       debugShowCheckedModeBanner: false,
+      locale: locale,
+      supportedLocales: const [Locale('en'), Locale('ar')],
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
       home: const AppInitializer(),
       builder: (context, child) {
-        return AnnotatedRegion(
-          value: isDarkMode 
+        return Directionality(
+          textDirection: locale.languageCode == 'ar' ? TextDirection.rtl : TextDirection.ltr,
+          child: AnnotatedRegion(
+            value: isDarkMode 
               ? const SystemUiOverlayStyle(
                   statusBarColor: Colors.transparent,
                   statusBarIconBrightness: Brightness.light,
@@ -45,7 +59,8 @@ class MyApp extends ConsumerWidget {
                   systemNavigationBarColor: Color(0xFFF8FAFC),
                   systemNavigationBarIconBrightness: Brightness.dark,
                 ),
-          child: child!,
+            child: child!,
+          ),
         );
       },
     );
