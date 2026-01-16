@@ -496,6 +496,54 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>> getUpcomingApartmentBookings() async {
+    try {
+      final headers = await _getHeaders();
+      final apiUrl = await AppConfig.baseUrl;
+      final response = await http.get(Uri.parse('$apiUrl/bookings/upcoming-on-apartments'), headers: headers).timeout(const Duration(seconds: 30));
+      return json.decode(response.body);
+    } catch (e, stackTrace) {
+      ErrorHandler.logError('getUpcomingApartmentBookings', e, stackTrace);
+      return ErrorHandler.handleApiError(e, operation: 'Loading upcoming apartment bookings');
+    }
+  }
+
+  Future<Map<String, dynamic>> getMyPendingBookings() async {
+    try {
+      final headers = await _getHeaders();
+      final apiUrl = await AppConfig.baseUrl;
+      final response = await http.get(Uri.parse('$apiUrl/bookings/my-pending'), headers: headers).timeout(const Duration(seconds: 30));
+      return json.decode(response.body);
+    } catch (e, stackTrace) {
+      ErrorHandler.logError('getMyPendingBookings', e, stackTrace);
+      return ErrorHandler.handleApiError(e, operation: 'Loading pending bookings');
+    }
+  }
+
+  Future<Map<String, dynamic>> getMyOngoingBookings() async {
+    try {
+      final headers = await _getHeaders();
+      final apiUrl = await AppConfig.baseUrl;
+      final response = await http.get(Uri.parse('$apiUrl/bookings/my-ongoing'), headers: headers).timeout(const Duration(seconds: 30));
+      return json.decode(response.body);
+    } catch (e, stackTrace) {
+      ErrorHandler.logError('getMyOngoingBookings', e, stackTrace);
+      return ErrorHandler.handleApiError(e, operation: 'Loading ongoing bookings');
+    }
+  }
+
+  Future<Map<String, dynamic>> getMyCancelledRejectedBookings() async {
+    try {
+      final headers = await _getHeaders();
+      final apiUrl = await AppConfig.baseUrl;
+      final response = await http.get(Uri.parse('$apiUrl/bookings/my-cancelled-rejected'), headers: headers).timeout(const Duration(seconds: 30));
+      return json.decode(response.body);
+    } catch (e, stackTrace) {
+      ErrorHandler.logError('getMyCancelledRejectedBookings', e, stackTrace);
+      return ErrorHandler.handleApiError(e, operation: 'Loading cancelled/rejected bookings');
+    }
+  }
+
   Future<Map<String, dynamic>> cancelBooking(String bookingId) async {
     try {
       final headers = await _getHeaders();

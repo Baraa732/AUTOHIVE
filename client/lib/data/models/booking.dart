@@ -30,21 +30,38 @@ class Booking {
   });
 
   factory Booking.fromJson(Map<String, dynamic> json) {
-    return Booking(
-      id: json['id'].toString(),
-      apartmentId: json['apartment_id'].toString(),
-      userId: json['user_id'].toString(),
-      checkIn: DateTime.parse(json['check_in']),
-      checkOut: DateTime.parse(json['check_out']),
-      totalPrice: double.parse(json['total_price'].toString()),
-      status: json['status'] ?? 'pending',
-      createdAt: DateTime.parse(json['created_at']),
-      updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at']) : null,
-      guests: json['guests'] as int?,
-      message: json['message'] as String?,
-      apartment: json['apartment'] as Map<String, dynamic>?,
-      user: json['user'] as Map<String, dynamic>?,
-    );
+    // Helper function to parse dates that might be in YYYY-MM-DD format or ISO8601
+    DateTime parseDate(dynamic dateValue) {
+      if (dateValue == null) throw Exception('Date value is null');
+      final dateStr = dateValue.toString();
+      // If it's just a date (YYYY-MM-DD), add time to make it parseable
+      if (dateStr.length == 10 && !dateStr.contains('T')) {
+        return DateTime.parse('${dateStr}T00:00:00.000Z');
+      }
+      return DateTime.parse(dateStr);
+    }
+
+    try {
+      return Booking(
+        id: json['id'].toString(),
+        apartmentId: json['apartment_id'].toString(),
+        userId: json['user_id'].toString(),
+        checkIn: parseDate(json['check_in']),
+        checkOut: parseDate(json['check_out']),
+        totalPrice: double.parse(json['total_price'].toString()),
+        status: json['status'] ?? 'pending',
+        createdAt: parseDate(json['created_at']),
+        updatedAt: json['updated_at'] != null ? parseDate(json['updated_at']) : null,
+        guests: json['guests'] as int?,
+        message: json['message'] as String?,
+        apartment: json['apartment'] as Map<String, dynamic>?,
+        user: json['user'] as Map<String, dynamic>?,
+      );
+    } catch (e) {
+      print('❌ Error parsing Booking from JSON: $e');
+      print('📋 JSON: $json');
+      rethrow;
+    }
   }
 
   Map<String, dynamic> toJson() {

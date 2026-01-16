@@ -57,12 +57,19 @@ Route::post('/broadcasting/auth', [\App\Http\Controllers\Api\BroadcastController
 Route::middleware(['auth:sanctum'])->group(function () {
     //8A Booking Viewing (allowed for all authenticated users)
     Route::get('/bookings', [BookingController::class, 'index']);
-    Route::get('/bookings/{id}', [BookingController::class, 'show']);
+    // IMPORTANT: Specific routes must come before parameterized routes
     Route::get('/bookings/history', [BookingController::class, 'history']);
     Route::get('/bookings/upcoming', [BookingController::class, 'upcoming']);
+    // Categorized bookings endpoints (must be before /bookings/{id})
+    Route::get('/bookings/upcoming-on-apartments', [BookingController::class, 'getUpcomingApartmentBookings']);
+    Route::get('/bookings/my-pending', [BookingController::class, 'getMyPendingBookings']);
+    Route::get('/bookings/my-ongoing', [BookingController::class, 'getMyOngoingBookings']);
+    Route::get('/bookings/my-cancelled-rejected', [BookingController::class, 'getMyCancelledRejectedBookings']);
+    Route::get('/bookings/check-availability/{apartmentId}', [BookingController::class, 'checkAvailability']);
+    // Parameterized routes come last
+    Route::get('/bookings/{id}', [BookingController::class, 'show']);
     Route::get('/my-apartment-bookings', [BookingController::class, 'myApartmentBookings']);
     Route::get('/my-apartment-bookings/{id}', [BookingController::class, 'apartmentBookingShow']);
-    Route::get('/bookings/check-availability/{apartmentId}', [BookingController::class, 'checkAvailability']);
     
     // Debug endpoint
     Route::get('/debug/bookings-debug', [BookingController::class, 'debugBookings']);

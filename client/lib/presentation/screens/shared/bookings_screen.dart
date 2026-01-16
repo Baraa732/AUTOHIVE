@@ -19,7 +19,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     _loadData();
   }
 
@@ -31,7 +31,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
 
   Future<void> _loadData() async {
     final bookingNotifier = ref.read(bookingProvider.notifier);
-    await bookingNotifier.loadAllBookingsData();
+    await bookingNotifier.loadAllCategorizedBookings();
   }
 
   @override
@@ -57,9 +57,12 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
           labelColor: AppTheme.primaryOrange,
           unselectedLabelColor: AppTheme.getSubtextColor(isDark),
           indicatorColor: AppTheme.primaryOrange,
+          isScrollable: true,
           tabs: [
-            Tab(text: l10n.translate('my_requests')),
-            Tab(text: l10n.translate('received')),
+            Tab(text: l10n.translate('upcoming_on_apartments')),
+            Tab(text: l10n.translate('my_pending')),
+            Tab(text: l10n.translate('my_ongoing')),
+            Tab(text: l10n.translate('my_cancelled_rejected')),
           ],
         ),
       ),
@@ -96,17 +99,32 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
           : TabBarView(
               controller: _tabController,
               children: [
-                _buildBookingsList(bookingState.bookings, l10n.translate('no_bookings_yet')),
                 _buildBookingsList(
-                  bookingState.apartmentBookings,
-                  l10n.translate('no_received_bookings'),
+                  bookingState.upcomingApartmentBookings,
+                  l10n.translate('no_upcoming_bookings'),
+                  isReceivedBooking: true,
+                ),
+                _buildBookingsList(
+                  bookingState.myPendingBookings,
+                  l10n.translate('no_pending_bookings'),
+                  isReceivedBooking: false,
+                ),
+                _buildBookingsList(
+                  bookingState.myOngoingBookings,
+                  l10n.translate('no_ongoing_bookings'),
+                  isReceivedBooking: false,
+                ),
+                _buildBookingsList(
+                  bookingState.myCancelledRejectedBookings,
+                  l10n.translate('no_cancelled_rejected_bookings'),
+                  isReceivedBooking: false,
                 ),
               ],
             ),
     );
   }
 
-  Widget _buildBookingsList(List<Booking> bookings, String emptyMessage) {
+  Widget _buildBookingsList(List<Booking> bookings, String emptyMessage, {required bool isReceivedBooking}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     if (bookings.isEmpty) {
@@ -129,7 +147,6 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
         itemCount: bookings.length,
         itemBuilder: (context, index) {
           final booking = bookings[index];
-          final isReceivedBooking = _tabController.index == 1;
           return _buildBookingCard(booking, isReceivedBooking: isReceivedBooking);
         },
       ),

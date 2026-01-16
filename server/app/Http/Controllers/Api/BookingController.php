@@ -811,4 +811,107 @@ class BookingController extends Controller
             ]
         ]);
     }
+
+    /**
+     * Get upcoming bookings for apartments owned by the user
+     * These are bookings created by others on the user's apartments that are still upcoming
+     */
+    public function getUpcomingApartmentBookings(Request $request)
+    {
+        $userId = $request->user()->id;
+        $today = now()->format('Y-m-d');
+        
+        $query = Booking::with(['apartment.user', 'user'])
+            ->whereHas('apartment', function($query) use ($userId) {
+                $query->where('user_id', $userId);
+            })
+            ->whereIn('status', [Booking::STATUS_PENDING, Booking::STATUS_CONFIRMED])
+            ->where('check_in', '>=', $today)
+            ->orderBy('check_in', 'asc');
+
+        $perPage = $request->get('per_page', 20);
+        $page = $request->get('page', 1);
+
+        $bookings = $query->paginate($perPage, ['*'], 'page', $page);
+
+        return response()->json([
+            'success' => true,
+            'data' => $bookings,
+            'message' => 'Upcoming apartment bookings retrieved successfully'
+        ]);
+    }
+
+    /**
+     * Get bookings created by the user that are still pending
+     */
+    public function getMyPendingBookings(Request $request)
+    {
+        $userId = $request->user()->id;
+        
+        $query = Booking::with(['apartment.user', 'user'])
+            ->where('user_id', $userId)
+            ->where('status', Booking::STATUS_PENDING)
+            ->orderBy('created_at', 'desc');
+
+        $perPage = $request->get('per_page', 20);
+        $page = $request->get('page', 1);
+
+        $bookings = $query->paginate($perPage, ['*'], 'page', $page);
+
+        return response()->json([
+            'success' => true,
+            'data' => $bookings,
+            'message' => 'Pending bookings retrieved successfully'
+        ]);
+    }
+
+    /**
+     * Get bookings created by the user that are confirmed and still ongoing (not expired)
+     */
+    public function getMyOngoingBookings(Request $request)
+    {
+        $userId = $request->user()->id;
+        $today = now()->format('Y-m-d');
+        
+        $query = Booking::with(['apartment.user', 'user'])
+            ->where('user_id', $userId)
+            ->where('status', Booking::STATUS_CONFIRMED)
+            ->where('check_out', '>=', $today)
+            ->orderBy('check_in', 'asc');
+
+        $perPage = $request->get('per_page', 20);
+        $page = $request->get('page', 1);
+
+        $bookings = $query->paginate($perPage, ['*'], 'page', $page);
+
+        return response()->json([
+            'success' => true,
+            'data' => $bookings,
+            'message' => 'Ongoing bookings retrieved successfully'
+        ]);
+    }
+
+    /**
+     * Get bookings created by the user that are cancelled or rejected
+     */
+    public function getMyCancelledRejectedBookings(Request $request)
+    {
+        $userId = $request->user()->id;
+        
+        $query = Booking::with(['apartment.user', 'user'])
+            ->where('user_id', $userId)
+            ->whereIn('status', [Booking::STATUS_CANCELLED, Booking::STATUS_REJECTED])
+            ->orderBy('created_at', 'desc');
+
+        $perPage = $request->get('per_page', 20);
+        $page = $request->get('page', 1);
+
+        $bookings = $query->paginate($perPage, ['*'], 'page', $page);
+
+        return response()->json([
+            'success' => true,
+            'data' => $bookings,
+            'message' => 'Cancelled and rejected bookings retrieved successfully'
+        ]);
+    }
 }
