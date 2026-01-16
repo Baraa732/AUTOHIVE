@@ -287,9 +287,9 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
             .read(apartmentProvider.notifier)
             .addApartment(apartmentData, _selectedImages);
         if (mounted) {
-          await ref.read(apartmentProvider.notifier).loadApartments();
           Navigator.of(context).popUntil((route) => route.isFirst);
-          _showSuccessDialog();
+          _showSuccessSnackBar();
+          _clearForm();
         }
       }
     } catch (e) {
@@ -369,6 +369,29 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen>
             child: Text('OK', style: TextStyle(color: AppTheme.primaryOrange)),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showSuccessSnackBar() {
+    final l10n = AppLocalizations.of(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                l10n.translate('apartment_created'),
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 3),
       ),
     );
   }
