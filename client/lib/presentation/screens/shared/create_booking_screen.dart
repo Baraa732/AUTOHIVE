@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../core/core.dart';
 import '../../providers/wallet_provider.dart';
+import '../../providers/booking_provider.dart';
 
 class CreateBookingScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> apartment;
@@ -43,8 +44,10 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
   Future<void> _loadBookedDates() async {
     try {
       final apiService = ApiService();
-      final result = await apiService.getBookedDates(widget.apartment['id'].toString());
-      
+      final result = await apiService.getBookedDates(
+        widget.apartment['id'].toString(),
+      );
+
       if (result['success'] == true && result['data'] != null) {
         final List<dynamic> bookedDates = result['data'];
         setState(() {
@@ -64,14 +67,20 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
   bool _isDateBooked(DateTime date) {
     // Normalize the date to midnight for accurate comparison
     final normalizedDate = DateTime(date.year, date.month, date.day);
-    
+
     for (var range in _bookedRanges) {
-      final rangeStart = DateTime(range.start.year, range.start.month, range.start.day);
+      final rangeStart = DateTime(
+        range.start.year,
+        range.start.month,
+        range.start.day,
+      );
       final rangeEnd = DateTime(range.end.year, range.end.month, range.end.day);
-      
+
       // Check if the date falls within any booked range (inclusive of start, exclusive of end)
-      if ((normalizedDate.isAfter(rangeStart.subtract(const Duration(days: 1))) && 
-           normalizedDate.isBefore(rangeEnd)) ||
+      if ((normalizedDate.isAfter(
+                rangeStart.subtract(const Duration(days: 1)),
+              ) &&
+              normalizedDate.isBefore(rangeEnd)) ||
           normalizedDate.isAtSameMomentAs(rangeStart)) {
         return true;
       }
@@ -94,7 +103,8 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
   Future<void> _selectCheckInDate() async {
     // Find the first available date starting from tomorrow
     DateTime initialDate = DateTime.now().add(const Duration(days: 1));
-    while (_isDateBooked(initialDate) && initialDate.isBefore(DateTime.now().add(const Duration(days: 365)))) {
+    while (_isDateBooked(initialDate) &&
+        initialDate.isBefore(DateTime.now().add(const Duration(days: 365)))) {
       initialDate = initialDate.add(const Duration(days: 1));
     }
 
@@ -146,7 +156,8 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
 
     // Find the first available date after check-in
     DateTime initialDate = _checkInDate!.add(const Duration(days: 1));
-    while (_isDateBooked(initialDate) && initialDate.isBefore(DateTime.now().add(const Duration(days: 365)))) {
+    while (_isDateBooked(initialDate) &&
+        initialDate.isBefore(DateTime.now().add(const Duration(days: 365)))) {
       initialDate = initialDate.add(const Duration(days: 1));
     }
 
@@ -213,7 +224,9 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('Selected dates are no longer available. Please choose different dates.'),
+              content: const Text(
+                'Selected dates are no longer available. Please choose different dates.',
+              ),
               backgroundColor: Colors.red,
               duration: const Duration(seconds: 4),
             ),
@@ -248,17 +261,22 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
           setState(() => _isLoading = false);
 
           if (result['success'] == true) {
+            // Refresh booking provider to show new booking immediately
+            await ref
+                .read(bookingProvider.notifier)
+                .loadAllCategorizedBookings();
             Navigator.pop(context, true);
           } else {
             String errorMessage =
                 result['message'] ?? 'Failed to create booking request';
-            
+
             // Check if it's an insufficient balance error
-            if (result['data'] != null && result['data']['shortage_usd'] != null) {
+            if (result['data'] != null &&
+                result['data']['shortage_usd'] != null) {
               final shortage = result['data']['shortage_usd'];
               final required = result['data']['required_amount_usd'];
               final current = result['data']['current_balance_usd'];
-              
+
               // Show dialog with option to add funds
               showDialog(
                 context: context,
@@ -268,12 +286,16 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('You need \$${required.toStringAsFixed(2)} to book this apartment.'),
+                      Text(
+                        'You need \$${required.toStringAsFixed(2)} to book this apartment.',
+                      ),
                       const SizedBox(height: 8),
                       Text('Current balance: \$${current.toStringAsFixed(2)}'),
                       Text('Required: \$${shortage.toStringAsFixed(2)} more'),
                       const SizedBox(height: 16),
-                      const Text('Please add funds to your wallet to continue.'),
+                      const Text(
+                        'Please add funds to your wallet to continue.',
+                      ),
                     ],
                   ),
                   actions: [
@@ -298,7 +320,7 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
               );
               return;
             }
-            
+
             String? errorDetails = result['details'];
             if (errorDetails != null && errorDetails.isNotEmpty) {
               errorMessage = '$errorMessage\n\n$errorDetails';
@@ -323,7 +345,7 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
     final nights = _checkInDate != null && _checkOutDate != null
         ? _checkOutDate!.difference(_checkInDate!).inDays
         : 0;
-    
+
     final walletState = ref.watch(walletProvider);
     final walletBalance = walletState.wallet?.balanceUsd ?? 0.0;
     final hasSufficientFunds = totalPrice > 0 && walletBalance >= totalPrice;
@@ -403,11 +425,7 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
                     ),
                     child: Row(
                       children: [
-                        Icon(
-                          Icons.info_outline,
-                          size: 20,
-                          color: Colors.blue,
-                        ),
+                        Icon(Icons.info_outline, size: 20, color: Colors.blue),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(

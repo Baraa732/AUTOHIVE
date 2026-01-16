@@ -92,20 +92,21 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
       'Banias': l10n.translate('banias'),
       'Safita': l10n.translate('safita'),
     };
-    
+
     // Try exact match first
     if (locationMap.containsKey(location)) {
       return locationMap[location]!;
     }
-    
+
     // Try case-insensitive match
     final key = locationMap.keys.firstWhere(
       (k) => k.toLowerCase() == location.toLowerCase(),
       orElse: () => '',
     );
-    
+
     return key.isNotEmpty ? locationMap[key]! : location;
   }
+
   final List<String> _priceRanges = [
     'All',
     '0-500',
@@ -610,24 +611,35 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
       crossAxisSpacing: 12,
       mainAxisSpacing: 12,
       children: [
-        _buildDropdownFilter(l10n.translate('location'), _selectedGovernorate, ['All', ..._governoratesTranslations.keys], (
-          v,
-        ) {
-          setState(() => _selectedGovernorate = v!);
-          _applyFilters();
-        }, translateValue: (v) => v == 'All' ? l10n.translate('all') : _getTranslatedGovernorate(v)),
-        _buildDropdownFilter(l10n.translate('price_range'), _selectedPriceRange, _priceRanges, (
-          v,
-        ) {
-          setState(() => _selectedPriceRange = v!);
-          _applyFilters();
-        }),
-        _buildDropdownFilter(l10n.translate('bedrooms'), _selectedBedrooms, _bedroomOptions, (
-          v,
-        ) {
-          setState(() => _selectedBedrooms = v!);
-          _applyFilters();
-        }),
+        _buildDropdownFilter(
+          l10n.translate('location'),
+          _selectedGovernorate,
+          ['All', ..._governoratesTranslations.keys],
+          (v) {
+            setState(() => _selectedGovernorate = v!);
+            _applyFilters();
+          },
+          translateValue: (v) =>
+              v == 'All' ? l10n.translate('all') : _getTranslatedGovernorate(v),
+        ),
+        _buildDropdownFilter(
+          l10n.translate('price_range'),
+          _selectedPriceRange,
+          _priceRanges,
+          (v) {
+            setState(() => _selectedPriceRange = v!);
+            _applyFilters();
+          },
+        ),
+        _buildDropdownFilter(
+          l10n.translate('bedrooms'),
+          _selectedBedrooms,
+          _bedroomOptions,
+          (v) {
+            setState(() => _selectedBedrooms = v!);
+            _applyFilters();
+          },
+        ),
         _buildDropdownFilter(
           l10n.translate('bathrooms'),
           _selectedBathrooms,
@@ -645,9 +657,9 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
     String label,
     String value,
     List<String> options,
-    Function(String?) onChanged,
-    {String Function(String)? translateValue}
-  ) {
+    Function(String?) onChanged, {
+    String Function(String)? translateValue,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
@@ -676,9 +688,9 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
                 (option) => DropdownMenuItem(
                   value: option,
                   child: Text(
-                    translateValue != null 
+                    translateValue != null
                         ? (option == 'All' ? label : translateValue(option))
-                        : (option == 'All' ? label : option)
+                        : (option == 'All' ? label : option),
                   ),
                 ),
               )
@@ -1018,7 +1030,11 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text(AppLocalizations.of(context).translate('removed_from_favorites')),
+                                      content: Text(
+                                        AppLocalizations.of(
+                                          context,
+                                        ).translate('removed_from_favorites'),
+                                      ),
                                     ),
                                   );
                                 }
@@ -1029,7 +1045,11 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text(AppLocalizations.of(context).translate('added_to_favorites')),
+                                      content: Text(
+                                        AppLocalizations.of(
+                                          context,
+                                        ).translate('added_to_favorites'),
+                                      ),
                                     ),
                                   );
                                 }

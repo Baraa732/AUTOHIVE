@@ -124,7 +124,11 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
     );
   }
 
-  Widget _buildBookingsList(List<Booking> bookings, String emptyMessage, {required bool isReceivedBooking}) {
+  Widget _buildBookingsList(
+    List<Booking> bookings,
+    String emptyMessage, {
+    required bool isReceivedBooking,
+  }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     if (bookings.isEmpty) {
@@ -147,7 +151,10 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
         itemCount: bookings.length,
         itemBuilder: (context, index) {
           final booking = bookings[index];
-          return _buildBookingCard(booking, isReceivedBooking: isReceivedBooking);
+          return _buildBookingCard(
+            booking,
+            isReceivedBooking: isReceivedBooking,
+          );
         },
       ),
     );
@@ -202,7 +209,8 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        booking.apartment?['title']?.toString() ?? l10n.translate('apartment'),
+                        booking.apartment?['title']?.toString() ??
+                            l10n.translate('apartment'),
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -451,85 +459,87 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
   Future<void> _handleApproveBooking(Booking booking) async {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final l10n = AppLocalizations.of(context);
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.getCardColor(isDark),
-        title: Text(
-          l10n.translate('approve_booking'),
-          style: TextStyle(color: AppTheme.getTextColor(isDark)),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.translate('are_you_sure_approve'),
+    final confirmed =
+        await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            backgroundColor: AppTheme.getCardColor(isDark),
+            title: Text(
+              l10n.translate('approve_booking'),
               style: TextStyle(color: AppTheme.getTextColor(isDark)),
             ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppTheme.primaryOrange.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: AppTheme.primaryOrange.withValues(alpha: 0.3),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.translate('are_you_sure_approve'),
+                  style: TextStyle(color: AppTheme.getTextColor(isDark)),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryOrange.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: AppTheme.primaryOrange.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${l10n.translate('apartment')}: ${booking.apartment?['title']}',
+                        style: TextStyle(
+                          color: AppTheme.getTextColor(isDark),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '${l10n.translate('amount')}: \$${booking.totalPrice.toStringAsFixed(2)}',
+                        style: TextStyle(
+                          color: AppTheme.primaryOrange,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        l10n.translate('payment_transfer_message'),
+                        style: TextStyle(
+                          color: AppTheme.getSubtextColor(isDark),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text(
+                  l10n.translate('cancel'),
+                  style: TextStyle(color: AppTheme.getSubtextColor(isDark)),
                 ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${l10n.translate('apartment')}: ${booking.apartment?['title']}',
-                    style: TextStyle(
-                      color: AppTheme.getTextColor(isDark),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '${l10n.translate('amount')}: \$${booking.totalPrice.toStringAsFixed(2)}',
-                    style: TextStyle(
-                      color: AppTheme.primaryOrange,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    l10n.translate('payment_transfer_message'),
-                    style: TextStyle(
-                      color: AppTheme.getSubtextColor(isDark),
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                child: Text(l10n.translate('approve_process_payment')),
               ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(
-              l10n.translate('cancel'),
-              style: TextStyle(color: AppTheme.getSubtextColor(isDark)),
-            ),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-            child: Text(l10n.translate('approve_process_payment')),
-          ),
-        ],
-      ),
-    ) ?? false;
+        ) ??
+        false;
 
     if (confirmed && mounted) {
       final notifier = ref.read(bookingProvider.notifier);
       final success = await notifier.approveBooking(booking.id);
-      
+
       if (mounted) {
         final state = ref.read(bookingProvider);
         if (success) {
@@ -542,7 +552,9 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(state.error ?? l10n.translate('failed_approve_booking')),
+              content: Text(
+                state.error ?? l10n.translate('failed_approve_booking'),
+              ),
               backgroundColor: Colors.red,
               duration: const Duration(seconds: 5),
             ),
@@ -554,29 +566,33 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
 
   Future<void> _handleRejectBooking(Booking booking) async {
     final l10n = AppLocalizations.of(context);
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.translate('reject_booking')),
-        content: Text('${l10n.translate('are_you_sure_reject')} ${booking.apartment?['title']}?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(l10n.translate('cancel')),
+    final confirmed =
+        await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(l10n.translate('reject_booking')),
+            content: Text(
+              '${l10n.translate('are_you_sure_reject')} ${booking.apartment?['title']}?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text(l10n.translate('cancel')),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                child: Text(l10n.translate('reject')),
+              ),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: Text(l10n.translate('reject')),
-          ),
-        ],
-      ),
-    ) ?? false;
+        ) ??
+        false;
 
     if (confirmed && mounted) {
       final notifier = ref.read(bookingProvider.notifier);
       final success = await notifier.rejectBooking(booking.id);
-      
+
       if (mounted) {
         if (success) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -602,60 +618,70 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
     DateTime? selectedCheckIn = booking.checkIn;
     DateTime? selectedCheckOut = booking.checkOut;
 
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: Text(l10n.translate('edit_booking_dates')),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                title: Text(l10n.translate('check_in_date')),
-                subtitle: Text(DateFormat('MMM d, yyyy').format(selectedCheckIn!)),
-                onTap: () async {
-                  final date = await showDatePicker(
-                    context: context,
-                    initialDate: selectedCheckIn!,
-                    firstDate: DateTime.now(),
-                    lastDate: DateTime.now().add(const Duration(days: 365)),
-                  );
-                  if (date != null) {
-                    setState(() => selectedCheckIn = date);
-                  }
-                },
+    final confirmed =
+        await showDialog<bool>(
+          context: context,
+          builder: (context) => StatefulBuilder(
+            builder: (context, setState) => AlertDialog(
+              title: Text(l10n.translate('edit_booking_dates')),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ListTile(
+                    title: Text(l10n.translate('check_in_date')),
+                    subtitle: Text(
+                      DateFormat('MMM d, yyyy').format(selectedCheckIn!),
+                    ),
+                    onTap: () async {
+                      final date = await showDatePicker(
+                        context: context,
+                        initialDate: selectedCheckIn!,
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime.now().add(const Duration(days: 365)),
+                      );
+                      if (date != null) {
+                        setState(() => selectedCheckIn = date);
+                      }
+                    },
+                  ),
+                  ListTile(
+                    title: Text(l10n.translate('check_out_date')),
+                    subtitle: Text(
+                      DateFormat('MMM d, yyyy').format(selectedCheckOut!),
+                    ),
+                    onTap: () async {
+                      final date = await showDatePicker(
+                        context: context,
+                        initialDate: selectedCheckOut!,
+                        firstDate: selectedCheckIn!.add(
+                          const Duration(days: 1),
+                        ),
+                        lastDate: DateTime.now().add(const Duration(days: 365)),
+                      );
+                      if (date != null) {
+                        setState(() => selectedCheckOut = date);
+                      }
+                    },
+                  ),
+                ],
               ),
-              ListTile(
-                title: Text(l10n.translate('check_out_date')),
-                subtitle: Text(DateFormat('MMM d, yyyy').format(selectedCheckOut!)),
-                onTap: () async {
-                  final date = await showDatePicker(
-                    context: context,
-                    initialDate: selectedCheckOut!,
-                    firstDate: selectedCheckIn!.add(const Duration(days: 1)),
-                    lastDate: DateTime.now().add(const Duration(days: 365)),
-                  );
-                  if (date != null) {
-                    setState(() => selectedCheckOut = date);
-                  }
-                },
-              ),
-            ],
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: Text(l10n.translate('cancel')),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryOrange,
+                  ),
+                  child: Text(l10n.translate('save')),
+                ),
+              ],
+            ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text(l10n.translate('cancel')),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryOrange),
-              child: Text(l10n.translate('save')),
-            ),
-          ],
-        ),
-      ),
-    ) ?? false;
+        ) ??
+        false;
 
     if (confirmed && mounted) {
       final notifier = ref.read(bookingProvider.notifier);
@@ -664,7 +690,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
         checkIn: selectedCheckIn!.toIso8601String().split('T')[0],
         checkOut: selectedCheckOut!.toIso8601String().split('T')[0],
       );
-      
+
       if (mounted) {
         if (success) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -687,29 +713,33 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
 
   Future<void> _handleDeleteBooking(Booking booking) async {
     final l10n = AppLocalizations.of(context);
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.translate('delete_booking')),
-        content: Text('${l10n.translate('are_you_sure_delete')} ${booking.apartment?['title']}?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(l10n.translate('cancel')),
+    final confirmed =
+        await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(l10n.translate('delete_booking')),
+            content: Text(
+              '${l10n.translate('are_you_sure_delete')} ${booking.apartment?['title']}?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text(l10n.translate('cancel')),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                child: Text(l10n.translate('delete')),
+              ),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: Text(l10n.translate('delete')),
-          ),
-        ],
-      ),
-    ) ?? false;
+        ) ??
+        false;
 
     if (confirmed && mounted) {
       final notifier = ref.read(bookingProvider.notifier);
       final success = await notifier.deleteBooking(booking.id);
-      
+
       if (mounted) {
         if (success) {
           ScaffoldMessenger.of(context).showSnackBar(

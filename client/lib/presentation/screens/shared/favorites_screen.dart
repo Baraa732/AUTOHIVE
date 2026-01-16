@@ -283,7 +283,9 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                       if (success && mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text(l10n.translate('removed_from_favorites')),
+                            content: Text(
+                              l10n.translate('removed_from_favorites'),
+                            ),
                             duration: Duration(seconds: 2),
                           ),
                         );

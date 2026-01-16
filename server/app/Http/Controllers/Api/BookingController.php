@@ -827,6 +827,7 @@ class BookingController extends Controller
             })
             ->whereIn('status', [Booking::STATUS_PENDING, Booking::STATUS_CONFIRMED])
             ->where('check_in', '>=', $today)
+            ->orderByRaw("CASE WHEN status = 'pending' THEN 0 ELSE 1 END")
             ->orderBy('check_in', 'asc');
 
         $perPage = $request->get('per_page', 20);

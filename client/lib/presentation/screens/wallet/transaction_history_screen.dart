@@ -29,7 +29,7 @@ class _TransactionHistoryScreenState
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final l10n = AppLocalizations.of(context);
-    
+
     return Scaffold(
       backgroundColor: AppTheme.getBackgroundColor(isDark),
       appBar: AppBar(
@@ -46,9 +46,7 @@ class _TransactionHistoryScreenState
           final walletState = ref.watch(walletProvider);
           if (walletState.isLoading && walletState.transactions.isEmpty) {
             return Center(
-              child: CircularProgressIndicator(
-                color: AppTheme.primaryOrange,
-              ),
+              child: CircularProgressIndicator(color: AppTheme.primaryOrange),
             );
           }
 
@@ -66,7 +64,8 @@ class _TransactionHistoryScreenState
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      walletState.error ?? l10n.translate('error_loading_transactions'),
+                      walletState.error ??
+                          l10n.translate('error_loading_transactions'),
                       style: TextStyle(
                         color: AppTheme.getTextColor(isDark),
                         fontSize: 16,
@@ -85,7 +84,10 @@ class _TransactionHistoryScreenState
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryOrange,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 16,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -146,7 +148,7 @@ class _TransactionHistoryScreenState
     if (transaction.type == TransactionType.withdrawal) {
       return const SizedBox.shrink();
     }
-    
+
     final isOutgoing =
         transaction.type == TransactionType.rentalPayment ||
         transaction.type == TransactionType.withdrawal;
@@ -177,10 +179,7 @@ class _TransactionHistoryScreenState
       decoration: BoxDecoration(
         color: AppTheme.getCardColor(isDark),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppTheme.getBorderColor(isDark),
-          width: 1,
-        ),
+        border: Border.all(color: AppTheme.getBorderColor(isDark), width: 1),
       ),
       child: Row(
         children: [
@@ -206,7 +205,8 @@ class _TransactionHistoryScreenState
                   ),
                 ),
                 const SizedBox(height: 6),
-                if (transaction.description != null && transaction.description!.isNotEmpty)
+                if (transaction.description != null &&
+                    transaction.description!.isNotEmpty)
                   Text(
                     transaction.description!,
                     style: TextStyle(
@@ -246,12 +246,17 @@ class _TransactionHistoryScreenState
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 17,
-                  color: isOutgoing ? AppTheme.primaryOrange : AppTheme.primaryGreen,
+                  color: isOutgoing
+                      ? AppTheme.primaryOrange
+                      : AppTheme.primaryGreen,
                 ),
               ),
               const SizedBox(height: 6),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: color.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(8),
