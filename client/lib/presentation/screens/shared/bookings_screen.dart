@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'dart:async';
 import '../../../core/core.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../providers/booking_provider.dart';
@@ -15,23 +16,99 @@ class BookingsScreen extends ConsumerStatefulWidget {
 class _BookingsScreenState extends ConsumerState<BookingsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  Timer? _timer;
+  Map<String, Map<String, int>> _bookingCountdowns = {};
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
     _loadData();
+    _startTimer();
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _timer?.cancel();
     super.dispose();
   }
 
   Future<void> _loadData() async {
     final bookingNotifier = ref.read(bookingProvider.notifier);
     await bookingNotifier.loadAllCategorizedBookings();
+  }
+
+  void _startTimer() {
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      _updateCountdowns();
+    });
+  }
+
+  void _updateCountdowns() {
+    final bookingState = ref.read(bookingProvider);
+    final now = DateTime.now();
+
+    final newCountdowns = <String, Map<String, int>>{};
+
+    // Update countdowns for ongoing bookings
+    for (final booking in bookingState.myOngoingBookings) {
+      final remaining = booking.checkOut.difference(now);
+      if (remaining.isNegative) {
+        // Booking has expired, move it to expired section
+        _moveBookingToExpired(booking);
+      } else {
+        newCountdowns[booking.id] = {
+          'days': remaining.inDays,
+          'hours': remaining.inHours % 24,
+          'minutes': remaining.inMinutes % 60,
+          'seconds': remaining.inSeconds % 60,
+        };
+      }
+    }
+
+    // Also update for upcoming apartment bookings
+    for (final booking in bookingState.upcomingApartmentBookings) {
+      final remaining = booking.checkOut.difference(now);
+      if (!remaining.isNegative) {
+        newCountdowns[booking.id] = {
+          'days': remaining.inDays,
+          'hours': remaining.inHours % 24,
+          'minutes': remaining.inMinutes % 60,
+          'seconds': remaining.inSeconds % 60,
+        };
+      }
+    }
+
+    if (mounted) {
+      setState(() {
+        _bookingCountdowns = newCountdowns;
+      });
+    }
+  }
+
+  void _moveBookingToExpired(Booking booking) {
+    // Mark the booking as expired locally and trigger a refresh
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadData();
+    });
+  }
+
+  String _formatCountdown(String bookingId) {
+    final countdown = _bookingCountdowns[bookingId];
+    if (countdown == null) return 'Expired';
+
+    final days = countdown['days'] ?? 0;
+    final hours = countdown['hours'] ?? 0;
+    final minutes = countdown['minutes'] ?? 0;
+
+    if (days > 0) {
+      return '${days}d ${hours}h ${minutes}m';
+    } else if (hours > 0) {
+      return '${hours}h ${minutes}m';
+    } else {
+      return '${minutes}m';
+    }
   }
 
   @override
@@ -62,6 +139,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
             Tab(text: l10n.translate('upcoming_on_apartments')),
             Tab(text: l10n.translate('my_pending')),
             Tab(text: l10n.translate('my_ongoing')),
+            Tab(text: l10n.translate('my_expired')),
             Tab(text: l10n.translate('my_cancelled_rejected')),
           ],
         ),
@@ -115,7 +193,24 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
                   isReceivedBooking: false,
                 ),
                 _buildBookingsList(
-                  bookingState.myCancelledRejectedBookings,
+                  bookingState.myCancelledRejectedBookings
+                      .where(
+                        (b) =>
+                            b.status.toLowerCase() == 'expired' ||
+                            DateTime.now().isAfter(b.checkOut),
+                      )
+                      .toList(),
+                  l10n.translate('no_expired_bookings'),
+                  isReceivedBooking: false,
+                ),
+                _buildBookingsList(
+                  bookingState.myCancelledRejectedBookings
+                      .where(
+                        (b) =>
+                            b.status.toLowerCase() != 'expired' &&
+                            !DateTime.now().isAfter(b.checkOut),
+                      )
+                      .toList(),
                   l10n.translate('no_cancelled_rejected_bookings'),
                   isReceivedBooking: false,
                 ),
@@ -169,8 +264,12 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
         : '0.00';
     final isPending = booking.status == 'pending';
     final isConfirmed = booking.status == 'confirmed';
+    final isOngoing =
+        booking.status == 'confirmed' || booking.status == 'ongoing';
     final canApproveReject = isReceivedBooking && isPending;
     final canEditDelete = !isReceivedBooking && (isPending || isConfirmed);
+    final shouldShowTimer = isOngoing && !isReceivedBooking;
+    final countdown = _formatCountdown(booking.id);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -315,6 +414,51 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
               ],
             ),
             const SizedBox(height: 14),
+            // Add countdown timer for ongoing bookings
+            if (shouldShowTimer && countdown != 'Expired') ...[
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.timer, color: Colors.red, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n.translate('time_remaining'),
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppTheme.getSubtextColor(isDark),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            countdown,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+            ],
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
               decoration: BoxDecoration(

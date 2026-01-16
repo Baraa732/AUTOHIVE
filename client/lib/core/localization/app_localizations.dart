@@ -9,7 +9,8 @@ class AppLocalizations {
     return Localizations.of<AppLocalizations>(context, AppLocalizations)!;
   }
 
-  static const LocalizationsDelegate<AppLocalizations> delegate = _AppLocalizationsDelegate();
+  static const LocalizationsDelegate<AppLocalizations> delegate =
+      _AppLocalizationsDelegate();
 
   static final Map<String, Map<String, String>> _localizedValues = {
     'en': {
@@ -234,7 +235,8 @@ class AppLocalizations {
       'submit_apartment': 'Submit Apartment',
       'update_apartment': 'Update Apartment',
       'success': 'Success!',
-      'apartment_created': 'Your apartment has been created successfully and is now live!',
+      'apartment_created':
+          'Your apartment has been created successfully and is now live!',
       'apartment_updated': 'Your apartment has been updated successfully!',
       'select_governorate_city': 'Please select governorate and city',
       'select_one_image': 'Please select at least one image',
@@ -292,10 +294,13 @@ class AppLocalizations {
       'my_pending': 'My Pending',
       'my_ongoing': 'My Ongoing',
       'my_cancelled_rejected': 'Cancelled/Rejected',
+      'my_expired': 'Expired',
+      'time_remaining': 'Time Remaining',
       'no_upcoming_bookings': 'No upcoming bookings on your apartments',
       'no_pending_bookings': 'No pending bookings',
       'no_ongoing_bookings': 'No ongoing bookings',
       'no_cancelled_rejected_bookings': 'No cancelled or rejected bookings',
+      'no_expired_bookings': 'No expired bookings',
       'error_loading_bookings': 'Error loading bookings',
       'unknown_error': 'Unknown error',
       'retry': 'Retry',
@@ -307,9 +312,11 @@ class AppLocalizations {
       'approve_booking': 'Approve Booking',
       'are_you_sure_approve': 'Are you sure you want to approve this booking?',
       'amount': 'Amount',
-      'payment_transfer_message': 'The payment will be automatically transferred from the tenant\'s wallet to your wallet.',
+      'payment_transfer_message':
+          'The payment will be automatically transferred from the tenant\'s wallet to your wallet.',
       'approve_process_payment': 'Approve & Process Payment',
-      'booking_approved_success': 'Booking approved and payment processed successfully!',
+      'booking_approved_success':
+          'Booking approved and payment processed successfully!',
       'failed_approve_booking': 'Failed to approve booking',
       'reject_booking': 'Reject Booking',
       'are_you_sure_reject': 'Are you sure you want to reject this booking for',
@@ -344,7 +351,8 @@ class AppLocalizations {
       'deposit_request': 'Deposit Request',
       'withdrawal_request': 'Withdrawal Request',
       'deposit_money': 'Deposit Money',
-      'enter_deposit_info': 'Enter the amount you want to deposit. Your request will be reviewed by admin.',
+      'enter_deposit_info':
+          'Enter the amount you want to deposit. Your request will be reviewed by admin.',
       'amount_usd': 'Amount (USD)',
       'enter_amount_usd': 'Enter amount in USD',
       'please_enter_amount': 'Please enter an amount',
@@ -593,7 +601,8 @@ class AppLocalizations {
       'apartment_updated': 'تم تحديث شقتك بنجاح!',
       'select_governorate_city': 'الرجاء اختيار المحافظة والمدينة',
       'select_one_image': 'الرجاء اختيار صورة واحدة على الأقل',
-      'keep_one_image': 'الرجاء الاحتفاظ بصورة واحدة على الأقل أو إضافة صور جديدة',
+      'keep_one_image':
+          'الرجاء الاحتفاظ بصورة واحدة على الأقل أو إضافة صور جديدة',
       'failed_add': 'فشل في إضافة الشقة',
       'failed_update': 'فشل في تحديث الشقة',
       'failed_load_features': 'فشل في تحميل المميزات المتاحة',
@@ -648,10 +657,13 @@ class AppLocalizations {
       'my_pending': 'قيد الانتظار',
       'my_ongoing': 'الجارية',
       'my_cancelled_rejected': 'ملغاة/مرفوضة',
+      'my_expired': 'منتهية الصلاحية',
+      'time_remaining': 'الوقت المتبقي',
       'no_upcoming_bookings': 'لا توجد حجوزات قادمة على شققك',
       'no_pending_bookings': 'لا توجد حجوزات قيد الانتظار',
       'no_ongoing_bookings': 'لا توجد حجوزات جارية',
       'no_cancelled_rejected_bookings': 'لا توجد حجوزات ملغاة أو مرفوضة',
+      'no_expired_bookings': 'لا توجد حجوزات منتهية الصلاحية',
       'error_loading_bookings': 'خطأ في تحميل الحجوزات',
       'unknown_error': 'خطأ غير معروف',
       'retry': 'إعادة المحاولة',
@@ -668,7 +680,8 @@ class AppLocalizations {
       'approve_booking': 'الموافقة على الحجز',
       'are_you_sure_approve': 'هل أنت متأكد من الموافقة على هذا الحجز؟',
       'amount': 'المبلغ',
-      'payment_transfer_message': 'سيتم تحويل الدفع تلقائياً من محفظة المستأجر إلى محفظتك.',
+      'payment_transfer_message':
+          'سيتم تحويل الدفع تلقائياً من محفظة المستأجر إلى محفظتك.',
       'approve_process_payment': 'الموافقة ومعالجة الدفع',
       'booking_approved_success': 'تمت الموافقة على الحجز ومعالجة الدفع بنجاح!',
       'failed_approve_booking': 'فشل في الموافقة على الحجز',
@@ -706,7 +719,8 @@ class AppLocalizations {
       'deposit_request': 'طلب إيداع',
       'withdrawal_request': 'طلب سحب',
       'deposit_money': 'إيداع أموال',
-      'enter_deposit_info': 'أدخل المبلغ الذي تريد إيداعه. سيتم مراجعة طلبك من قبل المسؤول.',
+      'enter_deposit_info':
+          'أدخل المبلغ الذي تريد إيداعه. سيتم مراجعة طلبك من قبل المسؤول.',
       'amount_usd': 'المبلغ (دولار)',
       'enter_amount_usd': 'أدخل المبلغ بالدولار',
       'please_enter_amount': 'الرجاء إدخال المبلغ',
@@ -731,17 +745,20 @@ class AppLocalizations {
     },
   };
 
-  String translate(String key) => _localizedValues[locale.languageCode]?[key] ?? key;
+  String translate(String key) =>
+      _localizedValues[locale.languageCode]?[key] ?? key;
 }
 
-class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
+class _AppLocalizationsDelegate
+    extends LocalizationsDelegate<AppLocalizations> {
   const _AppLocalizationsDelegate();
 
   @override
   bool isSupported(Locale locale) => ['en', 'ar'].contains(locale.languageCode);
 
   @override
-  Future<AppLocalizations> load(Locale locale) async => AppLocalizations(locale);
+  Future<AppLocalizations> load(Locale locale) async =>
+      AppLocalizations(locale);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
