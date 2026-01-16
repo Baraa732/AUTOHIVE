@@ -47,37 +47,55 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
 
   void _updateCountdowns() {
     final bookingState = ref.read(bookingProvider);
+    // Damascus time is UTC+3
     final now = DateTime.now();
 
     final newCountdowns = <String, Map<String, int>>{};
 
-    // Update countdowns for ongoing bookings
-    for (final booking in bookingState.myOngoingBookings) {
-      final remaining = booking.checkOut.difference(now);
-      if (remaining.isNegative) {
-        // Booking has expired, move it to expired section
-        _moveBookingToExpired(booking);
-      } else {
+    // Helper function to calculate countdown
+    void addCountdown(Booking booking) {
+      final checkIn = booking.checkIn;
+      final checkOut = booking.checkOut;
+      
+      // If before check-in, countdown to check-in
+      if (now.isBefore(checkIn)) {
+        final remaining = checkIn.difference(now);
         newCountdowns[booking.id] = {
           'days': remaining.inDays,
           'hours': remaining.inHours % 24,
           'minutes': remaining.inMinutes % 60,
           'seconds': remaining.inSeconds % 60,
+          'isBeforeCheckIn': 1, // Flag to indicate countdown to check-in
+        };
+      }
+      // If between check-in and check-out, countdown to check-out
+      else if (now.isBefore(checkOut)) {
+        final remaining = checkOut.difference(now);
+        newCountdowns[booking.id] = {
+          'days': remaining.inDays,
+          'hours': remaining.inHours % 24,
+          'minutes': remaining.inMinutes % 60,
+          'seconds': remaining.inSeconds % 60,
+          'isBeforeCheckIn': 0, // Flag to indicate countdown to check-out
         };
       }
     }
 
-    // Also update for upcoming apartment bookings
-    for (final booking in bookingState.upcomingApartmentBookings) {
-      final remaining = booking.checkOut.difference(now);
-      if (!remaining.isNegative) {
-        newCountdowns[booking.id] = {
-          'days': remaining.inDays,
-          'hours': remaining.inHours % 24,
-          'minutes': remaining.inMinutes % 60,
-          'seconds': remaining.inSeconds % 60,
-        };
+    // Update countdowns for ongoing bookings
+    for (final booking in bookingState.myOngoingBookings) {
+      addCountdown(booking);
+    }
+
+    // Update for confirmed bookings
+    for (final booking in bookingState.myPendingBookings) {
+      if (booking.status == 'confirmed') {
+        addCountdown(booking);
       }
+    }
+
+    // Update for upcoming apartment bookings
+    for (final booking in bookingState.upcomingApartmentBookings) {
+      addCountdown(booking);
     }
 
     if (mounted) {
@@ -109,6 +127,11 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
     } else {
       return '${minutes}m';
     }
+  }
+
+  bool _isBeforeCheckIn(String bookingId) {
+    final countdown = _bookingCountdowns[bookingId];
+    return countdown?['isBeforeCheckIn'] == 1;
   }
 
   @override
@@ -264,11 +287,19 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
         : '0.00';
     final isPending = booking.status == 'pending';
     final isConfirmed = booking.status == 'confirmed';
-    final isOngoing =
-        booking.status == 'confirmed' || booking.status == 'ongoing';
+    final isOngoing = booking.status == 'ongoing';
     final canApproveReject = isReceivedBooking && isPending;
-    final canEditDelete = !isReceivedBooking && (isPending || isConfirmed);
-    final shouldShowTimer = isOngoing && !isReceivedBooking;
+    // Allow editing for pending, confirmed, and ongoing bookings (but not after 24 hours from check-in)
+    final canEditDelete =
+        !isReceivedBooking && (isPending || isConfirmed || isOngoing);
+
+    // Show timer for confirmed and ongoing bookings
+    final now = DateTime.now();
+    final checkInDateTime = booking.checkIn;
+    final checkOutDateTime = booking.checkOut;
+
+    // Show timer if: booking is confirmed/ongoing AND current time is before checkout
+    final shouldShowTimer = (isConfirmed || isOngoing) && now.isBefore(checkOutDateTime);
     final countdown = _formatCountdown(booking.id);
 
     return Container(
@@ -396,7 +427,12 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
                 const SizedBox(height: 16),
                 // Countdown Timer
                 if (shouldShowTimer && countdown != 'Expired')
-                  _buildCountdownCard(countdown, l10n, isDark),
+                  _buildCountdownCard(
+                    countdown,
+                    l10n,
+                    isDark,
+                    isBeforeCheckIn: _isBeforeCheckIn(booking.id),
+                  ),
               ],
             ),
           ),
@@ -623,32 +659,50 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
   Widget _buildCountdownCard(
     String countdown,
     AppLocalizations l10n,
-    bool isDark,
-  ) {
+    bool isDark, {
+    required bool isBeforeCheckIn,
+  }) {
+    final locale = Localizations.localeOf(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            Colors.red.withValues(alpha: 0.08),
-            Colors.red.withValues(alpha: 0.04),
-          ],
+          colors: isBeforeCheckIn
+              ? [
+                  Colors.blue.withValues(alpha: 0.08),
+                  Colors.blue.withValues(alpha: 0.04),
+                ]
+              : [
+                  Colors.red.withValues(alpha: 0.08),
+                  Colors.red.withValues(alpha: 0.04),
+                ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.red.withValues(alpha: 0.2), width: 1),
+        border: Border.all(
+          color: isBeforeCheckIn
+              ? Colors.blue.withValues(alpha: 0.2)
+              : Colors.red.withValues(alpha: 0.2),
+          width: 1,
+        ),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.red.withValues(alpha: 0.1),
+              color: isBeforeCheckIn
+                  ? Colors.blue.withValues(alpha: 0.1)
+                  : Colors.red.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(Icons.timer_outlined, color: Colors.red, size: 24),
+            child: Icon(
+              isBeforeCheckIn ? Icons.schedule : Icons.timer_outlined,
+              color: isBeforeCheckIn ? Colors.blue : Colors.red,
+              size: 24,
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -656,7 +710,9 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  l10n.translate('time_remaining'),
+                  isBeforeCheckIn
+                      ? (locale.languageCode == 'ar' ? 'يبدأ العقد خلال' : 'Contract Starts In')
+                      : l10n.translate('time_remaining'),
                   style: TextStyle(
                     fontSize: 12,
                     color: AppTheme.getSubtextColor(isDark),
@@ -670,7 +726,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
-                    color: Colors.red,
+                    color: isBeforeCheckIn ? Colors.blue : Colors.red,
                     letterSpacing: -0.5,
                   ),
                 ),
@@ -997,8 +1053,24 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
 
   Future<void> _handleEditBooking(Booking booking) async {
     final l10n = AppLocalizations.of(context);
+
+    // Check if 24 hours have passed since check-in
+    final now = DateTime.now();
+    final hoursSinceCheckIn = now.difference(booking.checkIn).inHours;
+    if (hoursSinceCheckIn >= 24) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Cannot modify booking after 24 hours from check-in'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     DateTime? selectedCheckIn = booking.checkIn;
     DateTime? selectedCheckOut = booking.checkOut;
+    bool isCheckingAvailability = false;
+    Map<String, dynamic>? availabilityResult;
 
     final confirmed =
         await showDialog<bool>(
@@ -1006,46 +1078,202 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
           builder: (context) => StatefulBuilder(
             builder: (context, setState) => AlertDialog(
               title: Text(l10n.translate('edit_booking_dates')),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ListTile(
-                    title: Text(l10n.translate('check_in_date')),
-                    subtitle: Text(
-                      DateFormat('MMM d, yyyy').format(selectedCheckIn!),
-                    ),
-                    onTap: () async {
-                      final date = await showDatePicker(
-                        context: context,
-                        initialDate: selectedCheckIn!,
-                        firstDate: DateTime.now(),
-                        lastDate: DateTime.now().add(const Duration(days: 365)),
-                      );
-                      if (date != null) {
-                        setState(() => selectedCheckIn = date);
-                      }
-                    },
-                  ),
-                  ListTile(
-                    title: Text(l10n.translate('check_out_date')),
-                    subtitle: Text(
-                      DateFormat('MMM d, yyyy').format(selectedCheckOut!),
-                    ),
-                    onTap: () async {
-                      final date = await showDatePicker(
-                        context: context,
-                        initialDate: selectedCheckOut!,
-                        firstDate: selectedCheckIn!.add(
-                          const Duration(days: 1),
+              content: SizedBox(
+                width: double.maxFinite,
+                height: 500,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Select new dates for your booking:',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.grey[300]
+                              : Colors.grey[700],
                         ),
-                        lastDate: DateTime.now().add(const Duration(days: 365)),
-                      );
-                      if (date != null) {
-                        setState(() => selectedCheckOut = date);
-                      }
-                    },
+                      ),
+                      const SizedBox(height: 16),
+                      ListTile(
+                        title: Text(l10n.translate('check_in_date')),
+                        subtitle: Text(
+                          DateFormat('MMM d, yyyy').format(selectedCheckIn!),
+                        ),
+                        trailing: const Icon(Icons.calendar_today),
+                        onTap: () async {
+                          final date = await showDatePicker(
+                            context: context,
+                            initialDate: selectedCheckIn!,
+                            firstDate: DateTime.now(),
+                            lastDate: DateTime.now().add(
+                              const Duration(days: 365),
+                            ),
+                          );
+                          if (date != null) {
+                            setState(() {
+                              selectedCheckIn = date;
+                              if (selectedCheckOut!.isBefore(date)) {
+                                selectedCheckOut = date.add(
+                                  const Duration(days: 1),
+                                );
+                              }
+                              availabilityResult = null;
+                            });
+                          }
+                        },
+                      ),
+                      ListTile(
+                        title: Text(l10n.translate('check_out_date')),
+                        subtitle: Text(
+                          DateFormat('MMM d, yyyy').format(selectedCheckOut!),
+                        ),
+                        trailing: const Icon(Icons.calendar_today),
+                        onTap: () async {
+                          final date = await showDatePicker(
+                            context: context,
+                            initialDate: selectedCheckOut!,
+                            firstDate: selectedCheckIn!.add(
+                              const Duration(days: 1),
+                            ),
+                            lastDate: DateTime.now().add(
+                              const Duration(days: 365),
+                            ),
+                          );
+                          if (date != null) {
+                            setState(() {
+                              selectedCheckOut = date;
+                              availabilityResult = null;
+                            });
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: isCheckingAvailability
+                              ? null
+                              : () async {
+                                  if (selectedCheckIn == null ||
+                                      selectedCheckOut == null) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Please select both dates',
+                                        ),
+                                      ),
+                                    );
+                                    return;
+                                  }
+                                  setState(() => isCheckingAvailability = true);
+                                  try {
+                                    final apiService = ApiService();
+                                    final result = await apiService
+                                        .checkAvailability(
+                                          apartmentId: booking.apartmentId,
+                                          checkIn: selectedCheckIn!
+                                              .toIso8601String()
+                                              .split('T')[0],
+                                          checkOut: selectedCheckOut!
+                                              .toIso8601String()
+                                              .split('T')[0],
+                                        );
+                                    setState(() {
+                                      availabilityResult = result;
+                                      isCheckingAvailability = false;
+                                    });
+                                    if (result['success'] != true) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            result['message'] ??
+                                                'Dates not available',
+                                          ),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                    }
+                                  } catch (e) {
+                                    setState(
+                                      () => isCheckingAvailability = false,
+                                    );
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Error checking availability: $e',
+                                        ),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryOrange,
+                            foregroundColor: Colors.white,
+                          ),
+                          child: isCheckingAvailability
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white,
+                                    ),
+                                  ),
+                                )
+                              : const Text('Check Availability'),
+                        ),
+                      ),
+                      if (availabilityResult != null)
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: availabilityResult!['success'] == true
+                                ? Colors.green.withAlpha(25)
+                                : Colors.red.withAlpha(25),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: availabilityResult!['success'] == true
+                                  ? Colors.green.withAlpha(76)
+                                  : Colors.red.withAlpha(76),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                availabilityResult!['success'] == true
+                                    ? Icons.check_circle
+                                    : Icons.error,
+                                color: availabilityResult!['success'] == true
+                                    ? Colors.green
+                                    : Colors.red,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  availabilityResult!['message'] ??
+                                      (availabilityResult!['success'] == true
+                                          ? 'Dates are available!'
+                                          : 'Dates are not available'),
+                                  style: TextStyle(
+                                    color:
+                                        availabilityResult!['success'] == true
+                                        ? Colors.green
+                                        : Colors.red,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
                   ),
-                ],
+                ),
               ),
               actions: [
                 TextButton(
@@ -1053,11 +1281,19 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
                   child: Text(l10n.translate('cancel')),
                 ),
                 ElevatedButton(
-                  onPressed: () => Navigator.pop(context, true),
+                  onPressed:
+                      (availabilityResult != null &&
+                          availabilityResult!['success'] == true)
+                      ? () => Navigator.pop(context, true)
+                      : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryOrange,
+                    backgroundColor:
+                        availabilityResult != null &&
+                            availabilityResult!['success'] == true
+                        ? AppTheme.primaryOrange
+                        : Colors.grey,
                   ),
-                  child: Text(l10n.translate('save')),
+                  child: Text(l10n.translate('submit_modification')),
                 ),
               ],
             ),
@@ -1065,26 +1301,45 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
         ) ??
         false;
 
-    if (confirmed && mounted) {
-      final notifier = ref.read(bookingProvider.notifier);
-      final success = await notifier.updateBooking(
-        booking.id,
-        checkIn: selectedCheckIn!.toIso8601String().split('T')[0],
-        checkOut: selectedCheckOut!.toIso8601String().split('T')[0],
-      );
+    if (confirmed &&
+        mounted &&
+        selectedCheckIn != null &&
+        selectedCheckOut != null) {
+      try {
+        final apiService = ApiService();
+        final success = await apiService.updateBooking(
+          booking.id,
+          checkIn: selectedCheckIn!.toIso8601String().split('T')[0],
+          checkOut: selectedCheckOut!.toIso8601String().split('T')[0],
+        );
 
-      if (mounted) {
-        if (success) {
+        if (mounted) {
+          if (success['success'] == true) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(l10n.translate('modification_submitted_success')),
+                backgroundColor: Colors.green,
+              ),
+            );
+            // Refresh data to show updated status
+            _loadData();
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  success['message'] ??
+                      l10n.translate('failed_submit_modification'),
+                ),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+      } catch (e) {
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(l10n.translate('booking_updated_success')),
-              backgroundColor: Colors.green,
-            ),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(l10n.translate('failed_update_booking')),
+              content: Text('Error submitting modification: $e'),
               backgroundColor: Colors.red,
             ),
           );

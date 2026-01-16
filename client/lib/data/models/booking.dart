@@ -30,15 +30,17 @@ class Booking {
   });
 
   factory Booking.fromJson(Map<String, dynamic> json) {
-    // Helper function to parse dates that might be in YYYY-MM-DD format or ISO8601
+    // Helper function to parse dates in local time (Damascus time)
     DateTime parseDate(dynamic dateValue) {
       if (dateValue == null) throw Exception('Date value is null');
       final dateStr = dateValue.toString();
-      // If it's just a date (YYYY-MM-DD), add time to make it parseable
+      // If it's just a date (YYYY-MM-DD), parse as local time
       if (dateStr.length == 10 && !dateStr.contains('T')) {
-        return DateTime.parse('${dateStr}T00:00:00.000Z');
+        return DateTime.parse('${dateStr}T00:00:00');
       }
-      return DateTime.parse(dateStr);
+      // Parse as local time by removing Z and parsing
+      final cleanStr = dateStr.replaceAll('Z', '');
+      return DateTime.parse(cleanStr);
     }
 
     try {
