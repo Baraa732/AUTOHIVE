@@ -272,332 +272,570 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
     final countdown = _formatCountdown(booking.id);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
         color: AppTheme.getCardColor(isDark),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.getBorderColor(isDark)),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppTheme.getBorderColor(isDark).withValues(alpha: 0.3),
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
             color: isDark
-                ? Colors.black.withValues(alpha: 0.15)
-                : Colors.grey.withValues(alpha: 0.12),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+                ? Colors.black.withValues(alpha: 0.2)
+                : Colors.grey.withValues(alpha: 0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.1)
+                : Colors.grey.withValues(alpha: 0.04),
+            blurRadius: 40,
+            offset: const Offset(0, 16),
+            spreadRadius: -10,
           ),
         ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+      child: Column(
+        children: [
+          // Header Section
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? AppTheme.getCardColor(isDark).withValues(alpha: 0.8)
+                  : Colors.white.withValues(alpha: 0.9),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
+            ),
+            child: Column(
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.translate('apartment'),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppTheme.getSubtextColor(isDark),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        booking.apartment?['title']?.toString() ??
-                            l10n.translate('apartment'),
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.getTextColor(isDark),
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                _buildStatusBadge(booking.status),
-              ],
-            ),
-            const SizedBox(height: 14),
-            TenantProfilePreview(
-              user: booking.user,
-              isDark: isDark,
-              padding: const EdgeInsets.all(0),
-            ),
-            const SizedBox(height: 14),
-            Divider(
-              color: isDark ? Colors.grey[800] : Colors.grey[200],
-              height: 1,
-            ),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.translate('check_in'),
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: AppTheme.getSubtextColor(isDark),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        DateFormat('MMM d, yyyy').format(booking.checkIn),
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.getTextColor(isDark),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.translate('check_out'),
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: AppTheme.getSubtextColor(isDark),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        DateFormat('MMM d, yyyy').format(booking.checkOut),
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.getTextColor(isDark),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.translate('duration'),
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: AppTheme.getSubtextColor(isDark),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '$nights ${l10n.translate('nights')}',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.primaryOrange,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            // Add countdown timer for ongoing bookings
-            if (shouldShowTimer && countdown != 'Expired') ...[
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
-                ),
-                child: Row(
+                Row(
                   children: [
-                    Icon(Icons.timer, color: Colors.red, size: 20),
-                    const SizedBox(width: 8),
+                    // Apartment Info
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            l10n.translate('time_remaining'),
+                            l10n.translate('apartment'),
                             style: TextStyle(
                               fontSize: 11,
                               color: AppTheme.getSubtextColor(isDark),
-                              fontWeight: FontWeight.w500,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.5,
                             ),
                           ),
-                          const SizedBox(height: 2),
+                          const SizedBox(height: 6),
                           Text(
-                            countdown,
+                            booking.apartment?['title']?.toString() ??
+                                l10n.translate('apartment'),
                             style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.red,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.getTextColor(isDark),
+                              height: 1.2,
+                              letterSpacing: -0.5,
                             ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
                     ),
+                    const SizedBox(width: 16),
+                    // Status Badge
+                    _buildModernStatusBadge(booking.status),
                   ],
                 ),
-              ),
-              const SizedBox(height: 14),
-            ],
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-              decoration: BoxDecoration(
-                color: AppTheme.primaryOrange.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: AppTheme.primaryOrange.withValues(alpha: 0.2),
+                const SizedBox(height: 16),
+                // User Info
+                TenantProfilePreview(
+                  user: booking.user,
+                  isDark: isDark,
+                  padding: const EdgeInsets.all(0),
                 ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.translate('price_per_night'),
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: AppTheme.getSubtextColor(isDark),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '\$$pricePerNight',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.primaryOrange,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Container(
-                    width: 1,
-                    height: 32,
-                    color: AppTheme.primaryOrange.withValues(alpha: 0.2),
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        l10n.translate('total_amount'),
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: AppTheme.getSubtextColor(isDark),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '\$${booking.totalPrice.toStringAsFixed(2)}',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.primaryOrange,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+              ],
+            ),
+          ),
+          // Divider
+          Container(
+            height: 1,
+            margin: const EdgeInsets.symmetric(horizontal: 20),
+            color: isDark ? Colors.grey[800] : Colors.grey[200],
+          ),
+          // Date & Duration Section
+          Container(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    _buildDateCard(
+                      l10n.translate('check_in'),
+                      DateFormat('MMM d').format(booking.checkIn),
+                      DateFormat('yyyy').format(booking.checkIn),
+                      isDark,
+                    ),
+                    const SizedBox(width: 12),
+                    _buildDateCard(
+                      l10n.translate('check_out'),
+                      DateFormat('MMM d').format(booking.checkOut),
+                      DateFormat('yyyy').format(booking.checkOut),
+                      isDark,
+                    ),
+                    const SizedBox(width: 12),
+                    _buildDurationCard(nights, l10n, isDark),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                // Countdown Timer
+                if (shouldShowTimer && countdown != 'Expired')
+                  _buildCountdownCard(countdown, l10n, isDark),
+              ],
+            ),
+          ),
+          // Price Section
+          Container(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryOrange.withValues(alpha: 0.04),
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(20),
+                bottomRight: Radius.circular(20),
               ),
             ),
-            if (canApproveReject) ...[
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () => _handleApproveBooking(booking),
-                      icon: const Icon(Icons.check_circle, size: 18),
-                      label: Text(l10n.translate('approve')),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                    ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _buildPriceInfo(
+                    l10n.translate('price_per_night'),
+                    '\$$pricePerNight',
+                    isDark,
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => _handleRejectBooking(booking),
-                      icon: const Icon(Icons.cancel, size: 18),
-                      label: Text(l10n.translate('reject')),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.red,
-                        side: const BorderSide(color: Colors.red),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                    ),
+                ),
+                Container(
+                  width: 1,
+                  height: 40,
+                  color: AppTheme.primaryOrange.withValues(alpha: 0.2),
+                ),
+                Expanded(
+                  child: _buildPriceInfo(
+                    l10n.translate('total_amount'),
+                    '\$${booking.totalPrice.toStringAsFixed(2)}',
+                    isDark,
+                    isTotal: true,
                   ),
-                ],
+                ),
+              ],
+            ),
+          ),
+          // Action Buttons
+          if (canApproveReject || canEditDelete)
+            Container(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+              child: _buildActionButtons(
+                booking,
+                canApproveReject,
+                canEditDelete,
+                l10n,
+                isDark,
               ),
-            ] else if (canEditDelete) ...[
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => _handleEditBooking(booking),
-                      icon: const Icon(Icons.edit, size: 18),
-                      label: Text(l10n.translate('edit')),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppTheme.primaryOrange,
-                        side: BorderSide(color: AppTheme.primaryOrange),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => _handleDeleteBooking(booking),
-                      icon: const Icon(Icons.delete, size: 18),
-                      label: Text(l10n.translate('delete')),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.red,
-                        side: const BorderSide(color: Colors.red),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModernStatusBadge(String status) {
+    Color backgroundColor;
+    Color textColor;
+    Color borderColor;
+    IconData iconData;
+
+    switch (status.toLowerCase()) {
+      case 'approved':
+      case 'confirmed':
+        backgroundColor = Colors.green.withValues(alpha: 0.1);
+        textColor = Colors.green;
+        borderColor = Colors.green.withValues(alpha: 0.3);
+        iconData = Icons.check_circle;
+        break;
+      case 'pending':
+        backgroundColor = Colors.orange.withValues(alpha: 0.1);
+        textColor = Colors.orange;
+        borderColor = Colors.orange.withValues(alpha: 0.3);
+        iconData = Icons.access_time;
+        break;
+      case 'rejected':
+      case 'cancelled':
+        backgroundColor = Colors.red.withValues(alpha: 0.1);
+        textColor = Colors.red;
+        borderColor = Colors.red.withValues(alpha: 0.3);
+        iconData = Icons.cancel;
+        break;
+      default:
+        backgroundColor = Colors.grey.withValues(alpha: 0.1);
+        textColor = Colors.grey;
+        borderColor = Colors.grey.withValues(alpha: 0.3);
+        iconData = Icons.help;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: borderColor, width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(iconData, color: textColor, size: 16),
+          const SizedBox(width: 6),
+          Text(
+            status.toUpperCase(),
+            style: TextStyle(
+              color: textColor,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.8,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDateCard(String label, String date, String year, bool isDark) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: isDark
+              ? AppTheme.getCardColor(isDark).withValues(alpha: 0.6)
+              : Colors.grey[50],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isDark ? Colors.grey[700]! : Colors.grey[200]!,
+            width: 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                color: AppTheme.getSubtextColor(isDark),
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
               ),
-            ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              date,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.getTextColor(isDark),
+              ),
+            ),
+            Text(
+              year,
+              style: TextStyle(
+                fontSize: 11,
+                color: AppTheme.getSubtextColor(isDark),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildDurationCard(int nights, AppLocalizations l10n, bool isDark) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppTheme.primaryOrange.withValues(alpha: 0.1),
+              AppTheme.primaryOrange.withValues(alpha: 0.05),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppTheme.primaryOrange.withValues(alpha: 0.2),
+            width: 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.translate('duration'),
+              style: TextStyle(
+                fontSize: 10,
+                color: AppTheme.getSubtextColor(isDark),
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Text(
+                  '$nights',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.primaryOrange,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  l10n.translate('nights'),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.primaryOrange,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCountdownCard(
+    String countdown,
+    AppLocalizations l10n,
+    bool isDark,
+  ) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Colors.red.withValues(alpha: 0.08),
+            Colors.red.withValues(alpha: 0.04),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.red.withValues(alpha: 0.2), width: 1),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.red.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(Icons.timer_outlined, color: Colors.red, size: 24),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.translate('time_remaining'),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppTheme.getSubtextColor(isDark),
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  countdown,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.red,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPriceInfo(
+    String label,
+    String amount,
+    bool isDark, {
+    bool isTotal = false,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            color: AppTheme.getSubtextColor(isDark),
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.5,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          amount,
+          style: TextStyle(
+            fontSize: isTotal ? 18 : 16,
+            fontWeight: FontWeight.w800,
+            color: AppTheme.primaryOrange,
+            letterSpacing: -0.5,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionButtons(
+    Booking booking,
+    bool canApproveReject,
+    bool canEditDelete,
+    AppLocalizations l10n,
+    bool isDark,
+  ) {
+    if (canApproveReject) {
+      return Row(
+        children: [
+          Expanded(
+            child: Container(
+              height: 48,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.green, Colors.green.shade700],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.green.withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: ElevatedButton.icon(
+                onPressed: () => _handleApproveBooking(booking),
+                icon: const Icon(Icons.check_circle, size: 18),
+                label: Text(l10n.translate('approve')),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  foregroundColor: Colors.white,
+                  shadowColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Container(
+              height: 48,
+              decoration: BoxDecoration(
+                color: isDark ? Colors.grey[800] : Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+              ),
+              child: OutlinedButton.icon(
+                onPressed: () => _handleRejectBooking(booking),
+                icon: const Icon(Icons.cancel, size: 18),
+                label: Text(l10n.translate('reject')),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.red,
+                  side: BorderSide.none,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    } else if (canEditDelete) {
+      return Row(
+        children: [
+          Expanded(
+            child: Container(
+              height: 48,
+              decoration: BoxDecoration(
+                color: isDark ? Colors.grey[800] : Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppTheme.primaryOrange.withValues(alpha: 0.3),
+                ),
+              ),
+              child: OutlinedButton.icon(
+                onPressed: () => _handleEditBooking(booking),
+                icon: const Icon(Icons.edit_outlined, size: 18),
+                label: Text(l10n.translate('edit')),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppTheme.primaryOrange,
+                  side: BorderSide.none,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Container(
+              height: 48,
+              decoration: BoxDecoration(
+                color: isDark ? Colors.grey[800] : Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+              ),
+              child: OutlinedButton.icon(
+                onPressed: () => _handleDeleteBooking(booking),
+                icon: const Icon(Icons.delete_outline, size: 18),
+                label: Text(l10n.translate('delete')),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.red,
+                  side: BorderSide.none,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+    return const SizedBox.shrink();
   }
 
   Future<void> _handleApproveBooking(Booking booking) async {
@@ -902,41 +1140,5 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
         }
       }
     }
-  }
-
-  Widget _buildStatusBadge(String status) {
-    Color color;
-    switch (status.toLowerCase()) {
-      case 'approved':
-      case 'confirmed':
-        color = Colors.green;
-        break;
-      case 'pending':
-        color = Colors.orange;
-        break;
-      case 'rejected':
-      case 'cancelled':
-        color = Colors.red;
-        break;
-      default:
-        color = Colors.grey;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
-      child: Text(
-        status.toUpperCase(),
-        style: TextStyle(
-          color: color,
-          fontSize: 11,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
   }
 }
