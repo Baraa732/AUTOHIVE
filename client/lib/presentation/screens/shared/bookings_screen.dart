@@ -1127,17 +1127,19 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
   Future<void> _handleEditBooking(Booking booking) async {
     final l10n = AppLocalizations.of(context);
 
-    // Check if 24 hours have passed since check-in
+    // Check if 24 hours have passed since check-in ONLY if check-in has already occurred
     final now = DateTime.now();
-    final hoursSinceCheckIn = now.difference(booking.checkIn).inHours;
-    if (hoursSinceCheckIn >= 24) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Cannot modify booking after 24 hours from check-in'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
+    if (now.isAfter(booking.checkIn)) {
+      final hoursSinceCheckIn = now.difference(booking.checkIn).inHours;
+      if (hoursSinceCheckIn >= 24) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Cannot modify booking after 24 hours from check-in'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
     }
 
     DateTime? selectedCheckIn = booking.checkIn;
