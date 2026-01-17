@@ -16,6 +16,8 @@ class Apartment {
   final bool isApproved;
   final String status;
   final double? rating;
+  final double? averageRating;
+  final int? totalRatings;
   final Map<String, dynamic>? owner;
 
   Apartment({
@@ -36,6 +38,8 @@ class Apartment {
     required this.isApproved,
     required this.status,
     this.rating,
+    this.averageRating,
+    this.totalRatings,
     this.owner,
   });
 
@@ -66,7 +70,13 @@ class Apartment {
       rating: json['rating'] != null
           ? double.parse(json['rating'].toString())
           : null,
-      owner: json['user'] as Map<String, dynamic>? ?? json['owner'] as Map<String, dynamic>?,
+      averageRating: json['average_rating'] != null
+          ? double.parse(json['average_rating'].toString())
+          : null,
+      totalRatings: json['total_ratings'] as int?,
+      owner:
+          json['user'] as Map<String, dynamic>? ??
+          json['owner'] as Map<String, dynamic>?,
     );
   }
 
@@ -92,4 +102,11 @@ class Apartment {
       'user': owner,
     };
   }
+
+  double? get ratingPercentage {
+    if (averageRating == null) return null;
+    return (averageRating! / 5) * 100;
+  }
+
+  bool get hasRating => averageRating != null && averageRating! > 0;
 }

@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\BookingRequestController;
 use App\Http\Controllers\Api\RentalApplicationController;
 use App\Http\Controllers\Api\ReviewController;
+use App\Http\Controllers\Api\RatingController;
 use App\Http\Controllers\Api\FavoriteController;
 use App\Http\Controllers\Api\MessageController;
 use App\Http\Controllers\Api\NotificationController;
@@ -70,7 +71,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/bookings/{id}', [BookingController::class, 'show']);
     Route::get('/my-apartment-bookings', [BookingController::class, 'myApartmentBookings']);
     Route::get('/my-apartment-bookings/{id}', [BookingController::class, 'apartmentBookingShow']);
-    
+
     // Debug endpoint
     Route::get('/debug/bookings-debug', [BookingController::class, 'debugBookings']);
 });
@@ -247,5 +248,15 @@ Route::middleware(['auth:sanctum', 'approved'])->group(function () {
 
     //20 Settings
     Route::get('/settings', [SettingController::class, 'index']);
+
+    //21 Rating System
+    Route::get('/apartments/{apartmentId}/reviews', [RatingController::class, 'getApartmentReviews']);
+    Route::get('/apartments/{apartmentId}/rating-stats', [RatingController::class, 'getApartmentRatingStats']);
+    Route::get('/bookings/{bookingId}/can-review', [RatingController::class, 'canReviewBooking']);
+    Route::post('/bookings/{bookingId}/review', [RatingController::class, 'submitReview']);
+    Route::get('/my-reviews', [RatingController::class, 'getUserReviews']);
+    Route::get('/my-apartment-reviews', [RatingController::class, 'getMyApartmentReviews']);
+    Route::put('/reviews/{reviewId}', [RatingController::class, 'updateReview']);
+    Route::delete('/reviews/{reviewId}', [RatingController::class, 'deleteReview']);
     Route::put('/settings', [SettingController::class, 'update']);
 });

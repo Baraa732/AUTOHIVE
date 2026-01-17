@@ -5,6 +5,8 @@ import '../../../core/core.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../providers/booking_provider.dart';
 import '../../widgets/tenant_profile_preview.dart';
+import '../../../data/models/apartment.dart';
+import 'rating_screen.dart';
 
 class BookingsScreen extends ConsumerStatefulWidget {
   const BookingsScreen({super.key});
@@ -56,7 +58,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
     void addCountdown(Booking booking) {
       final checkIn = booking.checkIn;
       final checkOut = booking.checkOut;
-      
+
       // If before check-in, countdown to check-in
       if (now.isBefore(checkIn)) {
         final remaining = checkIn.difference(now);
@@ -289,10 +291,13 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
     final isPending = booking.status == 'pending';
     final isConfirmed = booking.status == 'confirmed';
     final isOngoing = booking.status == 'ongoing';
+    final isCompleted = booking.status == 'completed';
     final canApproveReject = isReceivedBooking && isPending;
     // Allow editing for pending, confirmed, and ongoing bookings (but not after 24 hours from check-in)
     final canEditDelete =
         !isReceivedBooking && (isPending || isConfirmed || isOngoing);
+    // Allow rating for completed bookings
+    final canRate = !isReceivedBooking && isCompleted;
 
     // Show timer for confirmed and ongoing bookings
     final now = DateTime.now();
@@ -300,7 +305,8 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
     final checkOutDateTime = booking.checkOut;
 
     // Show timer if: booking is confirmed/ongoing AND current time is before checkout
-    final shouldShowTimer = (isConfirmed || isOngoing) && now.isBefore(checkOutDateTime);
+    final shouldShowTimer =
+        (isConfirmed || isOngoing) && now.isBefore(checkOutDateTime);
     final countdown = _formatCountdown(booking.id);
 
     return Container(
@@ -473,13 +479,14 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
             ),
           ),
           // Action Buttons
-          if (canApproveReject || canEditDelete)
+          if (canApproveReject || canEditDelete || canRate)
             Container(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
               child: _buildActionButtons(
                 booking,
                 canApproveReject,
                 canEditDelete,
+                canRate,
                 l10n,
                 isDark,
               ),
@@ -712,7 +719,9 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
               children: [
                 Text(
                   isBeforeCheckIn
-                      ? (locale.languageCode == 'ar' ? 'يبدأ العقد خلال' : 'Contract Starts In')
+                      ? (locale.languageCode == 'ar'
+                            ? 'يبدأ العقد خلال'
+                            : 'Contract Starts In')
                       : l10n.translate('time_remaining'),
                   style: TextStyle(
                     fontSize: 12,
@@ -775,6 +784,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
     Booking booking,
     bool canApproveReject,
     bool canEditDelete,
+    bool canRate,
     AppLocalizations l10n,
     bool isDark,
   ) {
@@ -890,6 +900,38 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
             ),
           ),
         ],
+      );
+    } else if (canRate) {
+      return Container(
+        height: 48,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.amber, Colors.amber.shade700],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.amber.withValues(alpha: 0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: ElevatedButton.icon(
+          onPressed: () => _handleRateBooking(booking),
+          icon: const Icon(Icons.star, size: 18),
+          label: Text(l10n.translate('rate_stay')),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.transparent,
+            foregroundColor: Colors.white,
+            shadowColor: Colors.transparent,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
       );
     }
     return const SizedBox.shrink();
@@ -1395,6 +1437,41 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
           );
         }
       }
+    }
+  }
+
+  Future<void> _handleRateBooking(Booking booking) async {
+    // Convert booking apartment map to Apartment object
+    final apartment = Apartment(
+      id: booking.apartmentId,
+      title: booking.apartment?['title'] ?? '',
+      description: booking.apartment?['description'] ?? '',
+      address: booking.apartment?['address'] ?? '',
+      governorate: booking.apartment?['governorate'] ?? '',
+      city: booking.apartment?['city'] ?? '',
+      price:
+          double.tryParse(booking.apartment?['price']?.toString() ?? '0') ?? 0,
+      bedrooms: booking.apartment?['bedrooms'] ?? 0,
+      bathrooms: booking.apartment?['bathrooms'] ?? 0,
+      area: double.tryParse(booking.apartment?['area']?.toString() ?? '0') ?? 0,
+      images: List<String>.from(booking.apartment?['images'] ?? []),
+      features: List<String>.from(booking.apartment?['features'] ?? []),
+      isAvailable: booking.apartment?['is_available'] ?? false,
+      isApproved: booking.apartment?['is_approved'] ?? false,
+      status: booking.apartment?['status'] ?? 'pending',
+    );
+
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            RatingScreen(booking: booking, apartment: apartment),
+      ),
+    );
+
+    if (result == true) {
+      // Refresh data to update the booking status
+      _loadData();
     }
   }
 }

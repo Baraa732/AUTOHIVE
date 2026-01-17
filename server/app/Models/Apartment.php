@@ -28,6 +28,8 @@ class Apartment extends Model
         'is_approved',
         'status',
         'rejection_reason',
+        'average_rating',
+        'total_ratings',
     ];
 
     protected $casts = [
@@ -36,15 +38,16 @@ class Apartment extends Model
         'is_available' => 'boolean',
         'is_approved' => 'boolean',
         'price_per_night' => 'decimal:2',
+        'average_rating' => 'decimal:2',
     ];
-    
+
     protected $appends = ['image_urls'];
-    
+
     public function getImageUrlsAttribute()
     {
         if (!$this->images) return [];
-        
-        return array_map(function($image) {
+
+        return array_map(function ($image) {
             return asset('storage/' . $image);
         }, $this->images);
     }
@@ -75,10 +78,28 @@ class Apartment extends Model
         return $this->hasMany(Favorite::class);
     }
 
-    // Calculate average rating
+    // Calculate average rating (cached in database)
     public function averageRating()
     {
-        return $this->reviews()->avg('rating');
+        return $this->average_rating;
+    }
+
+    // Update average rating when new review is added
+    public function updateAverageRating()
+    {
+        $avgRating = $this->reviews()->avg('rating');
+        $totalRatings = $this->reviews()->count();
+
+        $this->update([
+            'average_rating' => $avgRating ?: 0,
+            'total_ratings' => $totalRatings,
+        ]);
+    }
+
+    // Get rating as percentage (for UI display)
+    public function getRatingPercentageAttribute()
+    {
+        return ($this->average_rating / 5) * 100;
     }
 
     // Check if apartment is booked for given dates

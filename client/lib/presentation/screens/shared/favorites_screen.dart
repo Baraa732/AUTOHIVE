@@ -5,6 +5,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/constants/app_config.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../widgets/common/cached_network_image.dart';
+import '../../widgets/rating_widget.dart';
 import 'apartment_details_screen.dart';
 import 'filter_bottom_sheet.dart';
 
@@ -293,33 +294,14 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                     },
                   ),
                 ),
-                if ((apartment.rating ?? 0) > 0)
+                if (apartment.hasRating)
                   Positioned(
                     top: 12,
                     left: 12,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.7),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.star, color: Colors.amber, size: 16),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${apartment.rating?.toStringAsFixed(1) ?? 'N/A'}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
+                    child: RatingPercentageWidget(
+                      averageRating: apartment.averageRating!,
+                      totalRatings: apartment.totalRatings ?? 0,
+                      size: 12,
                     ),
                   ),
               ],

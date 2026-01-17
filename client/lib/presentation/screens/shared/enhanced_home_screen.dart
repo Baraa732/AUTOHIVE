@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../../data/models/apartment.dart';
+import '../../widgets/rating_widget.dart';
+import 'rating_screen.dart';
 import '../../../core/core.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../providers/favorite_provider.dart';
@@ -990,6 +993,27 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen>
                       ),
                     ],
                   ),
+                  const SizedBox(height: 12),
+                  // Rating Display
+                  if (apartment.hasRating)
+                    Row(
+                      children: [
+                        RatingPercentageWidget(
+                          averageRating: apartment.averageRating!,
+                          totalRatings: apartment.totalRatings ?? 0,
+                          size: 14,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '${apartment.averageRating!.toStringAsFixed(1)}★',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.getSubtextColor(isDarkMode),
+                          ),
+                        ),
+                      ],
+                    ),
                   const SizedBox(height: 12),
                   Row(
                     children: [
