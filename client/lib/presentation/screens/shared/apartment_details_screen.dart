@@ -39,6 +39,16 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
     Future.microtask(() => ref.read(favoriteProvider.notifier).loadFavorites());
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Reload data when returning to this screen
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadDetails();
+      _loadUser();
+    });
+  }
+
   void _initAnimations() {
     _backgroundController = AnimationController(
       duration: const Duration(seconds: 20),
@@ -858,6 +868,8 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
 
     if (owner == null) return const SizedBox.shrink();
 
+    final profileImageUrl = owner['profile_image_url'] ?? owner['profile_image'];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -891,17 +903,26 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
           ),
           child: Row(
             children: [
-              CircleAvatar(
-                radius: 25,
-                backgroundColor: AppTheme.primaryOrange.withValues(alpha: 0.2),
-                child: Text(
-                  '${owner['first_name']?[0] ?? ''}${owner['last_name']?[0] ?? ''}',
-                  style: TextStyle(
-                    color: AppTheme.primaryOrange,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
+              profileImageUrl != null
+                  ? CircleAvatar(
+                      radius: 25,
+                      backgroundImage: NetworkImage(
+                        AppConfig.getImageUrlSync(profileImageUrl),
+                      ),
+                      onBackgroundImageError: (_, __) {},
+                      child: Container(),
+                    )
+                  : CircleAvatar(
+                      radius: 25,
+                      backgroundColor: AppTheme.primaryOrange.withValues(alpha: 0.2),
+                      child: Text(
+                        '${owner['first_name']?[0] ?? ''}${owner['last_name']?[0] ?? ''}',
+                        style: TextStyle(
+                          color: AppTheme.primaryOrange,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
