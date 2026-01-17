@@ -4,6 +4,7 @@
 @section('icon', 'fas fa-wallet')
 
 @section('content')
+<link rel="stylesheet" href="{{ asset('css/dashboard-advanced.css') }}">
 <style>
     .wallet-requests-container {
         animation: fadeInUp 0.6s ease;
@@ -343,34 +344,50 @@
 
 <div class="wallet-requests-container">
     <!-- Stats Row -->
-    <div class="stats-row">
-        <div class="stat-box">
-            <div class="stat-icon">
-                <i class="fas fa-wallet"></i>
+    <div class="kpi-grid fade-in-up-03">
+        <div class="kpi-card">
+            <div class="kpi-header">
+                <div class="kpi-icon-wrapper" style="background: linear-gradient(135deg, #ff6f2d, #ff9b57);">
+                    <i class="fas fa-wallet"></i>
+                </div>
             </div>
-            <div class="stat-number">{{ $requests->total() }}</div>
-            <div class="stat-label">Total Requests</div>
+            <div class="kpi-body">
+                <div class="kpi-value">{{ $requests->total() }}</div>
+                <div class="kpi-label">Total Requests</div>
+            </div>
         </div>
-        <div class="stat-box">
-            <div class="stat-icon">
-                <i class="fas fa-clock"></i>
+        <div class="kpi-card">
+            <div class="kpi-header">
+                <div class="kpi-icon-wrapper" style="background: linear-gradient(135deg, #F59E0B, #D97706);">
+                    <i class="fas fa-clock"></i>
+                </div>
             </div>
-            <div class="stat-number">{{ $requests->where('status', 'pending')->count() }}</div>
-            <div class="stat-label">Pending</div>
+            <div class="kpi-body">
+                <div class="kpi-value">{{ $requests->where('status', 'pending')->count() }}</div>
+                <div class="kpi-label">Pending</div>
+            </div>
         </div>
-        <div class="stat-box">
-            <div class="stat-icon">
-                <i class="fas fa-check-circle"></i>
+        <div class="kpi-card">
+            <div class="kpi-header">
+                <div class="kpi-icon-wrapper" style="background: linear-gradient(135deg, #10B981, #059669);">
+                    <i class="fas fa-check-circle"></i>
+                </div>
             </div>
-            <div class="stat-number">{{ $requests->where('status', 'approved')->count() }}</div>
-            <div class="stat-label">Approved</div>
+            <div class="kpi-body">
+                <div class="kpi-value">{{ $requests->where('status', 'approved')->count() }}</div>
+                <div class="kpi-label">Approved</div>
+            </div>
         </div>
-        <div class="stat-box">
-            <div class="stat-icon">
-                <i class="fas fa-times-circle"></i>
+        <div class="kpi-card">
+            <div class="kpi-header">
+                <div class="kpi-icon-wrapper" style="background: linear-gradient(135deg, #EF4444, #DC2626);">
+                    <i class="fas fa-times-circle"></i>
+                </div>
             </div>
-            <div class="stat-number">{{ $requests->where('status', 'rejected')->count() }}</div>
-            <div class="stat-label">Rejected</div>
+            <div class="kpi-body">
+                <div class="kpi-value">{{ $requests->where('status', 'rejected')->count() }}</div>
+                <div class="kpi-label">Rejected</div>
+            </div>
         </div>
     </div>
 
@@ -418,9 +435,13 @@
                             <td><strong>#{{ $request->id }}</strong></td>
                             <td>
                                 <div class="user-info">
-                                    <div class="user-avatar">
-                                        {{ substr($request->user->first_name, 0, 1) }}{{ substr($request->user->last_name, 0, 1) }}
-                                    </div>
+                                    @if($request->user->profile_image)
+                                        <img src="{{ asset('storage/' . $request->user->profile_image) }}" alt="{{ $request->user->first_name }}" class="user-avatar" style="object-fit: cover;">
+                                    @else
+                                        <div class="user-avatar">
+                                            {{ substr($request->user->first_name, 0, 1) }}{{ substr($request->user->last_name, 0, 1) }}
+                                        </div>
+                                    @endif
                                     <div>
                                         <div style="font-weight: 600; color: var(--text-dark);">
                                             {{ $request->user->first_name }} {{ $request->user->last_name }}

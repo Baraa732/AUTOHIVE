@@ -355,6 +355,41 @@
         box-shadow: var(--shadow-lg);
     }
     
+    .kpi-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: var(--space-md);
+    }
+
+    .kpi-icon-wrapper {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.2rem;
+    }
+
+    .kpi-body {
+        text-align: left;
+    }
+
+    .kpi-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: var(--space-xs);
+    }
+
+    .kpi-label {
+        color: var(--text-grey);
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
     .stat-icon-large {
         width: 48px;
         height: 48px;
@@ -556,43 +591,53 @@
 </style>
 
 <div class="bookings-container">
+    <link rel="stylesheet" href="{{ asset('css/dashboard-advanced.css') }}">
+
     <!-- Stats Dashboard -->
-    <div class="stats-dashboard">
-        <div class="stat-card-animated">
-            <div class="stat-header">
-                <div class="stat-icon-large">
+    <div class="kpi-grid fade-in-up-03">
+        <div class="kpi-card">
+            <div class="kpi-header">
+                <div class="kpi-icon-wrapper" style="background: linear-gradient(135deg, #0e1330, #17173a);">
                     <i class="fas fa-calendar-alt"></i>
                 </div>
             </div>
-            <div class="stat-number" style="font-size: 2rem; font-weight: 700; color: var(--text-dark); margin-bottom: var(--space-xs);">{{ $bookings->total() }}</div>
-            <div class="stat-label" style="color: var(--text-grey); font-size: 0.9rem; font-weight: 500;">Total Bookings</div>
+            <div class="kpi-body">
+                <div class="kpi-value">{{ $bookings->total() }}</div>
+                <div class="kpi-label">Total Bookings</div>
+            </div>
         </div>
-        <div class="stat-card-animated">
-            <div class="stat-header">
-                <div class="stat-icon-large">
+        <div class="kpi-card">
+            <div class="kpi-header">
+                <div class="kpi-icon-wrapper" style="background: linear-gradient(135deg, #F59E0B, #D97706);">
                     <i class="fas fa-clock"></i>
                 </div>
             </div>
-            <div class="stat-number" style="font-size: 2rem; font-weight: 700; color: var(--text-dark); margin-bottom: var(--space-xs);">{{ $bookings->where('status', 'pending')->count() }}</div>
-            <div class="stat-label" style="color: var(--text-grey); font-size: 0.9rem; font-weight: 500;">Pending</div>
+            <div class="kpi-body">
+                <div class="kpi-value">{{ $bookings->where('status', 'pending')->count() }}</div>
+                <div class="kpi-label">Pending</div>
+            </div>
         </div>
-        <div class="stat-card-animated">
-            <div class="stat-header">
-                <div class="stat-icon-large">
+        <div class="kpi-card">
+            <div class="kpi-header">
+                <div class="kpi-icon-wrapper" style="background: linear-gradient(135deg, #10B981, #059669);">
                     <i class="fas fa-check-double"></i>
                 </div>
             </div>
-            <div class="stat-number" style="font-size: 2rem; font-weight: 700; color: var(--text-dark); margin-bottom: var(--space-xs);">{{ $bookings->where('status', 'confirmed')->count() }}</div>
-            <div class="stat-label" style="color: var(--text-grey); font-size: 0.9rem; font-weight: 500;">Confirmed</div>
+            <div class="kpi-body">
+                <div class="kpi-value">{{ $bookings->where('status', 'confirmed')->count() }}</div>
+                <div class="kpi-label">Confirmed</div>
+            </div>
         </div>
-        <div class="stat-card-animated">
-            <div class="stat-header">
-                <div class="stat-icon-large">
+        <div class="kpi-card highlight">
+            <div class="kpi-header">
+                <div class="kpi-icon-wrapper">
                     <i class="fas fa-coins"></i>
                 </div>
             </div>
-            <div class="stat-number" style="font-size: 2rem; font-weight: 700; color: var(--text-dark); margin-bottom: var(--space-xs);">${{ number_format($bookings->where('status', 'completed')->sum('total_price'), 0) }}</div>
-            <div class="stat-label" style="color: var(--text-grey); font-size: 0.9rem; font-weight: 500;">Revenue</div>
+            <div class="kpi-body">
+                <div class="kpi-value">${{ number_format($bookings->where('status', 'completed')->sum('total_price'), 0) }}</div>
+                <div class="kpi-label">Revenue</div>
+            </div>
         </div>
     </div>
 
@@ -613,9 +658,13 @@
                             <div class="booking-guest">
                                 @if($booking->user && $booking->user->id)
                                     <a href="{{ route('admin.users.show', $booking->user->id) }}" style="text-decoration: none; display: flex; align-items: center; gap: var(--space-md);">
-                                        <div class="guest-avatar">
-                                            {{ substr($booking->user->first_name ?? 'U', 0, 1) }}{{ substr($booking->user->last_name ?? 'N', 0, 1) }}
-                                        </div>
+                                        @if($booking->user->profile_image)
+                                            <img src="{{ asset('storage/' . $booking->user->profile_image) }}" alt="{{ $booking->user->first_name }}" class="guest-avatar" style="object-fit: cover;">
+                                        @else
+                                            <div class="guest-avatar">
+                                                {{ substr($booking->user->first_name ?? 'U', 0, 1) }}{{ substr($booking->user->last_name ?? 'N', 0, 1) }}
+                                            </div>
+                                        @endif
                                         <div class="guest-info">
                                             <h4>{{ $booking->user->first_name ?? 'Unknown' }} {{ $booking->user->last_name ?? 'User' }}</h4>
                                             <p>{{ $booking->user->phone ?? 'N/A' }}</p>

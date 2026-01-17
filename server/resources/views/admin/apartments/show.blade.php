@@ -870,9 +870,13 @@
                 
                 @if($apartment->landlord && $apartment->landlord->first_name)
                     <div class="landlord-info">
-                        <div class="landlord-avatar">
-                            {{ substr($apartment->landlord->first_name, 0, 1) }}{{ substr($apartment->landlord->last_name ?? '', 0, 1) }}
-                        </div>
+                        @if($apartment->landlord->profile_image)
+                            <img src="{{ asset('storage/' . $apartment->landlord->profile_image) }}" alt="{{ $apartment->landlord->first_name }}" class="landlord-avatar" style="object-fit: cover;">
+                        @else
+                            <div class="landlord-avatar">
+                                {{ substr($apartment->landlord->first_name, 0, 1) }}{{ substr($apartment->landlord->last_name ?? '', 0, 1) }}
+                            </div>
+                        @endif
                         <div class="landlord-details">
                             <div class="landlord-name">
                                 {{ $apartment->landlord->first_name }} {{ $apartment->landlord->last_name ?? '' }}
@@ -965,9 +969,13 @@
                                     <td>
                                         @if($booking->tenant && $booking->tenant->first_name)
                                             <div class="guest-link">
-                                                <div class="small-avatar">
-                                                    {{ substr($booking->tenant->first_name, 0, 1) }}{{ substr($booking->tenant->last_name ?? '', 0, 1) }}
-                                                </div>
+                                                @if($booking->tenant->profile_image)
+                                                    <img src="{{ asset('storage/' . $booking->tenant->profile_image) }}" alt="{{ $booking->tenant->first_name }}" class="small-avatar" style="object-fit: cover;">
+                                                @else
+                                                    <div class="small-avatar">
+                                                        {{ substr($booking->tenant->first_name, 0, 1) }}{{ substr($booking->tenant->last_name ?? '', 0, 1) }}
+                                                    </div>
+                                                @endif
                                                 <div>
                                                     <div style="font-weight: 600;">{{ $booking->tenant->first_name }} {{ $booking->tenant->last_name ?? '' }}</div>
                                                     <div style="font-size: 0.8rem; color: var(--text-grey);">{{ $booking->tenant->phone ?? 'N/A' }}</div>
