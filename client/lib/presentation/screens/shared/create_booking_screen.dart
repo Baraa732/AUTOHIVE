@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../../../core/core.dart';
 import '../../providers/wallet_provider.dart';
 import '../../providers/booking_provider.dart';
+import '../wallet/deposit_request_screen.dart';
 
 class CreateBookingScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> apartment;
@@ -303,17 +304,52 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
                       onPressed: () => Navigator.pop(context),
                       child: const Text('Cancel'),
                     ),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        Navigator.pop(context);
-                        // Navigate to wallet screen
-                        Navigator.pushNamed(context, '/wallet');
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryOrange,
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [AppTheme.primaryGreen, const Color(0xFF059669)],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Text('Add Funds'),
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          final shortage = result['data']['shortage_usd'];
+                          Navigator.pop(context);
+                          Navigator.pop(context);
+                          final depositResult = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => DepositRequestScreen(
+                                suggestedAmount: shortage,
+                              ),
+                            ),
+                          );
+                          if (depositResult == true && mounted) {
+                            await ref.read(walletProvider.notifier).loadWallet();
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.add_circle_outline, color: Colors.white, size: 20),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Add Funds',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -757,11 +793,58 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
                           ),
                         ),
                         if (!hasSufficientFunds && totalPrice > 0)
-                          TextButton(
-                            onPressed: () {
-                              Navigator.pushNamed(context, '/wallet');
-                            },
-                            child: const Text('Add Funds'),
+                          Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [AppTheme.primaryGreen, const Color(0xFF059669)],
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppTheme.primaryGreen.withValues(alpha: 0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () async {
+                                  final shortage = totalPrice - walletBalance;
+                                  final result = await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => DepositRequestScreen(
+                                        suggestedAmount: shortage,
+                                      ),
+                                    ),
+                                  );
+                                  if (result == true && mounted) {
+                                    await ref.read(walletProvider.notifier).loadWallet();
+                                  }
+                                },
+                                borderRadius: BorderRadius.circular(12),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.add_circle_outline, color: Colors.white, size: 18),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'Add Funds',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
                       ],
                     ),

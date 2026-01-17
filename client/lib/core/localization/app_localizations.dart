@@ -393,6 +393,12 @@ class AppLocalizations {
       'already_reviewed': 'You have already submitted a review for this booking.',
       'unable_submit_review': 'Unable to submit review. Please try again later.',
       'provide_overall_rating': 'Please provide an overall rating',
+      'add_funds': 'Add Funds',
+      'insufficient_balance': 'Insufficient Balance',
+      'need_more_funds': 'You need \${{amount}} to book this apartment.',
+      'current_balance': 'Current balance',
+      'required_more': 'Required: \${{amount}} more',
+      'add_funds_to_continue': 'Please add funds to your wallet to continue.',
     },
     'ar': {
       'welcome_back': 'مرحباً بعودتك',
@@ -781,6 +787,12 @@ class AppLocalizations {
       'already_reviewed': 'لقد قمت بالفعل بإرسال تقييم لهذا الحجز.',
       'unable_submit_review': 'تعذر إرسال التقييم. يرجى المحاولة مرة أخرى لاحقاً.',
       'provide_overall_rating': 'الرجاء تقديم تقييم إجمالي',
+      'add_funds': 'إضافة أموال',
+      'insufficient_balance': 'رصيد غير كافٍ',
+      'need_more_funds': 'تحتاج إلى \${{amount}} لحجز هذه الشقة.',
+      'current_balance': 'الرصيد الحالي',
+      'required_more': 'مطلوب: \${{amount}} إضافية',
+      'add_funds_to_continue': 'الرجاء إضافة أموال إلى محفظتك للمتابعة.',
     },
   };
 

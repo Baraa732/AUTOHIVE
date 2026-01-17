@@ -5,7 +5,9 @@ import '../../../core/localization/app_localizations.dart';
 import '../../providers/wallet_provider.dart';
 
 class DepositRequestScreen extends ConsumerStatefulWidget {
-  const DepositRequestScreen({Key? key}) : super(key: key);
+  final double? suggestedAmount;
+  
+  const DepositRequestScreen({Key? key, this.suggestedAmount}) : super(key: key);
 
   @override
   ConsumerState<DepositRequestScreen> createState() => _DepositRequestScreenState();
@@ -15,6 +17,14 @@ class _DepositRequestScreenState extends ConsumerState<DepositRequestScreen> {
   final _amountController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.suggestedAmount != null) {
+      _amountController.text = widget.suggestedAmount!.toStringAsFixed(2);
+    }
+  }
 
   @override
   void dispose() {
