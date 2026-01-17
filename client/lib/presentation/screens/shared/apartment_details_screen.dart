@@ -359,6 +359,8 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
     );
   }
 
+  int _currentImageIndex = 0;
+
   Widget _buildImageGallery() {
     if (_apartment == null) {
       return Container(
@@ -380,25 +382,57 @@ class _ApartmentDetailsScreenState extends ConsumerState<ApartmentDetailsScreen>
       );
     }
 
-    return PageView.builder(
-      itemCount: images.length,
-      itemBuilder: (context, index) {
-        final imageUrl = AppConfig.getImageUrlSync(images[index]);
-        return AppCachedNetworkImage(
-          imageUrl: imageUrl,
-          fit: BoxFit.cover,
-          placeholder: Container(
-            color: Colors.grey[300],
-            child: const Center(
-              child: CircularProgressIndicator(color: Color(0xFFff6f2d)),
+    return Stack(
+      children: [
+        PageView.builder(
+          itemCount: images.length,
+          onPageChanged: (index) {
+            setState(() {
+              _currentImageIndex = index;
+            });
+          },
+          itemBuilder: (context, index) {
+            final imageUrl = AppConfig.getImageUrlSync(images[index]);
+            return AppCachedNetworkImage(
+              imageUrl: imageUrl,
+              fit: BoxFit.cover,
+              placeholder: Container(
+                color: Colors.grey[300],
+                child: const Center(
+                  child: CircularProgressIndicator(color: Color(0xFFff6f2d)),
+                ),
+              ),
+              errorWidget: Container(
+                color: Colors.grey,
+                child: const Icon(Icons.image, color: Colors.white, size: 50),
+              ),
+            );
+          },
+        ),
+        if (images.length > 1)
+          Positioned(
+            bottom: 16,
+            left: 0,
+            right: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                images.length,
+                (index) => Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _currentImageIndex == index
+                        ? Colors.white
+                        : Colors.white.withValues(alpha: 0.5),
+                  ),
+                ),
+              ),
             ),
           ),
-          errorWidget: Container(
-            color: Colors.grey,
-            child: const Icon(Icons.image, color: Colors.white, size: 50),
-          ),
-        );
-      },
+      ],
     );
   }
 
