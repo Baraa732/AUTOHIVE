@@ -901,7 +901,7 @@ class BookingController extends Controller
         
         $query = Booking::with(['apartment.user', 'user'])
             ->where('user_id', $userId)
-            ->whereIn('status', [Booking::STATUS_CANCELLED, Booking::STATUS_REJECTED])
+            ->whereIn('status', [Booking::STATUS_CANCELLED, Booking::STATUS_REJECTED, Booking::STATUS_COMPLETED])
             ->orderBy('created_at', 'desc');
 
         $perPage = $request->get('per_page', 20);

@@ -220,6 +220,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
                       .where(
                         (b) =>
                             b.status.toLowerCase() == 'expired' ||
+                            b.status.toLowerCase() == 'completed' ||
                             DateTime.now().isAfter(b.checkOut),
                       )
                       .toList(),
