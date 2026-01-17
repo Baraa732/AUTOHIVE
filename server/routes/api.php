@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\FileController;
 use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\WalletController;
 use App\Http\Controllers\Api\DepositWithdrawalController;
+use App\Http\Controllers\Api\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 // Connection test route
@@ -85,6 +86,15 @@ Route::middleware(['auth:sanctum', 'approved'])->group(function () {
     Route::post('/upload-id', [AuthController::class, 'uploadId']);
     Route::post('/change-password', [AuthController::class, 'changePassword']);
     Route::delete('/delete-account', [AuthController::class, 'deleteAccount']);
+
+    //1.1 Enhanced Profile Management
+    Route::get('/profile/show', [ProfileController::class, 'show']);
+    Route::put('/profile/update', [ProfileController::class, 'update']);
+    Route::post('/profile/upload-image', [ProfileController::class, 'uploadProfileImage']);
+    Route::post('/profile/upload-id', [ProfileController::class, 'uploadIdImage']);
+    Route::post('/profile/change-password', [ProfileController::class, 'changePassword']);
+    Route::delete('/profile/delete-image', [ProfileController::class, 'deleteProfileImage']);
+    Route::delete('/profile/delete-id', [ProfileController::class, 'deleteIdImage']);
 
     //1.5 User Stats
     Route::get('/user/stats', [StatisticsController::class, 'userStats']);
