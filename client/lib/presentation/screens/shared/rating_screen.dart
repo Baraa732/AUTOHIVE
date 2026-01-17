@@ -4,6 +4,8 @@ import '../../../data/models/booking.dart';
 import '../../../data/models/apartment.dart';
 import '../../../core/network/api_service.dart';
 import '../../../core/constants/app_config.dart';
+import '../../../core/core.dart';
+import '../../../core/localization/app_localizations.dart';
 
 class RatingScreen extends StatefulWidget {
   final Booking booking;
@@ -56,14 +58,15 @@ class _RatingScreenState extends State<RatingScreen> {
   }
 
   Future<void> _submitReview() async {
+    final l10n = AppLocalizations.of(context);
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
     if (_overallRating == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please provide an overall rating'),
+        SnackBar(
+          content: Text(l10n.translate('provide_overall_rating')),
           backgroundColor: Colors.red,
         ),
       );
@@ -91,20 +94,18 @@ class _RatingScreenState extends State<RatingScreen> {
 
       if (response['success']) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Review submitted successfully!'),
+          SnackBar(
+            content: Text(l10n.translate('review_submitted_success')),
             backgroundColor: Colors.green,
           ),
         );
         Navigator.of(context).pop(true);
       } else {
-        // Handle specific error cases
-        String errorMessage = response['message'] ?? 'Failed to submit review';
+        String errorMessage = response['message'] ?? l10n.translate('unable_submit_review');
         String? reason = response['reason'];
         
-        // Show user-friendly message for duplicate review
         if (reason != null && reason.contains('already reviewed')) {
-          errorMessage = 'You have already submitted a review for this booking.';
+          errorMessage = l10n.translate('already_reviewed');
         }
         
         ScaffoldMessenger.of(context).showSnackBar(
@@ -117,8 +118,8 @@ class _RatingScreenState extends State<RatingScreen> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Unable to submit review. Please try again later.'),
+        SnackBar(
+          content: Text(l10n.translate('unable_submit_review')),
           backgroundColor: Colors.red,
         ),
       );
@@ -133,10 +134,11 @@ class _RatingScreenState extends State<RatingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text('Rate Your Stay'),
+        title: Text(l10n.translate('rate_stay')),
         flexibleSpace: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
@@ -297,18 +299,18 @@ class _RatingScreenState extends State<RatingScreen> {
                       ),
                       child: Column(
                         children: [
-                          const Text(
-                            'Overall Rating',
-                            style: TextStyle(
+                          Text(
+                            l10n.translate('overall_rating'),
+                            style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
                             ),
                           ),
                           const SizedBox(height: 8),
-                          const Text(
-                            'How was your overall experience?',
-                            style: TextStyle(
+                          Text(
+                            l10n.translate('how_was_experience'),
+                            style: const TextStyle(
                               fontSize: 14,
                               color: Colors.white70,
                             ),
@@ -343,9 +345,9 @@ class _RatingScreenState extends State<RatingScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Rate Specific Aspects',
-                            style: TextStyle(
+                          Text(
+                            l10n.translate('rate_specific_aspects'),
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
@@ -353,28 +355,28 @@ class _RatingScreenState extends State<RatingScreen> {
                           const SizedBox(height: 16),
                           _buildCompactRating(
                             Icons.cleaning_services,
-                            'Cleanliness',
+                            l10n.translate('cleanliness'),
                             _cleanlinessRating,
                             (rating) => setState(() => _cleanlinessRating = rating),
                           ),
                           const Divider(height: 24),
                           _buildCompactRating(
                             Icons.location_on,
-                            'Location',
+                            l10n.translate('location'),
                             _locationRating,
                             (rating) => setState(() => _locationRating = rating),
                           ),
                           const Divider(height: 24),
                           _buildCompactRating(
                             Icons.attach_money,
-                            'Value',
+                            l10n.translate('value'),
                             _valueRating,
                             (rating) => setState(() => _valueRating = rating),
                           ),
                           const Divider(height: 24),
                           _buildCompactRating(
                             Icons.chat_bubble_outline,
-                            'Communication',
+                            l10n.translate('communication'),
                             _communicationRating,
                             (rating) => setState(() => _communicationRating = rating),
                           ),
@@ -405,9 +407,9 @@ class _RatingScreenState extends State<RatingScreen> {
                             children: [
                               const Icon(Icons.rate_review, size: 20, color: Color(0xFFff6f2d)),
                               const SizedBox(width: 8),
-                              const Text(
-                                'Share Your Experience',
-                                style: TextStyle(
+                              Text(
+                                l10n.translate('share_your_experience'),
+                                style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -419,7 +421,7 @@ class _RatingScreenState extends State<RatingScreen> {
                             controller: _commentController,
                             maxLines: 5,
                             decoration: InputDecoration(
-                              hintText: 'Tell us about your stay...',
+                              hintText: l10n.translate('tell_us_about_stay'),
                               hintStyle: TextStyle(color: Colors.grey[400]),
                               filled: true,
                               fillColor: Colors.grey[50],
@@ -434,7 +436,7 @@ class _RatingScreenState extends State<RatingScreen> {
                             ),
                             validator: (value) {
                               if (value != null && value.length > 1000) {
-                                return 'Comment must be less than 1000 characters';
+                                return l10n.translate('comment_max_length');
                               }
                               return null;
                             },
@@ -486,14 +488,14 @@ class _RatingScreenState extends State<RatingScreen> {
                                   valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                                 ),
                               )
-                            : const Row(
+                            : Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.send, size: 20),
-                                  SizedBox(width: 8),
+                                  const Icon(Icons.send, size: 20),
+                                  const SizedBox(width: 8),
                                   Text(
-                                    'Submit Review',
-                                    style: TextStyle(
+                                    l10n.translate('submit_review'),
+                                    style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.white,

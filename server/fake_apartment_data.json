@@ -1,0 +1,48 @@
+{
+  "apartments": [
+    {
+      "title": "Modern Downtown Loft with City Views",
+      "description": "Stunning 2-bedroom loft in the heart of downtown. Features floor-to-ceiling windows, exposed brick walls, and a gourmet kitchen. Walking distance to restaurants, shops, and public transit. Perfect for young professionals."
+    },
+    {
+      "title": "Cozy Studio Near University Campus",
+      "description": "Affordable studio apartment ideal for students. Fully furnished with modern amenities, high-speed internet, and laundry facilities. Just 5 minutes walk from campus and close to cafes and libraries."
+    },
+    {
+      "title": "Historic Brownstone Apartment",
+      "description": "Charming 2-bedroom in a beautifully restored brownstone. Original architectural details, high ceilings, and modern updates. Quiet tree-lined street with vintage character and contemporary comfort."
+    },
+    {
+      "title": "Beachside Retreat - Ocean Views",
+      "description": "Relaxing 2-bedroom apartment with direct ocean views. Private beach access, outdoor pool, and BBQ area. Wake up to the sound of waves. Ideal for those seeking a coastal lifestyle."
+    },
+    {
+      "title": "Eco-Friendly Green Living Space",
+      "description": "Sustainable 2-bedroom with solar panels and rainwater harvesting. Energy-efficient design, organic garden access, and recycling facilities. For environmentally conscious residents."
+    },
+    {
+      "title": "Garden Level Oasis",
+      "description": "Peaceful 1-bedroom with private garden entrance. Ground floor convenience, patio space, and abundant natural light. Perfect for those who love indoor-outdoor living and gardening."
+    },
+    {
+      "title": "Skyline View High-Rise",
+      "description": "Breathtaking 2-bedroom on the 25th floor. Floor-to-ceiling windows showcase stunning city skyline. Modern kitchen, spa-like bathrooms, and access to rooftop infinity pool."
+    },
+    {
+      "title": "Vintage Charm Meets Modern Comfort",
+      "description": "Beautifully renovated 2-bedroom blending classic architecture with contemporary amenities. Original hardwood floors, updated kitchen and bath, decorative fireplace, and central location."
+    },
+    {
+      "title": "Compact Urban Micro-Loft",
+      "description": "Efficiently designed micro-loft maximizing every square foot. Murphy bed, convertible furniture, and clever storage solutions. Perfect for minimalists in expensive urban markets."
+    },
+    {
+      "title": "Mountain View Retreat",
+      "description": "Serene 2-bedroom with panoramic mountain vistas. Fireplace, heated floors, and balcony perfect for morning coffee. Close to hiking trails and ski resorts. Year-round outdoor paradise."
+    },
+    {
+      "title": "Newly Built Contemporary 3BR",
+      "description": "Brand new 3-bedroom with latest construction standards. Open concept, quartz countertops, stainless appliances, and in-unit washer/dryer. Never-before-lived-in with builder warranty."
+    }
+  ]
+}

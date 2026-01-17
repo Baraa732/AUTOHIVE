@@ -818,157 +818,340 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
 
   Widget _buildApartmentCard(Apartment apartment, int index) {
     final isDarkMode = ref.watch(themeProvider);
-    return GestureDetector(
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => ApartmentDetailsScreen(apartmentId: apartment.id),
-        ),
-      ),
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        decoration: BoxDecoration(
-          color: AppTheme.getCardColor(isDarkMode),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppTheme.getBorderColor(isDarkMode)),
-          boxShadow: [
-            BoxShadow(
-              color: isDarkMode
-                  ? Colors.black.withOpacity(0.15)
-                  : Colors.grey.withOpacity(0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildApartmentImage(apartment),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          apartment.title,
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.getTextColor(isDarkMode),
+    return TweenAnimationBuilder(
+      duration: Duration(milliseconds: 300 + (index * 50)),
+      tween: Tween<double>(begin: 0, end: 1),
+      builder: (context, double value, child) {
+        return Transform.scale(
+          scale: 0.95 + (0.05 * value),
+          child: Opacity(
+            opacity: value,
+            child: GestureDetector(
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ApartmentDetailsScreen(apartmentId: apartment.id),
+                ),
+              ),
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  gradient: isDarkMode
+                      ? LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            AppTheme.getCardColor(isDarkMode),
+                            AppTheme.getCardColor(isDarkMode).withOpacity(0.8),
+                          ],
+                        )
+                      : null,
+                  color: isDarkMode ? null : AppTheme.getCardColor(isDarkMode),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: AppTheme.getBorderColor(isDarkMode).withOpacity(0.5),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: isDarkMode
+                          ? Colors.black.withOpacity(0.3)
+                          : const Color(0xFFff6f2d).withOpacity(0.08),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                    BoxShadow(
+                      color: isDarkMode
+                          ? Colors.black.withOpacity(0.2)
+                          : Colors.grey.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Stack(
+                      children: [
+                        Hero(
+                          tag: 'apartment_${apartment.id}',
+                          child: Container(
+                            height: 220,
+                            width: double.infinity,
+                            child: _buildApartmentImage(apartment),
                           ),
                         ),
-                      ),
-                      _buildStatusBadge(apartment.isAvailable),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.location_on,
-                        color: Color(0xFFff6f2d),
-                        size: 16,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${apartment.city}, ${apartment.governorate}',
-                        style: TextStyle(
-                          color: AppTheme.getSubtextColor(isDarkMode),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.bed,
-                        size: 16,
-                        color: AppTheme.getSubtextColor(isDarkMode),
-                      ),
-                      Text(
-                        ' ${apartment.bedrooms}',
-                        style: TextStyle(
-                          color: AppTheme.getSubtextColor(isDarkMode),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Icon(
-                        Icons.bathtub,
-                        size: 16,
-                        color: AppTheme.getSubtextColor(isDarkMode),
-                      ),
-                      Text(
-                        ' ${apartment.bathrooms}',
-                        style: TextStyle(
-                          color: AppTheme.getSubtextColor(isDarkMode),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Icon(
-                        Icons.square_foot,
-                        size: 16,
-                        color: AppTheme.getSubtextColor(isDarkMode),
-                      ),
-                      Text(
-                        ' ${apartment.area}m²',
-                        style: TextStyle(
-                          color: AppTheme.getSubtextColor(isDarkMode),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Text(
-                        '\$${apartment.price}/${AppLocalizations.of(context).translate('night')}',
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFFff6f2d),
-                        ),
-                      ),
-                      const Spacer(),
-                      _buildOwnerProfile(apartment),
-                      const SizedBox(width: 8),
-                      Consumer(
-                        builder: (context, ref, _) {
-                          final favoriteState = ref.watch(favoriteProvider);
-                          final isFav = favoriteState.favorites.any((f) => f.apartmentId == apartment.id.toString());
-                          return IconButton(
-                            icon: Icon(
-                              isFav ? Icons.favorite : Icons.favorite_border,
-                              color: Colors.red,
-                            ),
-                            onPressed: () async {
-                              if (isFav) {
-                                final favId = favoriteState.favorites.firstWhere((f) => f.apartmentId == apartment.id.toString()).id;
-                                await ref.read(favoriteProvider.notifier).removeFromFavorites(favId);
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Removed from favorites')),
-                                  );
-                                }
-                              } else {
-                                await ref.read(favoriteProvider.notifier).addToFavorites(apartment.id.toString());
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Added to favorites')),
-                                  );
-                                }
-                              }
+                        Positioned(
+                          top: 12,
+                          right: 12,
+                          child: Consumer(
+                            builder: (context, ref, _) {
+                              final favoriteState = ref.watch(favoriteProvider);
+                              final isFav = favoriteState.favorites.any(
+                                (f) => f.apartmentId == apartment.id.toString(),
+                              );
+                              return Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.95),
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.15),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: IconButton(
+                                  icon: Icon(
+                                    isFav ? Icons.favorite : Icons.favorite_border,
+                                    color: isFav ? Colors.red : Colors.grey[700],
+                                    size: 22,
+                                  ),
+                                  onPressed: () async {
+                                    if (isFav) {
+                                      final favId = favoriteState.favorites
+                                          .firstWhere(
+                                            (f) => f.apartmentId == apartment.id.toString(),
+                                          )
+                                          .id;
+                                      await ref
+                                          .read(favoriteProvider.notifier)
+                                          .removeFromFavorites(favId);
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: const Text('Removed from favorites'),
+                                            behavior: SnackBarBehavior.floating,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    } else {
+                                      await ref
+                                          .read(favoriteProvider.notifier)
+                                          .addToFavorites(apartment.id.toString());
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: const Text('Added to favorites'),
+                                            behavior: SnackBarBehavior.floating,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  },
+                                ),
+                              );
                             },
-                          );
-                        },
+                          ),
+                        ),
+                        Positioned(
+                          top: 12,
+                          left: 12,
+                          child: _buildStatusBadge(apartment.isAvailable),
+                        ),
+                        if (apartment.images.length > 1)
+                          Positioned(
+                            bottom: 12,
+                            right: 12,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.7),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.photo_library,
+                                    color: Colors.white,
+                                    size: 14,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '${apartment.images.length}',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(18),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            apartment.title,
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.getTextColor(isDarkMode),
+                              letterSpacing: -0.5,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFff6f2d).withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(
+                                  Icons.location_on,
+                                  color: Color(0xFFff6f2d),
+                                  size: 16,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  '${apartment.city}, ${apartment.governorate}',
+                                  style: TextStyle(
+                                    color: AppTheme.getSubtextColor(isDarkMode),
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+                          Row(
+                            children: [
+                              _buildFeatureChip(
+                                Icons.bed_outlined,
+                                '${apartment.bedrooms}',
+                                isDarkMode,
+                              ),
+                              const SizedBox(width: 8),
+                              _buildFeatureChip(
+                                Icons.bathtub_outlined,
+                                '${apartment.bathrooms}',
+                                isDarkMode,
+                              ),
+                              const SizedBox(width: 8),
+                              _buildFeatureChip(
+                                Icons.square_foot,
+                                '${apartment.area}m²',
+                                isDarkMode,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  const Color(0xFFff6f2d).withOpacity(0.1),
+                                  const Color(0xFF4a90e2).withOpacity(0.05),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: const Color(0xFFff6f2d).withOpacity(0.2),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Price per night',
+                                        style: TextStyle(
+                                          color: AppTheme.getSubtextColor(isDarkMode),
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '\$${apartment.price}',
+                                        style: const TextStyle(
+                                          fontSize: 26,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFFff6f2d),
+                                          letterSpacing: -1,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                _buildOwnerProfile(apartment),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildFeatureChip(IconData icon, String label, bool isDarkMode) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+        decoration: BoxDecoration(
+          color: isDarkMode
+              ? Colors.white.withOpacity(0.05)
+              : Colors.grey.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppTheme.getBorderColor(isDarkMode).withOpacity(0.3),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 18,
+              color: const Color(0xFFff6f2d),
+            ),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: AppTheme.getTextColor(isDarkMode),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
@@ -1012,18 +1195,41 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
   Widget _buildStatusBadge(bool isAvailable) {
     final l10n = AppLocalizations.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: isAvailable ? Colors.green : Colors.red,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        isAvailable ? l10n.translate('available') : l10n.translate('booked'),
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
+        gradient: LinearGradient(
+          colors: isAvailable
+              ? [Colors.green.shade400, Colors.green.shade600]
+              : [Colors.red.shade400, Colors.red.shade600],
         ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: (isAvailable ? Colors.green : Colors.red).withOpacity(0.4),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isAvailable ? Icons.check_circle : Icons.event_busy,
+            color: Colors.white,
+            size: 14,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            isAvailable ? l10n.translate('available') : l10n.translate('booked'),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1034,26 +1240,43 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
     return GestureDetector(
       onTap: () => _showOwnerInfo(apartment.owner!),
       child: Container(
-        padding: const EdgeInsets.all(4),
+        padding: const EdgeInsets.all(3),
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          border: Border.all(color: const Color(0xFFff6f2d), width: 2),
+          gradient: const LinearGradient(
+            colors: [Color(0xFFff6f2d), Color(0xFF4a90e2)],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFff6f2d).withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
-        child: CircleAvatar(
-          radius: 16,
-          backgroundImage: apartment.owner!['profile_image_url'] != null
-              ? NetworkImage(apartment.owner!['profile_image_url'])
-              : null,
-          backgroundColor: const Color(0xFFff6f2d),
-          child: apartment.owner!['profile_image_url'] == null
-              ? Text(
-                  apartment.owner!['first_name']?[0]?.toUpperCase() ?? 'O',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                )
-              : null,
+        child: Container(
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.white,
+          ),
+          padding: const EdgeInsets.all(2),
+          child: CircleAvatar(
+            radius: 20,
+            backgroundImage: apartment.owner!['profile_image_url'] != null
+                ? NetworkImage(apartment.owner!['profile_image_url'])
+                : null,
+            backgroundColor: const Color(0xFFff6f2d),
+            child: apartment.owner!['profile_image_url'] == null
+                ? Text(
+                    apartment.owner!['first_name']?[0]?.toUpperCase() ?? 'O',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  )
+                : null,
+          ),
         ),
       ),
     );

@@ -903,33 +903,63 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
       );
     } else if (canRate) {
       return Container(
-        height: 48,
+        width: double.infinity,
+        height: 52,
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.amber, Colors.amber.shade700],
+            colors: [
+              AppTheme.primaryOrange,
+              AppTheme.primaryOrange.withOpacity(0.8),
+            ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.amber.withValues(alpha: 0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
+              color: AppTheme.primaryOrange.withOpacity(0.4),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+              spreadRadius: 0,
             ),
           ],
         ),
-        child: ElevatedButton.icon(
+        child: ElevatedButton(
           onPressed: () => _handleRateBooking(booking),
-          icon: const Icon(Icons.star, size: 18),
-          label: Text(l10n.translate('rate_stay')),
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.transparent,
             foregroundColor: Colors.white,
             shadowColor: Colors.transparent,
+            elevation: 0,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(16),
             ),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.star_rounded,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                l10n.translate('rate_stay'),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
           ),
         ),
       );
