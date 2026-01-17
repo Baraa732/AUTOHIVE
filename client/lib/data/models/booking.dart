@@ -30,17 +30,29 @@ class Booking {
   });
 
   factory Booking.fromJson(Map<String, dynamic> json) {
-    // Helper function to parse dates in local time (Damascus time)
+    // Helper function to parse dates correctly without timezone issues
     DateTime parseDate(dynamic dateValue) {
       if (dateValue == null) throw Exception('Date value is null');
       final dateStr = dateValue.toString();
-      // If it's just a date (YYYY-MM-DD), parse as local time
+
+      // If it's just a date (YYYY-MM-DD), parse as local date without time
       if (dateStr.length == 10 && !dateStr.contains('T')) {
-        return DateTime.parse('${dateStr}T00:00:00');
+        final parts = dateStr.split('-');
+        return DateTime(
+          int.parse(parts[0]), // year
+          int.parse(parts[1]), // month
+          int.parse(parts[2]), // day
+        );
       }
-      // Parse as local time by removing Z and parsing
-      final cleanStr = dateStr.replaceAll('Z', '');
-      return DateTime.parse(cleanStr);
+
+      // For datetime strings, parse as UTC to avoid timezone issues
+      if (dateStr.endsWith('Z')) {
+        // Parse as UTC time
+        return DateTime.parse(dateStr).toUtc();
+      }
+
+      // For other datetime strings, parse normally
+      return DateTime.parse(dateStr.replaceAll('Z', ''));
     }
 
     try {
@@ -53,7 +65,9 @@ class Booking {
         totalPrice: double.parse(json['total_price'].toString()),
         status: json['status'] ?? 'pending',
         createdAt: parseDate(json['created_at']),
-        updatedAt: json['updated_at'] != null ? parseDate(json['updated_at']) : null,
+        updatedAt: json['updated_at'] != null
+            ? parseDate(json['updated_at'])
+            : null,
         guests: json['guests'] as int?,
         message: json['message'] as String?,
         apartment: json['apartment'] as Map<String, dynamic>?,

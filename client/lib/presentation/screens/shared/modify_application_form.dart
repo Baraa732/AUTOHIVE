@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../../core/network/api_service.dart';
 import '../../../data/models/rental_application.dart';
 
@@ -78,8 +79,8 @@ class _ModifyApplicationFormScreenState extends State<ModifyApplicationFormScree
     try {
       final response = await _apiService.modifyRentalApplication(
         widget.application.id,
-        checkIn: _selectedCheckIn.toString().split(' ')[0],
-        checkOut: _selectedCheckOut.toString().split(' ')[0],
+        checkIn: DateFormat('yyyy-MM-dd').format(_selectedCheckIn),
+        checkOut: DateFormat('yyyy-MM-dd').format(_selectedCheckOut),
         message: _messageController.text.isNotEmpty ? _messageController.text : null,
       );
 

@@ -48,26 +48,45 @@ class RentalApplication {
   }
 
   factory RentalApplication.fromJson(Map<String, dynamic> json) {
+    // Helper function to parse dates correctly without timezone issues
+    DateTime parseDate(dynamic dateValue) {
+      if (dateValue == null) throw Exception('Date value is null');
+      final dateStr = dateValue.toString();
+      
+      // If it's just a date (YYYY-MM-DD), parse as local date without time
+      if (dateStr.length == 10 && !dateStr.contains('T')) {
+        final parts = dateStr.split('-');
+        return DateTime(
+          int.parse(parts[0]), // year
+          int.parse(parts[1]), // month
+          int.parse(parts[2]), // day
+        );
+      }
+      
+      // For datetime strings, parse normally
+      return DateTime.parse(dateStr.replaceAll('Z', ''));
+    }
+
     return RentalApplication(
       id: json['id'].toString(),
       userId: json['user_id'].toString(),
       apartmentId: json['apartment_id'].toString(),
-      checkIn: DateTime.parse(json['check_in']),
-      checkOut: DateTime.parse(json['check_out']),
+      checkIn: parseDate(json['check_in']),
+      checkOut: parseDate(json['check_out']),
       message: json['message'] as String?,
       submissionAttempt: json['submission_attempt'] ?? 0,
       status: json['status'] ?? 'pending',
       rejectedReason: json['rejected_reason'] as String?,
-      submittedAt: DateTime.parse(json['submitted_at']),
+      submittedAt: parseDate(json['submitted_at']),
       respondedAt: json['responded_at'] != null 
-          ? DateTime.parse(json['responded_at']) 
+          ? parseDate(json['responded_at']) 
           : null,
       previousStatus: json['previous_status'] as String?,
       previousData: json['previous_data'] as Map<String, dynamic>?,
       currentData: json['current_data'] as Map<String, dynamic>?,
       modificationReason: json['modification_reason'] as String?,
       modificationSubmittedAt: json['modification_submitted_at'] != null
-          ? DateTime.parse(json['modification_submitted_at'])
+          ? parseDate(json['modification_submitted_at'])
           : null,
       user: json['user'] as Map<String, dynamic>?,
       apartment: json['apartment'] as Map<String, dynamic>?,

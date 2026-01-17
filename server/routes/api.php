@@ -26,6 +26,31 @@ Route::get('/', function () {
     return response()->json(['message' => 'AUTOHIVE API Ready', 'status' => 'ok']);
 });
 
+// Debug time and timezone
+Route::get('/debug-time', function () {
+    return response()->json([
+        'current_time_utc' => now()->setTimezone('UTC')->toDateTimeString(),
+        'current_time_syria' => now()->toDateTimeString(),
+        'timezone' => config('app.timezone'),
+        'carbon_now' => \Carbon\Carbon::now()->toDateTimeString(),
+        'carbon_syria' => \Carbon\Carbon::now('Asia/Damascus')->toDateTimeString(),
+    ]);
+});
+
+// Debug booking dates
+Route::post('/debug-booking-dates', function (Illuminate\Http\Request $request) {
+    return response()->json([
+        'received_check_in' => $request->check_in,
+        'received_check_out' => $request->check_out,
+        'received_check_in_type' => gettype($request->check_in),
+        'received_check_out_type' => gettype($request->check_out),
+        'parsed_check_in' => $request->check_in ? \Carbon\Carbon::parse($request->check_in)->toDateTimeString() : null,
+        'parsed_check_out' => $request->check_out ? \Carbon\Carbon::parse($request->check_out)->toDateTimeString() : null,
+        'current_syria_time' => now()->toDateTimeString(),
+        'current_utc_time' => now()->setTimezone('UTC')->toDateTimeString(),
+    ]);
+});
+
 // Test image URLs
 Route::get('/test-images', [\App\Http\Controllers\Api\TestController::class, 'testImages']);
 
@@ -70,6 +95,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/bookings/check-availability/{apartmentId}', [BookingController::class, 'checkAvailability']);
     // Parameterized routes come last
     Route::get('/bookings/{id}', [BookingController::class, 'show']);
+    Route::put('/bookings/{id}', [BookingController::class, 'update']);
+    Route::delete('/bookings/{id}', [BookingController::class, 'destroy']);
     Route::get('/my-apartment-bookings', [BookingController::class, 'myApartmentBookings']);
     Route::get('/my-apartment-bookings/{id}', [BookingController::class, 'apartmentBookingShow']);
 
@@ -160,8 +187,6 @@ Route::middleware(['auth:sanctum', 'approved'])->group(function () {
     Route::post('/booking-requests', [BookingController::class, 'requestBooking']);
     Route::get('/my-booking-requests', [BookingRequestController::class, 'myRequests']);
     Route::post('/bookings', [BookingController::class, 'store']);
-    Route::put('/bookings/{id}', [BookingController::class, 'update']);
-    Route::delete('/bookings/{id}', [BookingController::class, 'destroy']);
 
 
     //10 Reviews (Available to all users)

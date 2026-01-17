@@ -416,15 +416,31 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
                   children: [
                     _buildDateCard(
                       l10n.translate('check_in'),
-                      DateFormat('MMM d').format(booking.checkIn),
-                      DateFormat('yyyy').format(booking.checkIn),
+                      DateFormat('MMM d').format(
+                        booking.checkIn.isUtc
+                            ? booking.checkIn.toLocal()
+                            : booking.checkIn,
+                      ),
+                      DateFormat('yyyy').format(
+                        booking.checkIn.isUtc
+                            ? booking.checkIn.toLocal()
+                            : booking.checkIn,
+                      ),
                       isDark,
                     ),
                     const SizedBox(width: 12),
                     _buildDateCard(
                       l10n.translate('check_out'),
-                      DateFormat('MMM d').format(booking.checkOut),
-                      DateFormat('yyyy').format(booking.checkOut),
+                      DateFormat('MMM d').format(
+                        booking.checkOut.isUtc
+                            ? booking.checkOut.toLocal()
+                            : booking.checkOut,
+                      ),
+                      DateFormat('yyyy').format(
+                        booking.checkOut.isUtc
+                            ? booking.checkOut.toLocal()
+                            : booking.checkOut,
+                      ),
                       isDark,
                     ),
                     const SizedBox(width: 12),
@@ -627,16 +643,6 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              l10n.translate('duration'),
-              style: TextStyle(
-                fontSize: 10,
-                color: AppTheme.getSubtextColor(isDark),
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.5,
-              ),
-            ),
-            const SizedBox(height: 4),
             Row(
               children: [
                 Text(
@@ -945,10 +951,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
                   color: Colors.white.withOpacity(0.2),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
-                  Icons.star_rounded,
-                  size: 20,
-                ),
+                child: const Icon(Icons.star_rounded, size: 20),
               ),
               const SizedBox(width: 12),
               Text(
@@ -1127,21 +1130,6 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
   Future<void> _handleEditBooking(Booking booking) async {
     final l10n = AppLocalizations.of(context);
 
-    // Check if 24 hours have passed since check-in ONLY if check-in has already occurred
-    final now = DateTime.now();
-    if (now.isAfter(booking.checkIn)) {
-      final hoursSinceCheckIn = now.difference(booking.checkIn).inHours;
-      if (hoursSinceCheckIn >= 24) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Cannot modify booking after 24 hours from check-in'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
-    }
-
     DateTime? selectedCheckIn = booking.checkIn;
     DateTime? selectedCheckOut = booking.checkOut;
     bool isCheckingAvailability = false;
@@ -1247,12 +1235,12 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
                                     final result = await apiService
                                         .checkAvailability(
                                           apartmentId: booking.apartmentId,
-                                          checkIn: selectedCheckIn!
-                                              .toIso8601String()
-                                              .split('T')[0],
-                                          checkOut: selectedCheckOut!
-                                              .toIso8601String()
-                                              .split('T')[0],
+                                          checkIn: DateFormat(
+                                            'yyyy-MM-dd',
+                                          ).format(selectedCheckIn!),
+                                          checkOut: DateFormat(
+                                            'yyyy-MM-dd',
+                                          ).format(selectedCheckOut!),
                                         );
                                     setState(() {
                                       availabilityResult = result;
@@ -1359,7 +1347,59 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
                   onPressed:
                       (availabilityResult != null &&
                           availabilityResult!['success'] == true)
-                      ? () => Navigator.pop(context, true)
+                      ? () async {
+                          final oldNights = booking.checkOut.difference(booking.checkIn).inDays;
+                          final newNights = selectedCheckOut!.difference(selectedCheckIn!).inDays;
+                          
+                          if (newNights < oldNights) {
+                            final pricePerNight = booking.totalPrice / oldNights;
+                            final lostAmount = (oldNights - newNights) * pricePerNight;
+                            
+                            final confirmShorten = await showDialog<bool>(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                title: const Text('⚠️ No Refund Warning'),
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Shortening your booking will NOT result in a refund.',
+                                      style: TextStyle(fontWeight: FontWeight.bold),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text('Original: $oldNights nights'),
+                                    Text('New: $newNights nights'),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'You will lose: \$${lostAmount.toStringAsFixed(2)}',
+                                      style: const TextStyle(
+                                        color: Colors.red,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(ctx, false),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () => Navigator.pop(ctx, true),
+                                    style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                                    child: const Text('Continue'),
+                                  ),
+                                ],
+                              ),
+                            ) ?? false;
+                            
+                            if (!confirmShorten) return;
+                          }
+                          
+                          Navigator.pop(context, true);
+                        }
                       : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor:
@@ -1384,8 +1424,8 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
         final apiService = ApiService();
         final success = await apiService.updateBooking(
           booking.id,
-          checkIn: selectedCheckIn!.toIso8601String().split('T')[0],
-          checkOut: selectedCheckOut!.toIso8601String().split('T')[0],
+          checkIn: DateFormat('yyyy-MM-dd').format(selectedCheckIn!),
+          checkOut: DateFormat('yyyy-MM-dd').format(selectedCheckOut!),
         );
 
         if (mounted) {
@@ -1396,18 +1436,56 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
                 backgroundColor: Colors.green,
               ),
             );
-            // Refresh data to show updated status
             _loadData();
           } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  success['message'] ??
-                      l10n.translate('failed_submit_modification'),
+            // Check if it's an insufficient balance error
+            if (success['data'] != null && success['data']['shortage_usd'] != null) {
+              final shortage = success['data']['shortage_usd'];
+              final required = success['data']['required_difference_usd'];
+              
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Insufficient Balance'),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('You need additional funds to extend this booking.'),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Required: \$${required?.toStringAsFixed(2) ?? '0.00'}',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      Text('Shortage: \$${shortage.toStringAsFixed(2)}'),
+                    ],
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cancel'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        // Navigate to deposit screen
+                      },
+                      child: const Text('Add Funds'),
+                    ),
+                  ],
                 ),
-                backgroundColor: Colors.red,
-              ),
-            );
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    success['message'] ??
+                        l10n.translate('failed_submit_modification'),
+                  ),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
           }
         }
       } catch (e) {

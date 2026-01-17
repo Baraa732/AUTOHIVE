@@ -15,7 +15,7 @@ class BookingController extends Controller
     public function index(Request $request)
     {
         $userId = $request->user()->id;
-        
+
         // Load ONLY from Booking table to avoid duplicates from BookingRequest
         $query = Booking::with(['apartment.user', 'user'])
             ->where('user_id', $userId);
@@ -90,6 +90,17 @@ class BookingController extends Controller
             $nights = $checkIn->diffInDays($checkOut);
             $totalPrice = $nights * $apartment->price_per_night;
 
+            // Debug booking creation dates
+            Log::info('Creating booking with dates', [
+                'raw_check_in' => $request->check_in,
+                'raw_check_out' => $request->check_out,
+                'parsed_check_in' => $checkIn->toDateTimeString(),
+                'parsed_check_out' => $checkOut->toDateTimeString(),
+                'nights' => $nights,
+                'total_price' => $totalPrice,
+                'timezone' => config('app.timezone')
+            ]);
+
             $booking = Booking::create([
                 'user_id' => $request->user()->id,
                 'apartment_id' => $request->apartment_id,
@@ -138,29 +149,72 @@ class BookingController extends Controller
             ->whereIn('status', [Booking::STATUS_PENDING, Booking::STATUS_CONFIRMED])
             ->findOrFail($id);
 
-        // Check if booking can be modified (not within 24 hours of check-in)
-        if ($booking->check_in->diffInHours(now()) < 24) {
+        // Check if booking can be modified
+        // Allow editing if: 
+        // 1. Booking was just created (within 60 minutes) OR
+        // 2. Booking is more than 24 hours away from check-in OR
+        // 3. Booking is not approved (pending status) AND check-in is in future
+        $minutesSinceCreation = $booking->created_at->diffInMinutes(now());
+        $hoursUntilCheckIn = $booking->check_in->diffInHours(now());
+        $isCheckInFuture = $booking->check_in->isFuture();
+        $isBookingPending = $booking->status === Booking::STATUS_PENDING;
+
+        // Debug logging
+        Log::info('Booking modification check', [
+            'booking_id' => $booking->id,
+            'created_at' => $booking->created_at->toDateTimeString(),
+            'check_in' => $booking->check_in->toDateTimeString(),
+            'now' => now()->toDateTimeString(),
+            'minutes_since_creation' => $minutesSinceCreation,
+            'hours_until_check_in' => $hoursUntilCheckIn,
+            'is_check_in_future' => $isCheckInFuture,
+            'is_booking_pending' => $isBookingPending,
+            'timezone' => config('app.timezone')
+        ]);
+
+        // Allow editing only if: created recently OR (check-in is future AND booking is pending)
+        if ($minutesSinceCreation > 60 && (!$isCheckInFuture || !$isBookingPending)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Cannot modify booking within 24 hours of check-in',
-                'errors' => ['timing' => ['Too close to check-in date']]
+                'message' => 'Cannot modify booking: contract is approved or stay has begun',
+                'errors' => ['timing' => ['Date changes only allowed for pending bookings with future check-in dates']]
             ], 422);
         }
 
         $request->validate([
-            'check_in' => 'date|after:today',
-            'check_out' => 'date|after:check_in',
-            'payment_details' => 'array',
+            'check_in' => 'sometimes|date|after_or_equal:today',
+            'check_out' => 'sometimes|date|after:check_in',
+            'payment_details' => 'sometimes|array',
         ]);
 
         DB::beginTransaction();
         try {
+            Log::info('Booking update attempt', [
+                'booking_id' => $id,
+                'request_data' => $request->all(),
+                'user_id' => $request->user()->id,
+                'raw_check_in' => $request->check_in,
+                'raw_check_out' => $request->check_out,
+                'check_in_type' => gettype($request->check_in),
+                'check_out_type' => gettype($request->check_out)
+            ]);
+
             $updateData = [];
             $recalculatePrice = false;
 
-            if ($request->check_in || $request->check_out) {
-                $checkIn = $request->check_in ?? $booking->check_in->format('Y-m-d');
-                $checkOut = $request->check_out ?? $booking->check_out->format('Y-m-d');
+            if ($request->has('check_in') || $request->has('check_out')) {
+                // Use provided dates or keep existing ones
+                $checkIn = $request->has('check_in') ? $request->check_in : $booking->check_in->format('Y-m-d');
+                $checkOut = $request->has('check_out') ? $request->check_out : $booking->check_out->format('Y-m-d');
+
+                Log::info('Processing date change', [
+                    'original_check_in' => $booking->check_in->format('Y-m-d'),
+                    'original_check_out' => $booking->check_out->format('Y-m-d'),
+                    'new_check_in' => $checkIn,
+                    'new_check_out' => $checkOut,
+                    'request_has_check_in' => $request->has('check_in'),
+                    'request_has_check_out' => $request->has('check_out')
+                ]);
 
                 // Check availability for new dates
                 if ($booking->apartment->isBookedForDates($checkIn, $checkOut, $booking->id)) {
@@ -183,28 +237,88 @@ class BookingController extends Controller
 
             if ($recalculatePrice) {
                 $nights = \Carbon\Carbon::parse($updateData['check_in'])->diffInDays($updateData['check_out']);
-                $updateData['total_price'] = $nights * $booking->apartment->price_per_night;
+                $newTotalPrice = $nights * $booking->apartment->price_per_night;
+                $oldTotalPrice = $booking->total_price;
+
+                Log::info('Price recalculated', [
+                    'nights' => $nights,
+                    'price_per_night' => $booking->apartment->price_per_night,
+                    'old_total_price' => $oldTotalPrice,
+                    'new_total_price' => $newTotalPrice,
+                    'price_difference' => $newTotalPrice - $oldTotalPrice
+                ]);
+
+                // If new price is higher, check wallet balance and deduct difference
+                if ($newTotalPrice > $oldTotalPrice) {
+                    $priceDifference = $newTotalPrice - $oldTotalPrice;
+                    $priceDifferenceSpy = intval($priceDifference * 110);
+                    
+                    $walletService = app(\App\Services\WalletService::class);
+                    $tenantId = $booking->user_id;
+                    
+                    // Check if tenant has sufficient funds for the difference
+                    if (!$walletService->validateSufficientBalance($tenantId, $priceDifferenceSpy)) {
+                        DB::rollBack();
+                        
+                        $tenantWallet = \App\Models\User::find($tenantId)->wallet;
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Insufficient funds to extend booking duration',
+                            'errors' => ['wallet' => ['Insufficient balance for price difference']],
+                            'data' => [
+                                'required_difference_usd' => $priceDifference,
+                                'required_difference_spy' => $priceDifferenceSpy,
+                                'current_balance_usd' => $tenantWallet ? $tenantWallet->balance_usd : 0,
+                                'current_balance_spy' => $tenantWallet ? intval($tenantWallet->balance_spy) : 0,
+                                'shortage_usd' => $priceDifference - ($tenantWallet ? $tenantWallet->balance_usd : 0),
+                            ]
+                        ], 422);
+                    }
+                    
+                    // Deduct the difference from tenant and transfer to landlord
+                    $landlordId = $booking->apartment->user_id;
+                    $walletService->deductAndTransfer($tenantId, $landlordId, $priceDifferenceSpy, $booking->id);
+                    
+                    Log::info('Additional payment processed for booking extension', [
+                        'booking_id' => $booking->id,
+                        'price_difference_usd' => $priceDifference,
+                        'price_difference_spy' => $priceDifferenceSpy
+                    ]);
+                }
+                // If new price is lower, do NOT refund the difference (tenant loses the difference)
+                elseif ($newTotalPrice < $oldTotalPrice) {
+                    Log::info('Booking shortened - no refund issued', [
+                        'booking_id' => $booking->id,
+                        'price_reduction' => $oldTotalPrice - $newTotalPrice
+                    ]);
+                }
+
+                $updateData['total_price'] = $newTotalPrice;
             }
 
             // Reset status to pending if dates changed and booking was confirmed
-            if (($request->check_in || $request->check_out) && $booking->status === Booking::STATUS_CONFIRMED) {
+            if (($request->has('check_in') || $request->has('check_out')) && $booking->status === Booking::STATUS_CONFIRMED) {
                 $updateData['status'] = Booking::STATUS_PENDING;
+                Log::info('Status reset to pending due to date change');
             }
+
+            Log::info('Final update data', ['update_data' => $updateData]);
 
             $booking->update($updateData);
             DB::commit();
 
             // Notify owner if dates changed
-            if ($request->check_in || $request->check_out) {
+            if ($request->has('check_in') || $request->has('check_out')) {
                 $this->notifyOwnerOfModification($booking);
             }
 
             return response()->json([
                 'success' => true,
-                'message' => 'Booking updated successfully',
+                'message' => ($request->has('check_in') || $request->has('check_out'))
+                    ? 'Booking updated successfully. Owner approval required for date changes.'
+                    : 'Booking updated successfully',
                 'data' => $booking->fresh(['apartment.user', 'user'])
             ]);
-            
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
@@ -220,8 +334,8 @@ class BookingController extends Controller
         \App\Models\Notification::create([
             'user_id' => $booking->apartment->user_id,
             'type' => 'booking_modified',
-            'title' => 'Booking Modified',
-            'message' => "Booking for {$booking->apartment->title} has been modified",
+            'title' => 'Booking Modification - Approval Required',
+            'message' => "Booking for {$booking->apartment->title} has been modified and requires your approval",
             'data' => ['booking_id' => $booking->id]
         ]);
     }
@@ -307,10 +421,10 @@ class BookingController extends Controller
     public function myApartmentBookings(Request $request)
     {
         $userId = $request->user()->id;
-        
+
         // Load ONLY from Booking table - no duplicates from BookingRequest
         $query = Booking::with(['apartment.user', 'user'])
-            ->whereHas('apartment', function($query) use ($userId) {
+            ->whereHas('apartment', function ($query) use ($userId) {
                 $query->where('user_id', $userId);
             });
 
@@ -349,7 +463,7 @@ class BookingController extends Controller
     public function apartmentBookingShow(Request $request, $id)
     {
         $booking = Booking::with(['apartment', 'user'])
-            ->whereHas('apartment', function($query) use ($request) {
+            ->whereHas('apartment', function ($query) use ($request) {
                 $query->where('user_id', $request->user()->id);
             })
             ->findOrFail($id);
@@ -396,7 +510,7 @@ class BookingController extends Controller
             // Check if tenant has sufficient funds
             if (!$walletService->validateSufficientBalance($tenantId, $rentalAmountSpy)) {
                 DB::rollBack();
-                
+
                 $tenantWallet = \App\Models\User::find($tenantId)->wallet;
                 return response()->json([
                     'success' => false,
@@ -496,18 +610,18 @@ class BookingController extends Controller
     public function debugBookings(Request $request)
     {
         $userId = $request->user()->id;
-        
+
         // Get all bookings made by this user
         $myBookings = Booking::with(['apartment', 'user'])
             ->where('user_id', $userId)
             ->get();
-            
+
         // Get all apartments owned by this user
         $myApartments = \App\Models\Apartment::where('user_id', $userId)->get();
-        
+
         // Get all bookings for apartments owned by this user
         $apartmentBookings = Booking::with(['apartment', 'user'])
-            ->whereHas('apartment', function($query) use ($userId) {
+            ->whereHas('apartment', function ($query) use ($userId) {
                 $query->where('user_id', $userId);
             })
             ->get();
@@ -517,7 +631,7 @@ class BookingController extends Controller
         $allUserIds = Booking::select('user_id')->distinct()->pluck('user_id')->toArray();
         $apartmentIds = Apartment::where('user_id', $userId)->pluck('id')->toArray();
         $bookingsOnApartmentIds = Booking::whereIn('apartment_id', $apartmentIds)->count();
-            
+
         return response()->json([
             'authenticated_user' => [
                 'id' => $userId,
@@ -562,12 +676,12 @@ class BookingController extends Controller
                 break;
             case 'past':
                 $query->whereIn('status', [Booking::STATUS_COMPLETED, Booking::STATUS_CANCELLED])
-                      ->where('check_out', '<', now());
+                    ->where('check_out', '<', now());
                 break;
             case 'current':
                 $query->where('status', Booking::STATUS_CONFIRMED)
-                      ->where('check_in', '<=', now())
-                      ->where('check_out', '>=', now());
+                    ->where('check_in', '<=', now())
+                    ->where('check_out', '>=', now());
                 break;
             default:
                 // All bookings
@@ -587,12 +701,19 @@ class BookingController extends Controller
 
         // Add additional info for each booking
         $bookings->getCollection()->transform(function ($booking) {
-            $booking->can_review = $booking->status === Booking::STATUS_COMPLETED && 
-                                 !$booking->reviews()->where('user_id', $booking->user_id)->exists();
-            $booking->can_cancel = in_array($booking->status, [Booking::STATUS_PENDING, Booking::STATUS_CONFIRMED]) && 
-                                 $booking->check_in->isFuture();
-            $booking->can_modify = in_array($booking->status, [Booking::STATUS_PENDING, Booking::STATUS_CONFIRMED]) && 
-                                 $booking->check_in->diffInHours(now()) > 24;
+            $booking->can_review = $booking->status === Booking::STATUS_COMPLETED &&
+                !$booking->reviews()->where('user_id', $booking->user_id)->exists();
+            $booking->can_cancel = in_array($booking->status, [Booking::STATUS_PENDING, Booking::STATUS_CONFIRMED]) &&
+                $booking->check_in->isFuture();
+
+            // Apply same modification logic as update method
+            $minutesSinceCreation = $booking->created_at->diffInMinutes(now());
+            $hoursUntilCheckIn = $booking->check_in->diffInHours(now());
+            $isCheckInFuture = $booking->check_in->isFuture();
+            $isBookingPending = $booking->status === Booking::STATUS_PENDING;
+
+            $booking->can_modify = in_array($booking->status, [Booking::STATUS_PENDING, Booking::STATUS_CONFIRMED]) &&
+                ($minutesSinceCreation <= 60 || ($isCheckInFuture && $isBookingPending));
             return $booking;
         });
 
@@ -615,7 +736,15 @@ class BookingController extends Controller
         // Add action flags
         $bookings->getCollection()->transform(function ($booking) {
             $booking->can_cancel = $booking->check_in->isFuture();
-            $booking->can_modify = $booking->check_in->diffInHours(now()) > 24;
+
+            // Apply same modification logic as update method
+            $minutesSinceCreation = $booking->created_at->diffInMinutes(now());
+            $hoursUntilCheckIn = $booking->check_in->diffInHours(now());
+            $isCheckInFuture = $booking->check_in->isFuture();
+            $isBookingPending = $booking->status === Booking::STATUS_PENDING;
+
+            $booking->can_modify = in_array($booking->status, [Booking::STATUS_PENDING, Booking::STATUS_CONFIRMED]) &&
+                ($minutesSinceCreation <= 60 || ($isCheckInFuture && $isBookingPending));
             $booking->days_until_checkin = $booking->check_in->diffInDays(now());
             return $booking;
         });
@@ -635,9 +764,9 @@ class BookingController extends Controller
         ]);
 
         $apartment = Apartment::findOrFail($apartmentId);
-        
+
         $isAvailable = !$apartment->isBookedForDates($request->check_in, $request->check_out);
-        
+
         $checkIn = \Carbon\Carbon::parse($request->check_in);
         $checkOut = \Carbon\Carbon::parse($request->check_out);
         $nights = $checkIn->diffInDays($checkOut);
@@ -651,16 +780,16 @@ class BookingController extends Controller
                 ->where(function ($query) use ($request) {
                     $query->where(function ($q) use ($request) {
                         $q->where('check_in', '<=', $request->check_in)
-                          ->where('check_out', '>', $request->check_in);
+                            ->where('check_out', '>', $request->check_in);
                     })
-                    ->orWhere(function ($q) use ($request) {
-                        $q->where('check_in', '<', $request->check_out)
-                          ->where('check_out', '>=', $request->check_out);
-                    })
-                    ->orWhere(function ($q) use ($request) {
-                        $q->where('check_in', '>=', $request->check_in)
-                          ->where('check_out', '<=', $request->check_out);
-                    });
+                        ->orWhere(function ($q) use ($request) {
+                            $q->where('check_in', '<', $request->check_out)
+                                ->where('check_out', '>=', $request->check_out);
+                        })
+                        ->orWhere(function ($q) use ($request) {
+                            $q->where('check_in', '>=', $request->check_in)
+                                ->where('check_out', '<=', $request->check_out);
+                        });
                 })
                 ->select(['check_in', 'check_out'])
                 ->get();
@@ -820,9 +949,9 @@ class BookingController extends Controller
     {
         $userId = $request->user()->id;
         $today = now()->format('Y-m-d');
-        
+
         $query = Booking::with(['apartment.user', 'user'])
-            ->whereHas('apartment', function($query) use ($userId) {
+            ->whereHas('apartment', function ($query) use ($userId) {
                 $query->where('user_id', $userId);
             })
             ->whereIn('status', [Booking::STATUS_PENDING, Booking::STATUS_CONFIRMED])
@@ -848,7 +977,7 @@ class BookingController extends Controller
     public function getMyPendingBookings(Request $request)
     {
         $userId = $request->user()->id;
-        
+
         $query = Booking::with(['apartment.user', 'user'])
             ->where('user_id', $userId)
             ->where('status', Booking::STATUS_PENDING)
@@ -873,7 +1002,7 @@ class BookingController extends Controller
     {
         $userId = $request->user()->id;
         $today = now()->format('Y-m-d');
-        
+
         $query = Booking::with(['apartment.user', 'user'])
             ->where('user_id', $userId)
             ->where('status', Booking::STATUS_CONFIRMED)
@@ -898,7 +1027,7 @@ class BookingController extends Controller
     public function getMyCancelledRejectedBookings(Request $request)
     {
         $userId = $request->user()->id;
-        
+
         $query = Booking::with(['apartment.user', 'user'])
             ->where('user_id', $userId)
             ->whereIn('status', [Booking::STATUS_CANCELLED, Booking::STATUS_REJECTED, Booking::STATUS_COMPLETED])
