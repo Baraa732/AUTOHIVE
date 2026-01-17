@@ -9,12 +9,14 @@ class AuthState {
   final bool isLoading;
   final String? error;
   final bool isAuthenticated;
+  final String? token;
 
   const AuthState({
     this.user,
     this.isLoading = false,
     this.error,
     this.isAuthenticated = false,
+    this.token,
   });
 
   AuthState copyWith({
@@ -22,12 +24,14 @@ class AuthState {
     bool? isLoading,
     String? error,
     bool? isAuthenticated,
+    String? token,
   }) {
     return AuthState(
       user: user ?? this.user,
       isLoading: isLoading ?? this.isLoading,
       error: error,
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
+      token: token ?? this.token,
     );
   }
 }
@@ -42,13 +46,20 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> _initializeAuth() async {
-    await _clearStoredAuth();
-  }
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString(_tokenKey);
+    final userString = prefs.getString(_userKey);
 
+    if (token != null && userString != null) {
+      final userData = json.decode(userString);
+      final user = User.fromJson(userData);
+      state = AuthState(user: user, isAuthenticated: true, token: token);
+    }
+  }
 
   Future<void> login(String phone, String password) async {
     state = state.copyWith(isLoading: true, error: null);
-    
+
     try {
       final result = await _authService.login(phone, password);
       if (result['success'] == true && result['user'] != null) {
@@ -58,37 +69,50 @@ class AuthNotifier extends StateNotifier<AuthState> {
           user: user,
           isAuthenticated: true,
           isLoading: false,
+          token: result['token'],
         );
       } else {
         throw Exception(result['message'] ?? 'Login failed');
       }
     } catch (e) {
       final errorMsg = e.toString().replaceAll('Exception: ', '').trim();
-      final finalError = errorMsg.isEmpty ? 'Login failed. Please try again.' : errorMsg;
-      state = state.copyWith(
-        error: finalError,
-        isLoading: false,
-      );
+      final finalError = errorMsg.isEmpty
+          ? 'Login failed. Please try again.'
+          : errorMsg;
+      state = state.copyWith(error: finalError, isLoading: false);
     }
   }
 
-  Future<void> register(String firstName, String lastName, String phone, String password, String city, String governorate) async {
+  Future<void> register(
+    String firstName,
+    String lastName,
+    String phone,
+    String password,
+    String city,
+    String governorate,
+  ) async {
     state = state.copyWith(isLoading: true, error: null);
-    
+
     try {
-      final result = await _authService.register(firstName, lastName, phone, password, city, governorate);
+      final result = await _authService.register(
+        firstName,
+        lastName,
+        phone,
+        password,
+        city,
+        governorate,
+      );
       if (result['success'] == true && result['data'] != null) {
-        state = state.copyWith(
-          isLoading: false,
-          error: null,
-        );
+        state = state.copyWith(isLoading: false, error: null);
       } else {
         throw Exception(result['message'] ?? 'Registration failed');
       }
     } catch (e) {
       final errorMsg = e.toString().replaceAll('Exception: ', '').trim();
       state = state.copyWith(
-        error: errorMsg.isEmpty ? 'Registration failed. Please try again.' : errorMsg,
+        error: errorMsg.isEmpty
+            ? 'Registration failed. Please try again.'
+            : errorMsg,
         isLoading: false,
       );
     }
@@ -102,19 +126,27 @@ class AuthNotifier extends StateNotifier<AuthState> {
       // Continue with logout even if API call fails
     }
     await _clearStoredAuth();
-    state = const AuthState(isAuthenticated: false, user: null);
+    state = const AuthState(isAuthenticated: false, user: null, token: null);
   }
 
   Future<void> _storeAuth(String token, User user) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_tokenKey, token);
-    await prefs.setString(_userKey, jsonEncode(user.toJson())); // Use jsonEncode instead of toString
+    await prefs.setString(
+      _userKey,
+      jsonEncode(user.toJson()),
+    ); // Use jsonEncode instead of toString
   }
 
   Future<void> _clearStoredAuth() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_tokenKey);
     await prefs.remove(_userKey);
+  }
+
+  void updateUser(User updatedUser) {
+    state = state.copyWith(user: updatedUser);
+    _storeAuth(state.token ?? '', updatedUser);
   }
 }
 

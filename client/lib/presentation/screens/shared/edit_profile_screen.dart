@@ -208,6 +208,25 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         }
       }
 
+      // Refresh user data by fetching updated profile
+      try {
+        final profileResponse = await http.get(
+          Uri.parse('${await AppConfig.baseUrl}/profile/show'),
+          headers: {'Authorization': 'Bearer $token'},
+        );
+
+        if (profileResponse.statusCode.toString().startsWith('2')) {
+          final profileData = json.decode(profileResponse.body);
+          if (profileData['success'] == true && profileData['data'] != null) {
+            final updatedUser = User.fromJson(profileData['data']['user']);
+            ref.read(authProvider.notifier).updateUser(updatedUser);
+          }
+        }
+      } catch (e) {
+        // If refresh fails, continue with success message
+        print('Failed to refresh user data: $e');
+      }
+
       // Show success message
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
